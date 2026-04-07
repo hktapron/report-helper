@@ -60,6 +60,5 @@ export const useHistory = (currentUsername) => {
 
     if (!error) fetchHistory();
   };
-
-  return { history, saveReport, deleteReport, renameReport, refreshHistory: fetchHistory };
+  return { history, saveReport, renameReport, refreshHistory: fetchHistory };
 };
