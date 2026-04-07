@@ -1,0 +1,69 @@
+[
+  {
+    "id": "new_report",
+    "mode": "incident",
+    "name": "สร้างรายงานใหม่ (Custom Case)",
+    "trigger": "new",
+    "content": "รายงานความคืบหน้าเหตุการณ์ไม่ปกติ\nวันที่ {date}\n\nเมื่อเวลา {incident_time} น. {narrative}\n\n{update_text}\nหากมีความคืบหน้าจะแจ้งให้ทราบอีกครั้ง\n\nรายละเอียดเที่ยวบิน\nสายการบิน : {airline}\nเทียวบิน : {flight_no}\nทะเบียน : {registration}\nแบบอากาศยาน : {ac_type}\nเส้นทางบิน : {route}\nเวลาเข้า/ออก ตามตารางบิน : {std_sta}\nเวลาลงจริง : {ata}\nหลุมจอดฯ หมายเลข : {stand_no}\n\n===============\nApron control\nTel.076-351581",
+    "fields": [
+      {"id": "date", "label": "วันที่", "type": "date", "default": "today"},
+      {"id": "incident_time", "label": "เวลาเกิดเหตุ", "type": "time"},
+      {"id": "narrative", "label": "รายละเอียดเหตุการณ์ (เริ่มความเรียง)", "type": "textarea"},
+      {"id": "update_text", "label": "ข้อความเพิ่มเติม", "type": "textarea"},
+      {"id": "airline", "label": "สายการบิน", "type": "text"},
+      {"id": "flight_no", "label": "เที่ยวบิน", "type": "text"},
+      {"id": "registration", "label": "ทะเบียน", "type": "text"},
+      {"id": "ac_type", "label": "แบบอากาศยาน", "type": "text"},
+      {"id": "route", "label": "เส้นทางบิน", "type": "text"},
+      {"id": "std_sta", "label": "เวลาตามตาราง (STA/STD)", "type": "text"},
+      {"id": "ata", "label": "เวลาจริง (ATA/ATD)", "type": "text"},
+      {"id": "stand_no", "label": "หลุมจอด", "type": "text"}
+    ]
+  },
+  {
+    "id": "apu_technical",
+    "mode": "incident",
+    "name": "APU Technical Issue / Return to Bay",
+    "trigger": "apu",
+    "content": "รายงานเหตุการณ์ไม่ปกติ\nวันที่ {date}\n\nเที่ยวบินดังกล่าวได้ออกจาก ทภก. เมื่อเวลา {departure_time} น.\n\n---------------------------------\n\nเมื่อเวลา {incident_time} น. ได้รับแจ้งจากหอบังคับการบินว่า เที่ยวบิน {flight_no} ได้ดันถอยออกจากหลุมจอดฯหมายเลข {original_stand} และหยุดอยู่บน Taxilane {taxilane} บริเวณหลุมจอดดังกล่าว โดยนักบินแจ้งว่าพบปัญหาทางเทคนิค (APU ขัดข้อง) และขอกลับเข้าหลุมจอดอีกครั้ง เจ้าหน้าที่บริหารหลุมจอดฯจึงได้จัดให้เที่ยวบินดังกล่าวกลับเข้าหลุมจอดฯ หมายเลข {return_stand} \n\nเมื่อเวลา {tow_time} น. ได้รับแจ้งจากหอฯ ว่าอากาศยานไม่สามารถทำการ taxi ได้ จึงจำเป็นต้องใช้รถดันอากาศยานทำการลากจูงไปยังหลุมจอดฯหมายเลข {return_stand} และได้เข้าจอด ณ หลุมจอดฯ เมื่อเวลา {arrival_time} น.\n\nหากมีความคืบหนัาจะแจ้งให้ทราบอีกครั้ง\n\nรายละเอียดเที่ยวบิน\nเที่ยวบินที่: {flight_no}\nทะเบียนและสัญชาติ: {registration}\nแบบอากาศยาน: {ac_type}\nเส้นทางบิน: {route}\nเวลาออกจากทภก. ตามตารางบิน: {std} น.\nเวลาถอยออกจากหลุมจอดฯ หมายเลข {original_stand} : {pushback_time} น.\nหลุมจอดฯ หมายเลข: {return_stand}\n\n==================\nApron Control\nTel.076-351-581",
+    "fields": [
+      {"id": "date", "label": "วันที่", "type": "date", "default": "today"},
+      {"id": "flight_no", "label": "เที่ยวบินที่", "type": "text"},
+      {"id": "registration", "label": "ทะเบียนและสัญชาติ", "type": "text"},
+      {"id": "ac_type", "label": "แบบอากาศยาน", "type": "text"},
+      {"id": "route", "label": "เส้นทางบิน", "type": "text"},
+      {"id": "std", "label": "เวลาตามตาราง (STD)", "type": "time"},
+      {"id": "incident_time", "label": "เวลาเกิดเหตุ", "type": "time"},
+      {"id": "pushback_time", "label": "เวลาถอยออกจากหลุมเดิม", "type": "time"},
+      {"id": "original_stand", "label": "หลุมจอดเดิม", "type": "text"},
+      {"id": "taxilane", "label": "Taxilane ที่หยุด", "type": "text", "default": "T2"},
+      {"id": "return_stand", "label": "หลุมจอดที่กลับเข้า", "type": "text"},
+      {"id": "tow_time", "label": "เวลาที่ได้รับแจ้งว่า Taxi ไม่ได้", "type": "time"},
+      {"id": "arrival_time", "label": "เวลาเข้าจอดจริง", "type": "time"},
+      {"id": "departure_time", "label": "เวลาออกจาก ทภก. (สุดท้าย)", "type": "time"}
+    ]
+  },
+  {
+    "id": "violator_core",
+    "mode": "violator",
+    "name": "รายงานผู้กระทำความผิด",
+    "trigger": "v",
+    "content": "รายงานผู้กระทำความผิด\nวันที่ {date}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ {violation_action} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ{location} โดย {violation_detail} ซึ่งถือเป็นการฝ่าฝืนข้อกำหนดความปลอดภัยด้านการควบคุมยานพาหนะในเขตลานจอดอากาศยาน ซึ่งอาจก่อให้เกิดอันตรายต่อการปฏิบัติงานภาคพื้นและการขับเคลื่อนอากาศยาน\n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวัน{retraining_day}ที่ {retraining_date}\n\nงานควบคุมจราจรภาคพื้น\nสบข.ฝปข.ทภก.",
+    "fields": [
+      {"id": "date", "label": "วันที่", "type": "date", "default": "today"},
+      {"id": "incident_time", "label": "เวลาเกิดเหตุ", "type": "time"},
+      {"id": "violator_name", "label": "ชื่อผู้กระทำความผิด", "type": "text"},
+      {"id": "id_card", "label": "หมายเลขบัตร (HKT/...)", "type": "text"},
+      {"id": "company", "label": "สังกัด", "type": "text"},
+      {"id": "position", "label": "ตำแหน่ง", "type": "text"},
+      {"id": "violation_action", "label": "การกระทำ (เช่น ขับรถกระบะ)", "type": "text", "default": "ขับรถกระบะ"},
+      {"id": "vehicle_no", "label": "หมายเลขรถ/ทะเบียน", "type": "text"},
+      {"id": "location", "label": "บริเวณที่เกิดเหตุ", "type": "text"},
+      {"id": "violation_detail", "label": "รายละเอียดความผิด", "type": "textarea", "placeholder": "เช่น ขับด้วยความเร็ว 40 กม./ชม."},
+      {"id": "seizure_days", "label": "จำนวนวันที่ยึด", "type": "number", "default": "7"},
+      {"id": "seizure_start", "label": "เริ่มวันที่", "type": "date", "default": "today"},
+      {"id": "seizure_end", "label": "ถึงวันที่ (Auto)", "type": "text", "readOnly": true},
+      {"id": "retraining_date", "label": "วันเข้าอบรม (Auto)", "type": "text", "readOnly": true}
+    ]
+  }
+]
