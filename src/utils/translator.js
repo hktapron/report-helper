@@ -18,14 +18,18 @@ const dictionary = {
 };
 
 export const translateIncident = (text) => {
+  if (!text) return '';
   let translated = text;
   Object.entries(dictionary).forEach(([thai, english]) => {
-    translated = translated.split(thai).join(english);
+    // Escaping regex characters potentially in Thai text or dictionary keys
+    const escapedKey = thai.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    translated = translated.split(new RegExp(escapedKey, 'g')).join(english);
   });
   return translated;
 };
 
 export const generateCAAT22 = (data) => {
+  if (!data) return 'No data available.';
   const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
   const refNo = `HKT-APR-${Date.now().toString().slice(-6)}`;
   
@@ -34,12 +38,11 @@ export const generateCAAT22 = (data) => {
   // Case 1: APU Failure / Return to Stand
   if (data.original_stand && data.return_stand) {
     chronology = `
-- At ${data.incident_time || '--:--'} LT: ATC notified Apron Control that Flight ${data.flight_no} pushed back from Stand ${data.original_stand} and stopped on Taxilane ${data.taxilane || 'T2'}.
+- At ${data.incident_time || '--:--'} LT: ATC notified Apron Control that Flight ${data.flight_no || 'N/A'} pushed back from Stand ${data.original_stand} and stopped on Taxilane ${data.taxilane || 'T2'}.
 - Pilot reported technical issue (APU Failure) and requested return to stand.
 - Result: Apron Control assigned the aircraft to return to Stand ${data.return_stand}.
 `;
 
-    // Add Towing if data exists
     if (data.tow_time) {
       chronology += `- At ${data.tow_time} LT: ATC reported aircraft unable to taxi. Towing service deployed.
 - At ${data.arrival_time || '--:--'} LT: Aircraft successfully towed and parked at Stand ${data.return_stand}.`;
