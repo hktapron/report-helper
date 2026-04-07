@@ -12,24 +12,27 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     setError(null);
 
-    // Auto-append domain to make it look like a username system
-    const email = username.includes('@') ? username : `${username}@hkt.local`;
-
     if (supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
+      // 100% Custom Auth: Call RPC function verify_user directly
+      try {
+        const { data, error } = await supabase.rpc('verify_user', { 
+           p_username: username, 
+           p_password: password 
+        });
 
-      if (error) {
-        setError('Username หรือ รหัสผ่านไม่ถูกต้อง');
-      } else {
-        onLogin(data.user);
+        if (error || !data || data.length === 0 || !data[0].success) {
+          setError('Username หรือ รหัสผ่านไม่ถูกต้อง');
+        } else {
+          // data[0] is the user object from the database table app_accounts
+          onLogin(data[0]); 
+        }
+      } catch (err) {
+        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
       }
     } else {
       // Demo mode fallback
       if (username === 'admin' && password === 'admin') {
-        onLogin({ email: 'admin@demo.local', id: 'demo' });
+        onLogin({ username: 'admin', display_name: 'หัวหน้างานกะ', id: 'demo' });
       } else {
         setError('โหมดทดลอง: ใช้ admin / admin');
       }
@@ -44,25 +47,25 @@ const Login = ({ onLogin }) => {
           <h1 className="app-title" style={{ justifyContent: 'center' }}>
             <span>✈️</span> HKT Automator
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>กรุณาเข้ารหัสผ่าน (Username/Password)</p>
         </div>
         
         <form className="login-form" onSubmit={handleLogin}>
           <div className="input-group">
-            <label>Username</label>
+            <label>ชื่อผู้ใช้งาน (Username)</label>
             <input 
               type="text" 
-              placeholder="ใส่ชื่อผู้ใช้งาน..." 
+              placeholder="กรอกชื่อผู้ใช้งาน..." 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
           <div className="input-group">
-            <label>Password</label>
+            <label>รหัสผ่าน (Password)</label>
             <input 
               type="password" 
-              placeholder="ใส่รหัสผ่าน..." 
+              placeholder="กรอกรหัสผ่าน..." 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -72,7 +75,7 @@ const Login = ({ onLogin }) => {
           {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</div>}
           
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+            {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 
