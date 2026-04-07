@@ -5,7 +5,7 @@ const ModeSelector = ({ onSelect }) => {
     <div className="login-container">
       <div className="mode-card">
         <h1 className="app-title" style={{ justifyContent: 'center', fontSize: '2.2rem', marginBottom: '1.5rem' }}>
-          ระบบจัดทำรายงานอัตโนมัติ (HKT)
+          ระบบช่วยจัดทำรายงานเหตุการณ์ไม่ปกติ
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', marginBottom: '3rem' }}>
           กรุณาเลือกประเภทรายงานที่ท่านต้องการดำเนินการ:
@@ -15,7 +15,10 @@ const ModeSelector = ({ onSelect }) => {
           <div className="mode-item" onClick={() => onSelect('incident')}>
             <span className="mode-icon">📋</span>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>รายงานเหตุการณ์ไม่ปกติ</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>บันทึกเหตุการณ์ทางเทคนิค, ปัญหาหลุมจอด, และเหตุการณ์อื่นๆ</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', textAlign: 'center' }}>
+              บันทึกเหตุการณ์ทางเทคนิค, ปัญหาหลุมจอด<br/>
+              และเหตุการณ์อื่นๆ
+            </p>
           </div>
           
           <div className="mode-item" onClick={() => onSelect('violator')}>

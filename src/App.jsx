@@ -27,6 +27,7 @@ const App = () => {
   const history = historyData?.history || [];
   const saveReport = historyData?.saveReport;
   const renameReport = historyData?.renameReport;
+  const deleteReport = historyData?.deleteReport;
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -158,6 +159,14 @@ const App = () => {
     setRenamingId(null);
   };
 
+  const handleDelete = async (e, id) => {
+    e.stopPropagation(); // prevent activating the item
+    if (window.confirm("คุณต้องการลบประวัตินี้ใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
+      if (deleteReport) await deleteReport(id);
+      if (formData.id === id) setFormData({}); // clear form if deleting active element
+    }
+  };
+
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
@@ -174,10 +183,13 @@ const App = () => {
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="app-title" style={{ fontSize: '1.2rem' }}>
-            VTSP Automator
+          <div className="app-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: 'var(--accent-blue)' }}>
+            VTSP Report Helper
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
+          <div className="app-title" style={{ fontSize: '1.25rem', opacity: 0.9 }}>
+            {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
              <span>ผู้ใช้งาน: <strong>{user.username}</strong></span>
              <span style={{ cursor: 'pointer', color: 'var(--accent-pink)', fontWeight: '600' }} onClick={() => {setUser(null); setReportMode(null);}}>ออกจากระบบ</span>
           </div>
@@ -232,7 +244,8 @@ const App = () => {
                 ) : (
                   <>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem' }} onClick={(e) => startRename(e, item)}>✎</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-pink)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ">🗑️</span>
                   </>
                 )}
               </div>

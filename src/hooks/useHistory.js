@@ -60,5 +60,16 @@ export const useHistory = (currentUsername) => {
 
     if (!error) fetchHistory();
   };
-  return { history, saveReport, renameReport, refreshHistory: fetchHistory };
+
+  const deleteReport = async (id) => {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from('incident_history')
+      .delete()
+      .eq('id', id);
+
+    if (!error) fetchHistory();
+  };
+
+  return { history, saveReport, renameReport, deleteReport, refreshHistory: fetchHistory };
 };
