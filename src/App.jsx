@@ -28,6 +28,7 @@ const App = () => {
   const saveReport = historyData?.saveReport;
   const renameReport = historyData?.renameReport;
   const deleteReport = historyData?.deleteReport;
+  const togglePin = historyData?.togglePin;
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -103,17 +104,16 @@ const App = () => {
     if (!Array.isArray(templatesData)) return [];
     return templatesData.filter(t => 
       t.mode === reportMode && 
-      (
-        t.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        t.trigger?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.content?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      (t.id === 'new_report' || t.id === 'violator_core') // Only show base templates in the top list
     );
   }, [searchTerm, reportMode]);
 
   const filteredHistory = useMemo(() => {
     return history.filter(item => (item.mode || 'incident') === reportMode);
   }, [history, reportMode]);
+
+  const pinnedHistory = filteredHistory.filter(h => h.isPinned);
+  const normalHistory = filteredHistory.filter(h => !h.isPinned);
 
   const handleInputChange = (id, value) => {
     setFormData(prev => ({ ...prev, [id]: value }));
@@ -213,14 +213,51 @@ const App = () => {
               onClick={() => setSelectedTemplate(t)}
             >
               <div className="template-name">{t.name}</div>
-              {t.trigger && <div className="template-trigger">Keyword: :{t.trigger}</div>}
+              {t.trigger && <div className="template-trigger">เริ่มใหม่</div>}
             </div>
           ))}
         </div>
 
+        {pinnedHistory.length > 0 && (
+          <div className="history-section" style={{ flex: 'none', maxHeight: '40vh', overflowY: 'auto', marginBottom: '1rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+            <div className="history-title" style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>📌 รายการปักหมุด</div>
+            {pinnedHistory.map(item => (
+              <div key={item.id} className="history-item" onClick={() => {
+                setReportMode(item.mode || 'incident');
+                const t = templatesData.find(x => x.name === item.templateName);
+                setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
+                setFormData(item.data || {});
+                setThaiPreview(item.preview || '');
+                isEditingPreview.current = true;
+              }}>
+                <div className="history-info">
+                  {renamingId === item.id ? (
+                    <form onSubmit={submitRename} style={{ flex: 1, display: 'flex' }}>
+                      <input 
+                        autoFocus
+                        className="search-input" 
+                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
+                        value={renameValue} 
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => setRenamingId(null)}
+                      />
+                    </form>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
+                      <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
+                      <span style={{ cursor: 'pointer', opacity: 1, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} title="เลิกปักหมุด">📌</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="history-section" style={{ flex: 1, overflowY: 'auto' }}>
           <div className="history-title">ประวัติ</div>
-          {filteredHistory.map(item => (
+          {normalHistory.map(item => (
             <div key={item.id} className="history-item" onClick={() => {
               setReportMode(item.mode || 'incident');
               const t = templatesData.find(x => x.name === item.templateName);
@@ -244,6 +281,7 @@ const App = () => {
                 ) : (
                   <>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} title="ปักหมุด">📍</span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-pink)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ">🗑️</span>
                   </>

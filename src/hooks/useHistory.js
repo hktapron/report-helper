@@ -23,6 +23,7 @@ export const useHistory = (currentUsername) => {
         extraPreview: item.extra_preview,
         data: item.data,
         customTitle: item.custom_title,
+        isPinned: item.is_pinned,
         savedAt: item.saved_at
       })));
     }
@@ -71,5 +72,14 @@ export const useHistory = (currentUsername) => {
     if (!error) fetchHistory();
   };
 
-  return { history, saveReport, renameReport, deleteReport, refreshHistory: fetchHistory };
+  const togglePin = async (id, currentStatus) => {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from('incident_history')
+      .update({ is_pinned: !currentStatus })
+      .eq('id', id);
+    if (!error) fetchHistory();
+  };
+
+  return { history, saveReport, renameReport, deleteReport, togglePin, refreshHistory: fetchHistory };
 };

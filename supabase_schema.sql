@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.incident_history (
     data jsonb DEFAULT '{}'::jsonb,
     user_id text, -- Can be username or account ID string
     custom_title text, -- For manual renaming
+    is_pinned boolean DEFAULT false, -- For pinned templates
     saved_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

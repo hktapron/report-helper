@@ -147,6 +147,26 @@ body {
   gap: 2rem;
 }
 
+@media (min-width: 992px) {
+  .main-content {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .main-content > section:first-child {
+    flex: 0 0 55%;
+    min-width: 0;
+  }
+
+  .main-content > section.preview-container {
+    flex: 0 0 calc(45% - 2rem);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 1.5rem;
+  }
+}
+
 .card {
   background: var(--bg-card);
   backdrop-filter: blur(10px);
@@ -451,6 +471,14 @@ input:focus, textarea:focus {
   .preview-container {
     flex-direction: column;
     min-height: auto;
+  }
+  
+  .preview-body-v2 {
+    min-height: 250px;
+  }
+  
+  .preview-textarea {
+    min-height: 250px; /* Force larger textarea on mobile */
   }
 
   .mode-grid {
