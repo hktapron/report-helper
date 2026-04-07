@@ -19,37 +19,58 @@ const dictionary = {
 
 export const translateIncident = (text) => {
   let translated = text;
-  
-  // Replace known phrases
   Object.entries(dictionary).forEach(([thai, english]) => {
     translated = translated.split(thai).join(english);
   });
-
   return translated;
 };
 
 export const generateCAAT22 = (data) => {
-  const dateStr = new Date().toISOString().split('T')[0];
-  return `
-CAAT INCIDENT REPORT (CAAT-22 EQUIVALENT)
------------------------------------------
-REF: HKT-APR-${Date.now().toString().slice(-6)}
-DATE: ${dateStr}
-SUBJECT: Technical Incident / Return to Bay
+  const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+  const refNo = `HKT-APR-${Date.now().toString().slice(-6)}`;
+  
+  let chronology = '';
+  
+  // Case 1: APU Failure / Return to Stand
+  if (data.original_stand && data.return_stand) {
+    chronology = `
+- At ${data.incident_time || '--:--'} LT: ATC notified Apron Control that Flight ${data.flight_no} pushed back from Stand ${data.original_stand} and stopped on Taxilane ${data.taxilane || 'T2'}.
+- Pilot reported technical issue (APU Failure) and requested return to stand.
+- Result: Apron Control assigned the aircraft to return to Stand ${data.return_stand}.
+`;
 
-DETAILS:
-Flight: ${data.flight_no || 'N/A'}
+    // Add Towing if data exists
+    if (data.tow_time) {
+      chronology += `- At ${data.tow_time} LT: ATC reported aircraft unable to taxi. Towing service deployed.
+- At ${data.arrival_time || '--:--'} LT: Aircraft successfully towed and parked at Stand ${data.return_stand}.`;
+    }
+  } 
+  // Case 2: General / Progress Report
+  else {
+    chronology = `- At ${data.incident_time || '--:--'} LT: ${data.narrative ? translateIncident(data.narrative) : 'Incident reported'}.
+- Current Action: ${data.update_text ? translateIncident(data.update_text) : 'Monitoring the situation'}.
+${data.stand_no ? `- Stand: ${data.stand_no}` : ''}`;
+  }
+
+  return `
+AIRPORT INCIDENT SUMMARY (CAAT-22)
+----------------------------------
+Ref: ${refNo}
+Date: ${dateStr}
+Subject: Technical Incident / Operational Disruption
+
+FLIGHT INFORMATION:
+Flight No: ${data.flight_no || 'N/A'}
+A/C Registry: ${data.registration || 'N/A'}
 A/C Type: ${data.ac_type || 'N/A'}
-Registration: ${data.registration || 'N/A'}
+Route: ${data.route || 'N/A'}
 
 CHRONOLOGY:
-- At ${data.incident_time || '--:--'} LT: Incident reported.
-- Action: ${data.issue_desc || 'Technical evaluation requested'}.
-- Result: ${data.return_stand ? `A/C returned to stand ${data.return_stand}` : 'Continuous monitoring'}.
+${chronology}
 
-PRELIMINARY ASSESSMENT:
-The flight ${data.flight_no} experienced ${data.issue_desc || 'system failure'} during ${data.pushback_time ? 'pushback' : 'taxiing'}. 
-Safety protocols followed. No injury reported.
+STATUS:
+Safety protocols followed. No personnel injury reported.
+Final Stand: ${data.return_stand || data.stand_no || 'N/A'}
 
 APRON CONTROL UNIT
 PHUKET INTERNATIONAL AIRPORT

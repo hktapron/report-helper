@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.incident_history (
     extra_preview text,
     data jsonb DEFAULT '{}'::jsonb,
     user_id text, -- Can be username or account ID string
+    custom_title text, -- For manual renaming
     saved_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

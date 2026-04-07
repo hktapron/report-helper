@@ -17,6 +17,9 @@ const App = () => {
   const [formData, setFormData] = useState({});
   const [showCAAT, setShowCAAT] = useState(false);
   
+  // Mobile state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   const isEditingPreview = useRef(false);
@@ -24,7 +27,10 @@ const App = () => {
   // useHistory with custom user_id handling
   const historyData = useHistory(user?.username) || { history: [] };
   const history = historyData.history || [];
-  const saveReport = historyData.saveReport;
+  const { saveReport, renameReport } = historyData;
+
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   // Set default template when mode changes
   useEffect(() => {
@@ -32,8 +38,13 @@ const App = () => {
       const first = templatesData.find(t => t.mode === reportMode);
       if (first) setSelectedTemplate(first);
     }
-    setSearchTerm(''); // Clear search when switching modes
+    setIsSidebarOpen(false); // Close sidebar on mode switch
   }, [reportMode]);
+
+  // Close sidebar on template selection
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [selectedTemplate]);
 
   // Initialize form with defaults
   useEffect(() => {
@@ -84,7 +95,7 @@ const App = () => {
     }
   }, [formData.seizure_start, formData.seizure_days, reportMode, selectedTemplate]);
 
-  // Update Thai Preview based on form
+  // Update Thai Preview
   useEffect(() => {
     if (!isEditingPreview.current && selectedTemplate) {
       let text = selectedTemplate.content || '';
@@ -105,7 +116,6 @@ const App = () => {
     }
   }, [formData, selectedTemplate, reportMode]);
 
-  // Update Extra Preview (CAAT)
   useEffect(() => {
     let text = '';
     if (showCAAT) text += generateCAAT22(formData);
@@ -128,21 +138,20 @@ const App = () => {
     return Array.isArray(history) ? history.filter(item => (item.mode || 'incident') === reportMode) : [];
   }, [history, reportMode]);
 
-  // Helper to get smart title from preview text
-  const getSmartTitle = (previewText) => {
-    if (!previewText) return 'กำหนดเอง';
-    // Split by period or newline and take the first non-empty segment
-    const segments = previewText.split(/[\.\nม]/).filter(s => s.trim().length > 5);
-    if (segments.length > 0) {
-      const title = segments[0].trim();
-      return title.length > 40 ? title.substring(0, 40) + '...' : title;
-    }
-    return 'กำหนดเอง';
-  };
-
   const handleInputChange = (id, value) => {
     setFormData(prev => ({ ...prev, [id]: value }));
     isEditingPreview.current = false;
+  };
+
+  const getSmartTitle = (item) => {
+    if (item.customTitle) return item.customTitle;
+    const text = item.preview || '';
+    const segments = text.split(/[\. \nม]/).filter(s => s.trim().length > 5);
+    if (segments.length > 0) {
+      const title = segments[0].trim();
+      return title.length > 30 ? title.substring(0, 30) + '...' : title;
+    }
+    return 'กำหนดเอง';
   };
 
   const copyThai = () => {
@@ -154,16 +163,27 @@ const App = () => {
         templateName: selectedTemplate?.name || 'กำหนดเอง',
         preview: thaiPreview,
         extraPreview: extraPreview,
-        data: formData,
-        userId: user?.username || 'unknown'
+        data: formData
       });
     }
     alert('คัดลอกรายงานไทยแล้ว');
   };
 
+  const startRename = (e, item) => {
+    e.stopPropagation();
+    setRenamingId(item.id);
+    setRenameValue(item.customTitle || getSmartTitle(item));
+  };
+
+  const submitRename = async (e) => {
+    e.preventDefault();
+    if (renameReport && renamingId) await renameReport(renamingId, renameValue);
+    setRenamingId(null);
+  };
+
   const handleLogout = () => {
-     setUser(null);
-     setReportMode(null);
+    setUser(null);
+    setReportMode(null);
   };
 
   if (!user) return <Login onLogin={setUser} />;
@@ -171,12 +191,23 @@ const App = () => {
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
+        <div className="app-title" style={{ fontSize: '1.1rem' }}>
+          {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
+        </div>
+      </div>
+
+      {/* Sidebar Overlay for Mobile */}
+      <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="app-title">
-            <span>✈️</span> {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
+          <div className="app-title" style={{ fontSize: '1.2rem' }}>
+            {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
              <span>ผู้ใช้งาน: <strong>{user.username}</strong></span>
              <span style={{ cursor: 'pointer', color: 'var(--accent-pink)', fontWeight: '600' }} onClick={handleLogout}>ออกจากระบบ</span>
           </div>
@@ -186,7 +217,7 @@ const App = () => {
           <input 
             type="text" 
             className="search-input" 
-            placeholder="ค้นหา (ชื่อแม่แบบ หรือ เนื้อหา)..." 
+            placeholder="ค้นหาแม่แบบ/เนื้อหา..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -210,22 +241,40 @@ const App = () => {
           {filteredHistory.map(item => (
             <div key={item.id} className="history-item" onClick={() => {
               setReportMode(item.mode || 'incident');
-              const t = templatesData.find(x => x.name === item.templateName) || templatesData.find(x => x.mode === (item.mode || 'incident'));
-              setSelectedTemplate(t);
+              const t = templatesData.find(x => x.name === item.templateName);
+              setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
               setFormData(item.data);
               setThaiPreview(item.preview);
               isEditingPreview.current = true;
             }}>
               <div className="history-info">
-                <span title={item.preview}>{getSmartTitle(item.preview)}</span>
-                <span className="history-date">{new Date(item.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                {renamingId === item.id ? (
+                  <form onSubmit={submitRename} style={{ flex: 1, display: 'flex' }}>
+                    <input 
+                      autoFocus
+                      className="search-input" 
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
+                      value={renameValue} 
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => setRenamingId(null)}
+                    />
+                  </form>
+                ) : (
+                  <>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem' }} onClick={(e) => startRename(e, item)}>✎</span>
+                    <span className="history-date" style={{ marginLeft: '0.5rem' }}>
+                      {new Date(item.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         <div className="mode-switcher">
-           <button className="btn btn-ghost btn-full" style={{ fontSize: '0.8rem', borderColor: 'var(--accent-blue)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+           <button className="btn btn-ghost btn-full" style={{ fontSize: '0.85rem', borderColor: 'var(--accent-blue)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
               สลับไปที่: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
            </button>
         </div>
@@ -248,7 +297,6 @@ const App = () => {
                     value={formData[field.id] || ''} 
                     onChange={(e) => handleInputChange(field.id, e.target.value)}
                     readOnly={field.readOnly}
-                    placeholder={field.placeholder}
                   />
                 )}
               </div>
@@ -265,7 +313,7 @@ const App = () => {
           </div>
           <div className="actions" style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-glass)', display: 'flex', gap: '1rem' }}>
             <button className="btn btn-primary" onClick={copyThai} disabled={!selectedTemplate}>คัดลอกและบันทึก</button>
-            <button className="btn btn-ghost" onClick={() => setFormData({})}>รีเซ็ตฟอร์ม</button>
+            <button className="btn btn-ghost" onClick={() => setFormData({})}>รีเซ็ต</button>
           </div>
         </section>
 

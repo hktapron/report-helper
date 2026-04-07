@@ -22,6 +22,7 @@ export const useHistory = (currentUsername) => {
         preview: item.preview,
         extraPreview: item.extra_preview,
         data: item.data,
+        customTitle: item.custom_title,
         savedAt: item.saved_at
       })));
     }
@@ -50,15 +51,15 @@ export const useHistory = (currentUsername) => {
     if (!error) fetchHistory();
   };
 
-  const deleteReport = async (id) => {
+  const renameReport = async (id, newTitle) => {
     if (!supabase) return;
     const { error } = await supabase
       .from('incident_history')
-      .delete()
+      .update({ custom_title: newTitle })
       .eq('id', id);
 
     if (!error) fetchHistory();
   };
 
-  return { history, saveReport, deleteReport, refreshHistory: fetchHistory };
+  return { history, saveReport, deleteReport, renameReport, refreshHistory: fetchHistory };
 };

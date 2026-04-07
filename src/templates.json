@@ -2,7 +2,7 @@
   {
     "id": "new_report",
     "mode": "incident",
-    "name": "สร้างรายงานใหม่ (Custom Case)",
+    "name": "สร้างรายงานใหม่",
     "trigger": "new",
     "content": "รายงานความคืบหน้าเหตุการณ์ไม่ปกติ\nวันที่ {date}\n\nเมื่อเวลา {incident_time} น. {narrative}\n\n{update_text}\nหากมีความคืบหน้าจะแจ้งให้ทราบอีกครั้ง\n\nรายละเอียดเที่ยวบิน\nสายการบิน : {airline}\nเทียวบิน : {flight_no}\nทะเบียน : {registration}\nแบบอากาศยาน : {ac_type}\nเส้นทางบิน : {route}\nเวลาเข้า/ออก ตามตารางบิน : {std_sta}\nเวลาลงจริง : {ata}\nหลุมจอดฯ หมายเลข : {stand_no}\n\n===============\nApron control\nTel.076-351581",
     "fields": [

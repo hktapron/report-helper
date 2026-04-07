@@ -43,10 +43,10 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="app-title" style={{ justifyContent: 'center', fontSize: '1.2rem', textAlign: 'center' }}>
-            <span>✈️</span> ระบบจัดทำรายงานเหตุการณ์ไม่ปกติ
+          <h1 className="app-title" style={{ justifyContent: 'center', fontSize: '1.8rem', textAlign: 'center' }}>
+            ระบบจัดทำรายงานเหตุการณ์ไม่ปกติ
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', fontSize: '0.9rem' }}>กรุณาเข้าสู่ระบบ</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', fontSize: '1rem' }}>กรุณาเข้าสู่ระบบ</p>
         </div>
         
         <form className="login-form" onSubmit={handleLogin}>
