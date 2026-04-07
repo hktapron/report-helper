@@ -13,24 +13,23 @@ const Login = ({ onLogin }) => {
     setError(null);
 
     if (supabase) {
-      // 100% Custom Auth: Call RPC function verify_user directly
       try {
-        const { data, error } = await supabase.rpc('verify_user', { 
+        // 100% Custom Auth: Call RPC function verify_user directly
+        const { data, error: rpcError } = await supabase.rpc('verify_user', { 
            p_username: username, 
            p_password: password 
         });
 
-        if (error || !data || data.length === 0 || !data[0].success) {
+        if (rpcError || !data || data.length === 0 || !data[0].success) {
           setError('Username หรือ รหัสผ่านไม่ถูกต้อง');
         } else {
-          // data[0] is the user object from the database table app_accounts
           onLogin(data[0]); 
         }
       } catch (err) {
-        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
+        console.error('Login error:', err);
+        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้ (โปรดตรวจสอบการรัน SQL Schema)');
       }
     } else {
-      // Demo mode fallback
       if (username === 'admin' && password === 'admin') {
         onLogin({ username: 'admin', display_name: 'หัวหน้างานกะ', id: 'demo' });
       } else {
@@ -44,10 +43,10 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="app-title" style={{ justifyContent: 'center' }}>
-            <span>✈️</span> HKT Automator
+          <h1 className="app-title" style={{ justifyContent: 'center', fontSize: '1.2rem', textAlign: 'center' }}>
+            <span>✈️</span> ระบบจัดทำรายงานเหตุการณ์ไม่ปกติ
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>กรุณาเข้ารหัสผ่าน (Username/Password)</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', fontSize: '0.9rem' }}>กรุณาเข้าสู่ระบบ</p>
         </div>
         
         <form className="login-form" onSubmit={handleLogin}>
@@ -72,16 +71,16 @@ const Login = ({ onLogin }) => {
             />
           </div>
           
-          {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</div>}
+          {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>{error}</div>}
           
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          งานควบคุมจราจรภาคพื้น (Apron Control)<br/>
-          ท่าอากาศยานภูเก็ต
+        <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+          ส่วนปฏิบัติการเขตการบิน ฝ่ายปฏิบัติการเขตการบิน<br/>
+          ท่าอากาศยานภูเก็ต (Apron Control)
         </div>
       </div>
     </div>
