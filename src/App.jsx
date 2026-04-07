@@ -11,42 +11,40 @@ const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.',
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [reportMode, setReportMode] = useState(null); // 'incident' or 'violator'
+  const [reportMode, setReportMode] = useState(null); 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [showCAAT, setShowCAAT] = useState(false);
   
-  // Mobile state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   const isEditingPreview = useRef(false);
 
-  // useHistory with custom user_id handling
-  const historyData = useHistory(user?.username) || { history: [] };
-  const history = historyData.history || [];
-  const { saveReport, renameReport } = historyData;
+  // useHistory with robust fallback
+  const historyData = useHistory(user?.username);
+  const history = historyData?.history || [];
+  const saveReport = historyData?.saveReport;
+  const renameReport = historyData?.renameReport;
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
 
-  // Set default template when mode changes
+  // Sync default template
   useEffect(() => {
     if (reportMode && Array.isArray(templatesData)) {
       const first = templatesData.find(t => t.mode === reportMode);
       if (first) setSelectedTemplate(first);
     }
-    setIsSidebarOpen(false); // Close sidebar on mode switch
+    setIsSidebarOpen(false);
   }, [reportMode]);
 
-  // Close sidebar on template selection
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [selectedTemplate]);
 
-  // Initialize form with defaults
+  // Form initialization
   useEffect(() => {
     if (selectedTemplate && selectedTemplate.fields) {
       const defaults = {};
@@ -72,30 +70,7 @@ const App = () => {
     }
   }, [selectedTemplate]);
 
-  // Violator Date Logic
-  useEffect(() => {
-    if (reportMode === 'violator' && selectedTemplate?.id === 'violator_core' && formData.seizure_start) {
-      const startDate = new Date(formData.seizure_start);
-      const days = parseInt(formData.seizure_days || 0);
-
-      if (!isNaN(startDate.getTime()) && days > 0) {
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + (days - 1));
-        const seizure_end = `${endDate.getDate()} ${THAI_MONTHS_SHORT[endDate.getMonth()]} ${(endDate.getFullYear() + 543).toString().slice(-2)}`;
-
-        const retDate = new Date(endDate);
-        retDate.setDate(endDate.getDate() + 1);
-        const retraining_date = `${retDate.getDate()} ${THAI_MONTHS_SHORT[retDate.getMonth()]} ${(retDate.getFullYear() + 543).toString().slice(-2)}`;
-        const retraining_day = THAI_DAYS[retDate.getDay()];
-
-        if (formData.seizure_end !== seizure_end || formData.retraining_day !== retraining_day) {
-          setFormData(prev => ({ ...prev, seizure_end, retraining_date, retraining_day }));
-        }
-      }
-    }
-  }, [formData.seizure_start, formData.seizure_days, reportMode, selectedTemplate]);
-
-  // Update Thai Preview
+  // Preview Logic
   useEffect(() => {
     if (!isEditingPreview.current && selectedTemplate) {
       let text = selectedTemplate.content || '';
@@ -122,6 +97,7 @@ const App = () => {
     setExtraPreview(text);
   }, [formData, showCAAT]);
 
+  // Memoized lists
   const filteredTemplates = useMemo(() => {
     if (!Array.isArray(templatesData)) return [];
     return templatesData.filter(t => 
@@ -135,7 +111,7 @@ const App = () => {
   }, [searchTerm, reportMode]);
 
   const filteredHistory = useMemo(() => {
-    return Array.isArray(history) ? history.filter(item => (item.mode || 'incident') === reportMode) : [];
+    return history.filter(item => (item.mode || 'incident') === reportMode);
   }, [history, reportMode]);
 
   const handleInputChange = (id, value) => {
@@ -144,14 +120,15 @@ const App = () => {
   };
 
   const getSmartTitle = (item) => {
+    if (!item) return 'ไม่มีชื่อ';
     if (item.customTitle) return item.customTitle;
     const text = item.preview || '';
-    const segments = text.split(/[\. \nม]/).filter(s => s.trim().length > 5);
+    const segments = text.split(/[\. \nม]/).filter(s => s && s.trim().length > 5);
     if (segments.length > 0) {
       const title = segments[0].trim();
       return title.length > 30 ? title.substring(0, 30) + '...' : title;
     }
-    return 'กำหนดเอง';
+    return 'รายงานใหม่';
   };
 
   const copyThai = () => {
@@ -181,17 +158,11 @@ const App = () => {
     setRenamingId(null);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setReportMode(null);
-  };
-
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
   return (
     <div className="app-container">
-      {/* Mobile Header */}
       <div className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title" style={{ fontSize: '1.1rem' }}>
@@ -199,17 +170,16 @@ const App = () => {
         </div>
       </div>
 
-      {/* Sidebar Overlay for Mobile */}
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="app-title" style={{ fontSize: '1.2rem' }}>
-            {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
+            VTSP Automator
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
              <span>ผู้ใช้งาน: <strong>{user.username}</strong></span>
-             <span style={{ cursor: 'pointer', color: 'var(--accent-pink)', fontWeight: '600' }} onClick={handleLogout}>ออกจากระบบ</span>
+             <span style={{ cursor: 'pointer', color: 'var(--accent-pink)', fontWeight: '600' }} onClick={() => {setUser(null); setReportMode(null);}}>ออกจากระบบ</span>
           </div>
         </div>
         
@@ -217,7 +187,7 @@ const App = () => {
           <input 
             type="text" 
             className="search-input" 
-            placeholder="ค้นหาแม่แบบ/เนื้อหา..." 
+            placeholder="ค้นหาแม่แบบ/ประวัติ..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -243,8 +213,8 @@ const App = () => {
               setReportMode(item.mode || 'incident');
               const t = templatesData.find(x => x.name === item.templateName);
               setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
-              setFormData(item.data);
-              setThaiPreview(item.preview);
+              setFormData(item.data || {});
+              setThaiPreview(item.preview || '');
               isEditingPreview.current = true;
             }}>
               <div className="history-info">
@@ -263,9 +233,6 @@ const App = () => {
                   <>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem' }} onClick={(e) => startRename(e, item)}>✎</span>
-                    <span className="history-date" style={{ marginLeft: '0.5rem' }}>
-                      {new Date(item.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
                   </>
                 )}
               </div>
@@ -283,7 +250,7 @@ const App = () => {
       <main className="main-content">
         <section className="card">
           <div className="card-header">
-            <h2 className="card-title">แก้ไขฟอร์ม: {selectedTemplate?.name || 'เลือกแม่แบบ'}</h2>
+            <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
           </div>
           <div className="form-body">
             {selectedTemplate?.fields?.map(field => (
@@ -328,15 +295,14 @@ const App = () => {
               />
             </div>
           </div>
-
           {(extraPreview && reportMode === 'incident') && (
             <div className="card" style={{ flex: 0.8 }}>
               <div className="card-header">
-                <h2 className="card-title">CAAT-22 Report</h2>
-                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>Copy</button>
+                <h2 className="card-title">CAAT-22 (ENG)</h2>
+                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>คัดลอก</button>
               </div>
               <div className="preview-body-v2">
-                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-blue)', fontSize: '0.9rem' }} />
+                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-blue)' }} />
               </div>
             </div>
           )}

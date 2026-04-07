@@ -381,8 +381,10 @@ input:focus, textarea:focus {
 }
 
 /* Mobile Toggle Button */
-.menu-toggle {
+.menu-toggle, .mobile-header, .sidebar-overlay {
   display: none;
+}
+.menu-toggle {
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   color: white;
