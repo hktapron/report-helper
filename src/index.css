@@ -164,6 +164,11 @@ body {
     flex-direction: column;
     min-width: 0;
     gap: 1.5rem;
+    align-self: stretch; /* Stretch fully vertically */
+  }
+
+  .preview-container .card {
+    flex: 1; /* Allow cards to stretch */
   }
 }
 
@@ -474,11 +479,11 @@ input:focus, textarea:focus {
   }
   
   .preview-body-v2 {
-    min-height: 250px;
+    min-height: 500px;
   }
   
   .preview-textarea {
-    min-height: 250px; /* Force larger textarea on mobile */
+    min-height: 500px; /* Force larger textarea on mobile */
   }
 
   .mode-grid {
