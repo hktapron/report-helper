@@ -8,7 +8,7 @@
     "fields": [
       {"id": "date", "label": "วันที่", "type": "date", "default": "today"},
       {"id": "incident_time", "label": "เวลาเกิดเหตุ", "type": "time"},
-      {"id": "narrative", "label": "รายละเอียดเหตุการณ์ (เริ่มความเรียง)", "type": "textarea"},
+      {"id": "narrative", "label": "รายละเอียดเหตุการณ์", "type": "textarea"},
       {"id": "update_text", "label": "ข้อความเพิ่มเติม", "type": "textarea"},
       {"id": "airline", "label": "สายการบิน", "type": "text"},
       {"id": "flight_no", "label": "เที่ยวบิน", "type": "text"},
