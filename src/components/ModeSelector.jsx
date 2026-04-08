@@ -33,7 +33,8 @@ const ModeSelector = ({ onSelect }) => {
           </div>
         </div>
 
-        <div style={{ marginTop: '4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        <div style={{ marginTop: '4rem', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.6' }}>
+          งานเขตการบิน ส่วนบริการเขตการบิน<br/>
           ฝ่ายปฏิบัติการเขตการบิน ท่าอากาศยานภูเก็ต
         </div>
       </div>

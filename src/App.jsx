@@ -49,6 +49,9 @@ const App = () => {
   const [renamingTemplateId, setRenamingTemplateId] = useState(null);
   const [newTemplateName, setNewTemplateName] = useState('');
 
+  const [renamingHistoryId, setRenamingHistoryId] = useState(null);
+  const [newHistoryName, setNewHistoryName] = useState('');
+
   // Sync default template
   useEffect(() => {
     if (reportMode && Array.isArray(templatesData)) {
@@ -367,64 +370,28 @@ const App = () => {
 
           {customTemplates && customTemplates.length > 0 && (
             <div style={{ marginTop: '0.5rem' }}>
-              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>แม่แบบฟอร์มของฉัน</div>
-              {customTemplates.map(ct => (
-                <div 
-                  key={ct.id} 
-                  className="template-item" 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', borderLeft: '2px solid var(--accent-indigo-soft)' }}
-                  onClick={() => {
-                    if (renamingTemplateId === ct.id) return;
-                    setFormData(ct.data || {});
-                    setThaiPreview(ct.preview || '');
-                    setExtraPreview(ct.extra_preview || '');
-                    isEditingPreview.current = true;
+              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>ฟอร์มเหตุการณ์</div>
+              <div style={{ position: 'relative' }}>
+                <select 
+                  className="search-input" 
+                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', appearance: 'auto' }}
+                  onChange={(e) => {
+                    const ct = customTemplates.find(t => t.id === e.target.value);
+                    if (ct) {
+                      setFormData(ct.data || {});
+                      setThaiPreview(ct.preview || '');
+                      setExtraPreview(ct.extra_preview || '');
+                      isEditingPreview.current = true;
+                    }
                   }}
+                  value=""
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
-                    <Save size={12} style={{ opacity: 0.6 }} />
-                    {renamingTemplateId === ct.id ? (
-                      <input 
-                        className="search-input"
-                        style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0 }}
-                        value={newTemplateName}
-                        onChange={(e) => setNewTemplateName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            updateTemplateName(ct.id, newTemplateName);
-                            setRenamingTemplateId(null);
-                          }
-                        }}
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div className="template-name" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{ct.name}</div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    {renamingTemplateId === ct.id ? (
-                      <Check 
-                        size={12} 
-                        style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
-                        onClick={(e) => { e.stopPropagation(); updateTemplateName(ct.id, newTemplateName); setRenamingTemplateId(null); }}
-                      />
-                    ) : (
-                      <Edit2 
-                        size={12} 
-                        style={{ cursor: 'pointer', opacity: 0.3 }} 
-                        onClick={(e) => { e.stopPropagation(); setRenamingTemplateId(ct.id); setNewTemplateName(ct.name); }}
-                      />
-                    )}
-                    <Trash2 
-                      size={12} 
-                      className="delete-icon"
-                      style={{ cursor: 'pointer', opacity: 0.3 }} 
-                      onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }}
-                    />
-                  </div>
-                </div>
-              ))}
+                  <option value="" disabled>--- เลือกฟอร์มเหตุการณ์ ---</option>
+                  {customTemplates.map(ct => (
+                    <option key={ct.id} value={ct.id}>{ct.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -433,32 +400,96 @@ const App = () => {
 
         {/* BOTTOM SECTION: History with Strict Pinning */}
         <div className="history-section" style={{ border: 'none', paddingTop: 0, flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
-          <div className="history-title">ประวัติรายการ</div>
+          <div className="history-title">ประวัติเหตุการณ์</div>
           
           {pinnedHistory.map(item => (
             <div key={item.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => {
+              if (renamingHistoryId === item.id) return;
               setReportMode(item.mode || 'incident');
               setFormData(item.data || {});
               setThaiPreview(item.preview || '');
               isEditingPreview.current = true;
             }}>
               <div className="history-info">
-                 <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-                 <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
+                {renamingHistoryId === item.id ? (
+                  <input 
+                    className="search-input"
+                    style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0, flex: 1 }}
+                    value={newHistoryName}
+                    onChange={(e) => setNewHistoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        renameReport(item.id, newHistoryName);
+                        setRenamingHistoryId(null);
+                      }
+                    }}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
+                )}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {renamingHistoryId === item.id ? (
+                    <Check 
+                      size={14} 
+                      style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
+                      onClick={(e) => { e.stopPropagation(); renameReport(item.id, newHistoryName); setRenamingHistoryId(null); }}
+                    />
+                  ) : (
+                    <Edit2 
+                      size={14} 
+                      style={{ cursor: 'pointer', opacity: 0.8 }} 
+                      onClick={(e) => { e.stopPropagation(); setRenamingHistoryId(item.id); setNewHistoryName(getSmartTitle(item)); }}
+                    />
+                  )}
+                  <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
+                </div>
               </div>
             </div>
           ))}
           
           {normalHistory.map(item => (
             <div key={item.id} className="history-item" onClick={() => {
+              if (renamingHistoryId === item.id) return;
               setReportMode(item.mode || 'incident');
               setFormData(item.data || {});
               setThaiPreview(item.preview || '');
               isEditingPreview.current = true;
             }}>
               <div className="history-info">
-                <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                {renamingHistoryId === item.id ? (
+                  <input 
+                    className="search-input"
+                    style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0, flex: 1 }}
+                    value={newHistoryName}
+                    onChange={(e) => setNewHistoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        renameReport(item.id, newHistoryName);
+                        setRenamingHistoryId(null);
+                      }
+                    }}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                )}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {renamingHistoryId === item.id ? (
+                    <Check 
+                      size={14} 
+                      style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
+                      onClick={(e) => { e.stopPropagation(); renameReport(item.id, newHistoryName); setRenamingHistoryId(null); }}
+                    />
+                  ) : (
+                    <Edit2 
+                      size={14} 
+                      style={{ cursor: 'pointer', opacity: 0.4 }} 
+                      onClick={(e) => { e.stopPropagation(); setRenamingHistoryId(item.id); setNewHistoryName(getSmartTitle(item)); }}
+                    />
+                  )}
                   <Pin size={14} style={{ opacity: 0.4 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, false); }} />
                   <Trash2 size={14} style={{ opacity: 0.4, color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} />
                 </div>
@@ -503,7 +534,7 @@ const App = () => {
                 <div className="special-section" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="toggle-container">
                     <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
-                    <span className="toggle-label">Thai CAAT-22 Report (English)</span>
+                    <span className="toggle-label">จัดทำรายงาน กพท.22</span>
                   </label>
                   {showCAAT && (
                     <button 
