@@ -88,13 +88,13 @@ const App = () => {
     }
   }, [selectedTemplate]);
 
-  // Advanced Search & Substitution Engine (Optimized for Smart Forms)
+  // --- Smart Form (Auto-map) Substitution Engine ---
   useEffect(() => {
-    if (!isEditingPreview.current && selectedTemplate) {
-      // Use narrative from state but fallback to template content if narrative is empty
-      let text = formData.narrative || formData.update_text || selectedTemplate.content || '';
+    if (selectedTemplate && reportMode && !isEditingPreview.current) {
+      // 1. Source the base text from the original template narrative structure
+      // we use template data to ensure we are always replacing fresh brackets.
+      let text = selectedTemplate?.data?.narrative || selectedTemplate?.content || '';
       
-      // 1. Mandatory VTSP Date Formatting (DD MMM.YY)
       const now = new Date();
       const d = now.getDate();
       const m = THAI_MONTHS_SHORT[now.getMonth()];
@@ -104,10 +104,9 @@ const App = () => {
       // Replace {date} and [date]
       text = text.replace(/\{date\}|\[date\]/g, vtspDate);
 
-      // 2. Dynamic Smart Mapping for all VTSP Keys
+      // 2. Comprehensive Variable Mapping (The "10+ Keys")
       const mapping = {
         incident_time: formData.incident_time || '[incident_time]',
-        narrative: formData.narrative || '[narrative]',
         airline: formData.airline || '[airline]',
         flight_no: formData.flight_no || '[flight_no]',
         registration: formData.registration || '[registration]',
@@ -118,20 +117,18 @@ const App = () => {
         stand_no: formData.stand_no || formData.return_stand || '[stand_no]'
       };
 
-      // Perform replacement for both {key} and [key] formats
+      // 3. Perform dynamic replacement for both {key} and [key] formats
       Object.entries(mapping).forEach(([key, value]) => {
         const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-        // Only replace if the value is NOT the token itself (avoid recursiveness)
-        if (value !== `[${key}]` && value !== `{${key}}`) {
-          text = text.replace(regex, value);
-        }
+        const cleanValue = value ? value.toString() : `[${key}]`;
+        text = text.replace(regex, cleanValue);
       });
 
-      // 3. Fallback for any other fields defined in templates.json
+      // 4. Fallback for any other custom fields defined in custom templates
       Object.entries(formData).forEach(([key, value]) => {
-        if (!mapping[key]) {
+        if (!mapping[key] && key !== 'narrative' && key !== 'update_text') {
           const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-          text = text.replace(regex, value || `[${key}]`);
+          if (value) text = text.replace(regex, value);
         }
       });
 
