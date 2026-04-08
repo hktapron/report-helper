@@ -118,18 +118,27 @@ const App = () => {
     return uniqueKeys.map(key => {
       // Semantic UI Mapping
       let label = key;
+      let type = 'text';
+      
       if (key === 'flight_no') label = 'เที่ยวบินที่ (Flight No)';
       else if (key === 'registration') label = 'ทะเบียน (Registration)';
       else if (key === 'ac_type') label = 'แบบอากาศยาน (AC Type)';
       else if (key === 'sta') label = 'เวลาลง ทภก. (STA)';
       else if (key === 'std') label = 'เวลาออก ทภก. (STD)';
+      else if (key === 'atd') label = 'เวลาออกจาก ทภก. (ATD)';
+      else if (key === 'airline') label = 'สายการบิน (Airline)';
+      else if (key === 'route') label = 'เส้นทางบิน (Route)';
       else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
+      else if (key === 'impact_list') {
+        label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
+        type = 'list';
+      }
       else if (key.startsWith('time_')) {
         const num = key.split('_')[1];
         label = `ลำดับเวลาที่ ${num}`;
       }
       
-      return { id: key, label: label, type: 'text' };
+      return { id: key, label: label, type: type };
     });
   }, [selectedTemplate]);
 
@@ -148,7 +157,15 @@ const App = () => {
       // Perform dynamic replacement for all detected fields
       Object.entries(formData).forEach(([key, value]) => {
         const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-        if (value && String(value).trim().length > 0) {
+        
+        // PHASE 47: INFINITY LIST FORMATTER (VERTICAL NUMBERED)
+        if (key === 'impact_list' && Array.isArray(value)) {
+          const listContent = value
+            .filter(v => v && v.trim())
+            .map((v, i) => `${i + 1} ${v}`)
+            .join('\n');
+          text = text.replace(regex, listContent);
+        } else if (value && String(value).trim().length > 0) {
           text = text.replace(regex, value);
         }
       });
@@ -327,16 +344,24 @@ const App = () => {
         { kw: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)\s?[:：]?\s?/g, tag: 'flight_no', pat: /[A-Z0-9\/]+\b/ },
         { kw: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)\s?[:：]?\s?/g, tag: 'registration', pat: /[A-Z0-9-]+\b/ },
         { kw: /(แบบอากาศยาน)\s?[:：]?\s?/g, tag: 'ac_type', pat: /[A-Z0-9]+\b/ },
-        { kw: /(เส้นทางบิน)\s?[:：]?\s?/g, tag: 'route', pat: /[A-Z-]+\b/ },
+        { kw: /(เส้นทางบิน)\s?[:：]?\s?/g, tag: 'route', pat: /[A-Z0-9 -]+\b/ },
         { kw: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)\s?[:：]?\s?/g, tag: 'sta', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
-        { kw: /(เวลาออกจากทภก\.|เวลาออกตามตารางบิน)\s?[:：]?\s?/g, tag: 'std', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(เวลาออกตามตารางบิน|เวลาออกตามตาราง)\s?[:：]?\s?/g, tag: 'std', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)\s?[:：]?\s?/g, tag: 'atd', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(สายการบิน)\s?[:：]?\s?/g, tag: 'airline', pat: /[a-zA-Z\s]+\b/ },
         { kw: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)\s?[:：]?\s?/g, tag: 'stand_no', pat: /\d+[A-Z]?\b/ },
-        { kw: /(ผู้โดยสาร|จำนวนผู้โดยสาร)\s?[:：]?\s?/g, tag: 'pax', pat: /[\d+ ]+คน/ }
+        { kw: /(ผู้โดยสาร|จำนวนผู้โดยสาร)\s?[:：]?\s?/g, tag: 'pax', pat: /[\d+ ]+คน/ },
+        { kw: /(ส่งผลกระทบต่อเที่ยวบิน ดังนี้)\s?[:：]?\s?/g, tag: 'impact_list', pat: /[\s\S]+/ }
       ];
 
       semanticRules.forEach(rule => {
         const fullRegex = new RegExp(`(${rule.kw.source})(${rule.pat.source})`, 'g');
-        templateNarrative = templateNarrative.replace(fullRegex, `$1{${rule.tag}}`);
+        if (rule.tag === 'impact_list') {
+           // Handle list specially - don't over-consume
+           templateNarrative = templateNarrative.replace(rule.kw, `$1\n{${rule.tag}}`);
+        } else {
+           templateNarrative = templateNarrative.replace(fullRegex, `$1{${rule.tag}}`);
+        }
       });
 
       // 3. Sequence Timing (เมื่อเวลา, ต่อมาเวลา)
@@ -660,7 +685,38 @@ const App = () => {
                 dynamicFields.map(field => (
                   <div key={field.id} className="form-field">
                     <label>{field.label}</label>
-                    <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
+                    {field.type === 'list' ? (
+                      <div className="infinity-list">
+                        {(Array.isArray(formData[field.id]) ? formData[field.id] : []).map((val, idx) => (
+                           <input 
+                              key={idx}
+                              type="text" 
+                              value={val || ''} 
+                              placeholder={`เที่ยวบินที่ ${idx + 1}`}
+                              style={{ marginBottom: '0.5rem' }}
+                              onChange={(e) => {
+                                const newList = [...(formData[field.id] || [])];
+                                newList[idx] = e.target.value;
+                                handleInputChange(field.id, newList);
+                              }} 
+                           />
+                        ))}
+                        {/* The "Next" input for growing the list */}
+                        <input 
+                           type="text" 
+                           value="" 
+                           placeholder="+ เพิ่มเที่ยวบินผลกระทบ..."
+                           onChange={(e) => {
+                             if (e.target.value.trim()) {
+                               const newList = [...(formData[field.id] || []), e.target.value];
+                               handleInputChange(field.id, newList);
+                             }
+                           }}
+                        />
+                      </div>
+                    ) : (
+                      <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
+                    )}
                   </div>
                 ))
               ) : (
