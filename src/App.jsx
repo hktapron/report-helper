@@ -80,23 +80,49 @@ const App = () => {
     }
   }, [selectedTemplate]);
 
-  // Preview Logic
+  // Advanced Search & Substitution Engine
   useEffect(() => {
     if (!isEditingPreview.current && selectedTemplate) {
       let text = selectedTemplate.content || '';
-      Object.entries(formData).forEach(([key, value]) => {
-        text = text.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `[${key}]`);
-      });
       
-      if (text.includes('{date}')) {
-        const dObj = reportMode === 'violator' ? new Date(formData.seizure_start || new Date()) : new Date();
-        if (!isNaN(dObj.getTime())) {
-          const d = dObj.getDate();
-          const m = THAI_MONTHS_SHORT[dObj.getMonth()];
-          const y = (dObj.getFullYear() + 543).toString().slice(-2);
-          text = text.replace('{date}', `${d} ${m} ${y}`);
+      // 1. Mandatory VTSP Date Formatting (วันที่ DD MMM.YY)
+      const now = new Date();
+      const d = now.getDate();
+      const m = THAI_MONTHS_SHORT[now.getMonth()];
+      const y = (now.getFullYear() + 543).toString().slice(-2);
+      const vtspDate = `วันที่ ${d} ${m} ${y}`;
+      
+      // Replace {date} and [date]
+      text = text.replace(/\{date\}|\[date\]/g, vtspDate);
+
+      // 2. Dynamic Smart Mapping for all VTSP Keys
+      const mapping = {
+        incident_time: formData.incident_time || '[incident_time]',
+        narrative: formData.narrative || formData.update_text || '[narrative]',
+        airline: formData.airline || '[airline]',
+        flight_no: formData.flight_no || '[flight_no]',
+        registration: formData.registration || '[registration]',
+        ac_type: formData.ac_type || '[ac_type]',
+        route: formData.route || '[route]',
+        std_sta: formData.std_sta || '[std_sta]',
+        ata: formData.ata || formData.atd || '[ata]',
+        stand_no: formData.stand_no || formData.return_stand || '[stand_no]'
+      };
+
+      // Perform replacement for both {key} and [key] formats
+      Object.entries(mapping).forEach(([key, value]) => {
+        const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
+        text = text.replace(regex, value);
+      });
+
+      // 3. Fallback for any other fields defined in templates.json
+      Object.entries(formData).forEach(([key, value]) => {
+        if (!mapping[key]) {
+          const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
+          text = text.replace(regex, value || `[${key}]`);
         }
-      }
+      });
+
       setThaiPreview(text);
     }
   }, [formData, selectedTemplate, reportMode]);
@@ -308,28 +334,29 @@ const App = () => {
           />
         </div>
 
-        <button 
-          className="btn btn-primary" 
-          style={{ margin: '0 1rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-          onClick={() => {
-            const first = templatesData.find(t => t.mode === reportMode);
-            setSelectedTemplate(first);
-            setFormData({});
-          }}
-        >
-          <Plus size={16} /> สร้างรายงานใหม่
-        </button>
+        {/* TOP SECTION: Actions & Custom Forms */}
+        <div style={{ padding: '0 1rem' }}>
+          <button 
+            className="btn btn-primary btn-full" 
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            onClick={() => {
+              const first = templatesData.find(t => t.mode === reportMode);
+              setSelectedTemplate(first);
+              setFormData({});
+              isEditingPreview.current = false;
+            }}
+          >
+            <Plus size={16} /> สร้างรายงานใหม่
+          </button>
 
-        <div className="template-list" style={{ padding: '0 0.5rem' }}>
-          {/* Custom Templates Section (Integrated subtly) */}
           {customTemplates && customTemplates.length > 0 && (
-            <div className="history-section" style={{ border: 'none', paddingTop: 0 }}>
-              <div className="history-title">แม่แบบฟอร์มของฉัน</div>
+            <div style={{ marginTop: '0.5rem' }}>
+              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>แม่แบบฟอร์มของฉัน</div>
               {customTemplates.map(ct => (
                 <div 
                   key={ct.id} 
                   className="template-item" 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', borderLeft: '2px solid var(--accent-indigo-soft)' }}
                   onClick={() => {
                     setFormData(ct.data || {});
                     setThaiPreview(ct.preview || '');
@@ -337,57 +364,59 @@ const App = () => {
                     isEditingPreview.current = true;
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Save size={14} style={{ opacity: 0.6 }} />
-                    <div className="template-name">{ct.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                    <Save size={12} style={{ opacity: 0.6 }} />
+                    <div className="template-name" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{ct.name}</div>
                   </div>
                   <Trash2 
-                    size={14} 
+                    size={12} 
                     className="delete-icon"
-                    style={{ cursor: 'pointer', opacity: 0.4 }} 
+                    style={{ cursor: 'pointer', opacity: 0.3 }} 
                     onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }}
                   />
                 </div>
               ))}
             </div>
           )}
+        </div>
 
-          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
+        <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
 
-          <div className="history-section" style={{ border: 'none', paddingTop: 0 }}>
-            <div className="history-title">ประวัติรายการ</div>
-            {pinnedHistory.map(item => (
-              <div key={item.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => {
-                setReportMode(item.mode || 'incident');
-                setFormData(item.data || {});
-                setThaiPreview(item.preview || '');
-                isEditingPreview.current = true;
-              }}>
-                <div className="history-info">
-                   <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-                   <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
+        {/* BOTTOM SECTION: History with Strict Pinning */}
+        <div className="history-section" style={{ border: 'none', paddingTop: 0, flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
+          <div className="history-title">ประวัติรายการ</div>
+          
+          {pinnedHistory.map(item => (
+            <div key={item.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => {
+              setReportMode(item.mode || 'incident');
+              setFormData(item.data || {});
+              setThaiPreview(item.preview || '');
+              isEditingPreview.current = true;
+            }}>
+              <div className="history-info">
+                 <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                 <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
+              </div>
+            </div>
+          ))}
+          
+          {normalHistory.map(item => (
+            <div key={item.id} className="history-item" onClick={() => {
+              setReportMode(item.mode || 'incident');
+              setFormData(item.data || {});
+              setThaiPreview(item.preview || '');
+              isEditingPreview.current = true;
+            }}>
+              <div className="history-info">
+                <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Pin size={14} style={{ opacity: 0.4 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, false); }} />
+                  <Trash2 size={14} style={{ opacity: 0.4, color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} />
                 </div>
               </div>
-            ))}
-            
-            {normalHistory.map(item => (
-              <div key={item.id} className="history-item" onClick={() => {
-                setReportMode(item.mode || 'incident');
-                setFormData(item.data || {});
-                setThaiPreview(item.preview || '');
-                isEditingPreview.current = true;
-              }}>
-                <div className="history-info">
-                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Pin size={14} style={{ opacity: 0.4 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, false); }} />
-                    <Trash2 size={14} style={{ opacity: 0.4, color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} />
-                  </div>
-                </div>
-                <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
-              </div>
-            ))}
-          </div>
+              <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
+            </div>
+          ))}
 
           {hasMore && (
             <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
