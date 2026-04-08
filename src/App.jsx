@@ -102,15 +102,27 @@ const App = () => {
   // Memoized lists
   const filteredTemplates = useMemo(() => {
     if (!Array.isArray(templatesData)) return [];
+    const term = (searchTerm || '').toLowerCase();
     return templatesData.filter(t => 
       t.mode === reportMode && 
-      (t.id === 'new_report' || t.id === 'violator_core') // Only show base templates in the top list
+      (t.id === 'new_report' || t.id === 'violator_core') &&
+      (t.name.toLowerCase().includes(term) || (t.content || '').toLowerCase().includes(term))
     );
   }, [searchTerm, reportMode]);
 
   const filteredHistory = useMemo(() => {
-    return history.filter(item => (item.mode || 'incident') === reportMode);
-  }, [history, reportMode]);
+    const term = (searchTerm || '').toLowerCase();
+    return history.filter(item => {
+      const modeMatch = (item.mode || 'incident') === reportMode;
+      if (!modeMatch) return false;
+      if (!term) return true;
+      
+      const contentMatch = (item.preview || '').toLowerCase().includes(term);
+      const titleMatch = (item.customTitle || '').toLowerCase().includes(term);
+      const flightMatch = (item.data?.flight_no || '').toLowerCase().includes(term);
+      return contentMatch || titleMatch || flightMatch;
+    });
+  }, [history, reportMode, searchTerm]);
 
   const pinnedHistory = filteredHistory.filter(h => h.isPinned);
   const normalHistory = filteredHistory.filter(h => !h.isPinned);
@@ -188,6 +200,33 @@ const App = () => {
     }
   };
 
+  const exportToCSV = () => {
+    if (!filteredHistory.length) {
+      alert("ไม่มีข้อมูลที่จะส่งออก");
+      return;
+    }
+
+    const headers = ["Date", "Time", "Flight No", "Stand", "Thai Narrative", "English Narrative"];
+    const rows = filteredHistory.map(item => [
+      new Date(item.created_at).toLocaleDateString("en-GB"),
+      item.data?.incident_time || "",
+      item.data?.flight_no || "",
+      item.data?.stand_no || item.data?.return_stand || "",
+      `"${(item.preview || "").replace(/"/g, '""')}"`,
+      `"${(item.extraPreview || "").replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `VTSP_Reports_${reportMode}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
@@ -263,7 +302,12 @@ const App = () => {
         </div>
 
         <div className="history-section" style={{ flex: 1, overflowY: 'auto' }}>
-          <div className="history-title">ประวัติ</div>
+          <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div className="history-title" style={{ padding: 0 }}>ประวัติ</div>
+            <button className="btn btn-ghost" style={{ padding: '0.1rem 0.4rem', fontSize: '0.65rem', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={exportToCSV}>
+              📥 Export CSV
+            </button>
+          </div>
           {normalHistory.map(item => (
             <div key={item.id} className="history-item" onClick={() => {
               setReportMode(item.mode || 'incident');
