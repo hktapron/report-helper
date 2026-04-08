@@ -276,11 +276,17 @@ const App = () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
       // SMART REVERSE-TEMPLATIZATION:
-      // Convert current filled data back into {tags} so the template is reusable
+      // Convert current filled data back into {tags} so the template is reusable.
+      // We sort entries by value length descending to protect complex strings (e.g., replace "12:00" before "12").
       let templateNarrative = thaiPreview;
-      Object.entries(formData).forEach(([key, value]) => {
+      const sortedEntries = Object.entries(formData).sort((a, b) => {
+        const valA = String(a[1] || "");
+        const valB = String(b[1] || "");
+        return valB.length - valA.length;
+      });
+
+      sortedEntries.forEach(([key, value]) => {
         if (value && String(value).trim().length > 0) {
-          // Escape special regex characters in the value to avoid crashes
           const escapedValue = String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const regex = new RegExp(escapedValue, 'g');
           templateNarrative = templateNarrative.replace(regex, `{${key}}`);
@@ -369,7 +375,7 @@ const App = () => {
         setFormData(ct.data || {});
         setThaiPreview(ct.preview || '');
         setExtraPreview(ct.extra_preview || '');
-        isEditingPreview.current = true;
+        isEditingPreview.current = false;
       }
     }
   };
@@ -498,7 +504,7 @@ const App = () => {
                             setFormData(ct.data || {});
                             setThaiPreview(ct.preview || '');
                             setExtraPreview(ct.extra_preview || '');
-                            isEditingPreview.current = true;
+                            isEditingPreview.current = false;
                           }}
                         >
                           <FileText size={12} style={{ opacity: 0.6 }} />
@@ -526,7 +532,7 @@ const App = () => {
                     setFormData(ct.data || {});
                     setThaiPreview(ct.preview || '');
                     setExtraPreview(ct.extra_preview || '');
-                    isEditingPreview.current = true;
+                    isEditingPreview.current = false;
                   }}
                 >
                   <FileText size={12} style={{ opacity: 0.6 }} />
@@ -553,7 +559,7 @@ const App = () => {
                 setReportMode(item.mode || 'incident');
                 setFormData(item.data || {});
                 setThaiPreview(item.preview || '');
-                isEditingPreview.current = true;
+                isEditingPreview.current = false;
               }}
             >
               <div className="history-info">
@@ -572,7 +578,7 @@ const App = () => {
                 setReportMode(item.mode || 'incident');
                 setFormData(item.data || {});
                 setThaiPreview(item.preview || '');
-                isEditingPreview.current = true;
+                isEditingPreview.current = false;
               }}
             >
               <div className="history-info">
