@@ -82,7 +82,7 @@ PHUKET INTERNATIONAL AIRPORT
     // Clean up any stray markdown formatting
     return response.replace(/```(text|html)?\n?/g, '').replace(/```/g, '').trim();
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    throw new Error("Translation failed. Please ensure VITE_GEMINI_API_KEY is valid.");
+    console.error("Gemini API Error Detail: ", error);
+    throw new Error("API Error: " + (error.message || "ไม่สามารถเชื่อมต่อ AI ได้"));
   }
 };

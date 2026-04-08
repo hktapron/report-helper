@@ -541,9 +541,15 @@ const App = () => {
                 onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }} 
               />
             </div>
-            {extraPreview && reportMode === 'incident' && (
-              <div className="preview-body-v2" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--accent-indigo-soft)' }}>
-                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-indigo)' }} />
+            {showCAAT && reportMode === 'incident' && (
+              <div className="preview-body-v2" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--accent-indigo-soft)', minHeight: '100px' }}>
+                <textarea 
+                  className="preview-textarea" 
+                  value={extraPreview} 
+                  readOnly 
+                  style={{ color: 'var(--accent-indigo)' }} 
+                  placeholder={isTranslating ? "กำลังประมวลผลการแปลโดย AI..." : "กดปุ่ม 'แปลภาษาด้วย AI' เพื่อสร้างรายงานภาษาอังกฤษ"}
+                />
               </div>
             )}
           </div>
