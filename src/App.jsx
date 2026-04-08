@@ -28,6 +28,7 @@ const App = () => {
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   const isEditingPreview = useRef(false);
+  const prevFormDataRef = useRef({});
 
   const [isTranslating, setIsTranslating] = useState(false);
 
@@ -223,11 +224,28 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
+    // PHASE 48: HYBRID STATE SYNC (DIRECT INJECTION)
+    // If user is manually editing the preview, we replace only the changed value
+    // instead of reverting the whole template.
+    if (isEditingPreview.current && thaiPreview) {
+      const oldValue = prevFormDataRef.current[id];
+      const newValue = value;
+      
+      if (oldValue && newValue && oldValue !== newValue) {
+        // Special handle for lists vs strings
+        if (!Array.isArray(oldValue) && !Array.isArray(newValue)) {
+          const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(escapedOld, 'g');
+          setThaiPreview(current => current.replace(regex, String(newValue)));
+        }
+      }
+    }
+
     setFormData(prev => {
       const newData = { ...prev, [id]: value };
       
-      // Smart Guessing (Pattern detection in Narrative)
-      if (id === 'narrative' || id === 'update_text') {
+      // Smart Guessing (Pattern detection in Narrative) - only in dynamic mode
+      if (!isEditingPreview.current && (id === 'narrative' || id === 'update_text')) {
         // Detect Time (HH:mm or HH.mm)
         const timeMatch = value.match(/([01]?[0-9]|2[0-3])[:.][0-5][0-9]/);
         if (timeMatch && !newData.incident_time) {
@@ -241,11 +259,13 @@ const App = () => {
         }
       }
 
+      // Keep prevRef in sync
+      prevFormDataRef.current = newData;
       return newData;
     });
     
-    // Resume dynamic linking even for history items once user starts editing
-    isEditingPreview.current = false;
+    // We NO LONGER set isEditingPreview.current = false here.
+    // This allows the hybrid mode to persist.
   };
 
   const formatRelativeTime = (isoString) => {
@@ -316,10 +336,12 @@ const App = () => {
     });
 
     // 4. Set data and unlock preview linkage
-    setFormData(item.data || {});
+    const initialData = item.data || {};
+    setFormData(initialData);
+    prevFormDataRef.current = initialData; // PHASE 48 SYNC
     setThaiPreview(item.preview || "");
     setExtraPreview(item.extra_preview || "");
-    isEditingPreview.current = false;
+    isEditingPreview.current = type === 'history';
   };
 
   const handleSaveAsTemplate = async () => {
