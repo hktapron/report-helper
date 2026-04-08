@@ -35,6 +35,15 @@ const dictionary = {
 };
 
 /**
+ * Helper to extract metadata from Thai text if state is missing
+ */
+const extractFromText = (text, regex) => {
+  if (!text) return null;
+  const match = text.match(regex);
+  return match ? match[1].trim() : null;
+};
+
+/**
  * Translates a single line of Thai text into English using regex and dictionary mapping.
  */
 export const translateIncident = (text) => {
@@ -58,58 +67,34 @@ export const translateIncident = (text) => {
 };
 
 /**
- * TOTAL REWRITE: Generates CAAT-22 plaintext report from formData state.
+ * STRICT PARSER: Generates CAAT-22 plaintext report.
  * @param {object} formData - The current form state
  * @param {string} thaiText - Optional live Thai text from preview box
  */
 export const generateCAAT22 = (formData, thaiText = '') => {
-  if (!formData) return 'No data available.';
+  if (!formData && !thaiText) return 'No data available.';
 
-  // 1. Mandatory Metadata Binding (Strict from State)
-  const flightNo = formData.flight_no || 'N/A';
-  const registration = formData.registration || 'N/A';
-  const acType = formData.ac_type || 'N/A';
-  const route = formData.route || 'N/A';
-  const standNo = formData.stand_no || formData.return_stand || 'N/A';
+  // 1. Mandatory Metadata Hybrid Binding (State > Regex > Fallback)
+  const flightNo = formData.flight_no || extractFromText(thaiText, /เที่ยวบิน:\s*(.+)/) || 'N/A';
+  const registration = formData.registration || extractFromText(thaiText, /ทะเบียน:\s*(.+)/) || 'N/A';
+  const acType = formData.ac_type || extractFromText(thaiText, /แบบอากาศยาน:\s*(.+)/) || 'N/A';
+  const route = formData.route || extractFromText(thaiText, /เส้นทาง:\s*(.+)/) || 'N/A';
+  const standNo = formData.stand_no || formData.return_stand || extractFromText(thaiText, /หลุมจอด:\s*(.+)/) || 'N/A';
   
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-GB'); // DD/MM/YYYY
   
-  // 2. Smart Narrative Extraction (CHRONOLOGY ONLY)
-  // Use thaiText if provided, otherwise fallback to formData
-  const rawThaiText = thaiText || (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
-  const lines = rawThaiText.split('\n');
+  // 2. Strict Chronology Extraction (NUMBERED LINES ONLY)
+  // Logic: Split by newline, then filter strictly for "/^\d+\./"
+  const rawSource = thaiText || (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
+  const lines = rawSource.split('\n');
   
-  // Blacklist for common Thai headers that shouldn't be in the English chronology
-  const blacklist = [
-    /รายงานเหตุการณ์ไม่ปกติ/i,
-    /วันที่ [0-9]/i,
-    /หากมีความคืบหน้า/i,
-    /รายละเอียดเที่ยวบิน/i,
-    /Apron Control Tel/i
-  ];
+  const chronologyText = lines
+    .filter(line => /^\d+\./.test(line.trim())) // IRONCLAD RULE: Must start with "1.", "2.", etc.
+    .map(line => `- ${translateIncident(line.trim())}`)
+    .join('\n');
 
-  const chronologyLines = lines
-    .filter(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return false;
-      // 1. Priority: Keep numbered lines
-      if (/^[0-9]+[\.\)]/.test(trimmed)) return true;
-      // 2. Fallback: Keep other lines as long as they aren't in the blacklist
-      return !blacklist.some(regex => regex.test(trimmed));
-    })
-    .map(line => {
-      const trimmed = line.trim();
-      const needsPrefix = !/^[0-9]+[\.\)]/.test(trimmed);
-      return `${needsPrefix ? '- ' : ''}${translateIncident(trimmed)}`;
-    });
-
-  // Fallback if no narrative lines found at all
-  const chronologyText = chronologyLines.length > 0 
-    ? chronologyLines.join('\n') 
-    : `- At ${formData.incident_time || '--:--'} LT: Incident reported`;
-
-  // 3. Assembly (Pinpoint parity with CAAT-22 format)
+  // Assembly (Strict CAAT-22 Structure)
   return `AIRPORT INCIDENT SUMMARY (CAAT-22)
 ----------------------------------
 Date: ${dateStr}
@@ -122,7 +107,7 @@ A/C Type: ${acType}
 Route: ${route}
 
 CHRONOLOGY:
-${chronologyText}
+${chronologyText || '- No numbered chronology provided.'}
 
 STATUS:
 Safety protocols followed. No personnel injury reported.
