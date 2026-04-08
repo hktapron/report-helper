@@ -232,9 +232,30 @@ const App = () => {
       const newValue = value;
       
       if (oldValue && newValue && oldValue !== newValue) {
-        // Special handle for lists vs strings
-        if (!Array.isArray(oldValue) && !Array.isArray(newValue)) {
-          const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // PHASE 50: PRECISION SEMANTIC SYNC (Fixes Global Overwrite Bug)
+        const keywordMap = {
+          flight_no: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)/,
+          registration: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)/,
+          ac_type: /(แบบอากาศยาน)/,
+          route: /(เส้นทางบิน)/,
+          sta: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)/,
+          std: /(เวลาออกตามตารางบิน|เวลาออกตามตาราง)/,
+          atd: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)/,
+          airline: /(สายการบิน)/,
+          stand_no: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)/,
+          pax: /(ผู้โดยสาร|จำนวนผู้โดยสาร)/
+        };
+
+        const kw = keywordMap[id];
+        const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        if (kw) {
+          // Surgical Replacement: (Keyword) (Optional Separator) (Value)
+          // We replace only the value part following the keyword.
+          const regex = new RegExp(`(${kw.source}\\s?[:：]?\\s?)${escapedOld}`, 'g');
+          setThaiPreview(current => current.replace(regex, `$1${newValue}`));
+        } else if (String(oldValue).length > 2) {
+          // Fallback: Only replace globally if the value is unique enough (>2 chars)
           const regex = new RegExp(escapedOld, 'g');
           setThaiPreview(current => current.replace(regex, String(newValue)));
         }
