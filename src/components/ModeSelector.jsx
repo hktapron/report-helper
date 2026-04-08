@@ -1,4 +1,5 @@
 import React from 'react';
+import { FileText, Scale } from 'lucide-react';
 
 const ModeSelector = ({ onSelect }) => {
   return (
@@ -13,7 +14,9 @@ const ModeSelector = ({ onSelect }) => {
         
         <div className="mode-grid">
           <div className="mode-item" onClick={() => onSelect('incident')} style={{ padding: '2rem' }}>
-            <span className="mode-icon">📋</span>
+            <span className="mode-icon">
+              <FileText size={64} strokeWidth={1.5} />
+            </span>
             <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>รายงานเหตุการณ์ไม่ปกติ</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.5', textAlign: 'center' }}>
               บันทึกเหตุการณ์ทางเทคนิค, ปัญหาหลุมจอด<br/>
@@ -22,7 +25,9 @@ const ModeSelector = ({ onSelect }) => {
           </div>
           
           <div className="mode-item" onClick={() => onSelect('violator')} style={{ padding: '2rem' }}>
-            <span className="mode-icon">⚖️</span>
+            <span className="mode-icon">
+              <Scale size={64} strokeWidth={1.5} />
+            </span>
             <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>รายงานผู้กระทำความผิด</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.5', textAlign: 'center' }}>บันทึกการกระทำความผิดกฎจราจร<br/>และการยึดบัตรอนุญาตเข้าเขตการบิน</p>
           </div>

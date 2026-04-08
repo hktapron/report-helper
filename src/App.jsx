@@ -5,6 +5,8 @@ import { generateCAAT22 } from './utils/translator';
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
 import { supabase } from './supabaseClient';
+import { useUserTemplates } from './hooks/useUserTemplates';
+import { Trash2, Pin, Save, Plus } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -32,6 +34,9 @@ const App = () => {
   const hasMore = historyData?.hasMore;
   const loadingHistory = historyData?.loading;
   const loadMore = historyData?.loadMore;
+
+  // Custom Templates Hook
+  const { templates: customTemplates, saveTemplate, deleteTemplate } = useUserTemplates(user?.username, reportMode);
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -115,16 +120,23 @@ const App = () => {
 
   const filteredHistory = useMemo(() => {
     const term = (searchTerm || '').toLowerCase();
-    return history.filter(item => {
-      const modeMatch = (item.mode || 'incident') === reportMode;
-      if (!modeMatch) return false;
-      if (!term) return true;
-      
-      const contentMatch = (item.preview || '').toLowerCase().includes(term);
-      const titleMatch = (item.customTitle || '').toLowerCase().includes(term);
-      const flightMatch = (item.data?.flight_no || '').toLowerCase().includes(term);
-      return contentMatch || titleMatch || flightMatch;
-    });
+    return history
+      .filter(item => {
+        const modeMatch = (item.mode || 'incident') === reportMode;
+        if (!modeMatch) return false;
+        if (!term) return true;
+        
+        const contentMatch = (item.preview || '').toLowerCase().includes(term);
+        const titleMatch = (item.customTitle || '').toLowerCase().includes(term);
+        const flightMatch = (item.data?.flight_no || '').toLowerCase().includes(term);
+        return contentMatch || titleMatch || flightMatch;
+      })
+      .sort((a, b) => {
+        // Sort by Pinned First, then by Date
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.savedAt) - new Date(a.savedAt);
+      });
   }, [history, reportMode, searchTerm]);
 
   const pinnedHistory = filteredHistory.filter(h => h.isPinned);
@@ -200,6 +212,13 @@ const App = () => {
     alert('คัดลอกรายงานไทยแล้ว');
   };
 
+  const handleSaveAsTemplate = async () => {
+    const name = window.prompt("กรุณาตั้งชื่อแม่แบบฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
+    if (name && saveTemplate) {
+      const { error } = await saveTemplate(name, formData, thaiPreview, extraPreview);
+      if (!error) alert("บันทึกเป็นแม่แบบแล้ว");
+    }
+  };
   const startRename = (e, item) => {
     e.stopPropagation();
     setRenamingId(item.id);
@@ -291,11 +310,43 @@ const App = () => {
               key={t.id} 
               className={`template-item ${selectedTemplate?.id === t.id ? 'active' : ''}`}
               onClick={() => setSelectedTemplate(t)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
+              <Plus size={14} />
               <div className="template-name">{t.name}</div>
-              {t.trigger && <div className="template-trigger">เริ่มใหม่</div>}
             </div>
           ))}
+
+          {customTemplates && customTemplates.length > 0 && (
+            <>
+              <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>แม่แบบของฉัน</div>
+              {customTemplates.map(ct => (
+                <div 
+                  key={ct.id} 
+                  className="template-item" 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  onClick={() => {
+                    setFormData(ct.data || {});
+                    setThaiPreview(ct.preview || '');
+                    setExtraPreview(ct.extra_preview || '');
+                    isEditingPreview.current = true;
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Save size={14} />
+                    <div className="template-name">{ct.name}</div>
+                  </div>
+                  <Trash2 
+                    size={14} 
+                    style={{ cursor: 'pointer', opacity: 0.5 }} 
+                    onMouseOver={(e) => e.target.style.opacity = 1}
+                    onMouseOut={(e) => e.target.style.opacity = 0.5}
+                    onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบแม่แบบนี้?")) deleteTemplate(ct.id); }}
+                  />
+                </div>
+              ))}
+            </>
+          )}
 
           {pinnedHistory.length > 0 && (
             <>
@@ -312,9 +363,11 @@ const App = () => {
                   <div className="template-name" style={{ flex: 1 }}>{getSmartTitle(item)}</div>
                   <div 
                     title="เลิกปักหมุด"
-                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'var(--accent-indigo-soft)', borderRadius: '4px', fontSize: '0.9rem' }} 
+                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'var(--accent-indigo-soft)', borderRadius: '4px', fontSize: '0.9rem', color: 'var(--accent-red)' }} 
                     onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
-                  >📌</div>
+                  >
+                    <Pin size={14} fill="var(--accent-red)" />
+                  </div>
                 </div>
               ))}
             </>
@@ -352,9 +405,15 @@ const App = () => {
                 ) : (
                   <>
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} title="ปักหมุด">📍</span>
+                    <span 
+                      style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} 
+                      onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} 
+                      title="ปักหมุด"
+                    >
+                      <Pin size={16} />
+                    </span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ">🗑️</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ"><Trash2 size={16} /></span>
                   </>
                 )}
               </div>
@@ -423,7 +482,10 @@ const App = () => {
           <div className="card" style={{ flex: 1.2 }}>
             <div className="card-header">
               <h2 className="card-title">Preview (Thai)</h2>
-              <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={copyThai} disabled={!selectedTemplate}>คัดลอกและบันทึก</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleSaveAsTemplate} title="บันทึกฟอร์มนี้เป็นแม่แบบไว้ใช้คราวหน้า">💾 บันทึกเป็นแม่แบบ</button>
+                <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={copyThai}>คัดลอกและบันทึก</button>
+              </div>
             </div>
             <div className="preview-body-v2">
               <textarea 
