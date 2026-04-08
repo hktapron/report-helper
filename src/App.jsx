@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import templatesData from './templates.json';
 import { useHistory } from './hooks/useHistory';
-import { generateCAAT22 } from './utils/translator';
+import { translateToCAAT22 } from './utils/translator';
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
 import { supabase } from './supabaseClient';
 import { useUserTemplates } from './hooks/useUserTemplates';
-import { Trash2, Pin, Save, Plus, Edit2, Check } from 'lucide-react';
+import { 
+  Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
+  Search, Calendar, Clock, ChevronRight, User, Terminal, 
+  ArrowRight, History 
+} from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -23,6 +27,8 @@ const App = () => {
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   const isEditingPreview = useRef(false);
+
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // useHistory with robust fallback
   const historyData = useHistory(user?.username);
@@ -133,11 +139,18 @@ const App = () => {
     }
   }, [formData, selectedTemplate, reportMode]);
 
-  useEffect(() => {
-    let text = '';
-    if (showCAAT) text += generateCAAT22(formData, thaiPreview);
-    setExtraPreview(text);
-  }, [formData, showCAAT, thaiPreview]);
+  const handleTranslate = async () => {
+    if (!thaiPreview) return;
+    setIsTranslating(true);
+    try {
+      const result = await translateToCAAT22(thaiPreview, formData);
+      setExtraPreview(result);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   // Memoized lists
   const filteredTemplates = useMemo(() => {
@@ -490,11 +503,22 @@ const App = () => {
                 </div>
               ))}
               {reportMode === 'incident' && (
-                <div className="special-section" style={{ gridColumn: '1 / -1' }}>
+                <div className="special-section" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="toggle-container">
                     <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
                     <span className="toggle-label">Thai CAAT-22 Report (English)</span>
                   </label>
+                  {showCAAT && (
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', gap: '0.5rem' }} 
+                      onClick={handleTranslate}
+                      disabled={isTranslating || !thaiPreview}
+                    >
+                      {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {isTranslating ? 'กำลังแปลภาษา...' : 'แปลภาษาด้วย AI'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

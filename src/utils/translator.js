@@ -1,141 +1,82 @@
-/**
- * Standardized mapping for Thai to English phrases in Apron Control
- */
-const dictionary = {
-  "ได้รับแจ้งจากหอบังคับการบิน": "Received notification from Air Traffic Control (ATC)",
-  "พบปัญหาทางเทคนิค": "Technical problem found",
-  "ขอกลับเข้าหลุมจอดอีกครั้ง": "Requested return to bay (RTB)",
-  "ดันถอยออกจากหลุมจอด": "Pushback from stand",
-  "ไม่สามารถทำการ taxi ได้": "Unable to taxi",
-  "จำเป็นต้องใช้รถดันอากาศยาน": "Towing service required",
-  "มีผู้ป่วยหนึ่งท่าน": "One sick passenger on board",
-  "สะพานเทียบมีปัญหา": "Passenger bridge technical issue",
-  "ระบบ VDGS ไม่แสดงผล": "VDGS failure (No display)",
-  "น้ำมันล้นปลายปีก": "Fuel spillage at wing tip",
-  "เติมน้ำมันเพิ่ม": "Refueling required",
-  "หลุมจอด": "Aircraft Stand / Bay",
-  "สะพานเทียบอากาศยาน": "Passenger Boarding Bridge (PBB)",
-  "รถนำอากาศยาน": "Follow-me Car",
-  "ทางขับ": "Taxiway",
-  "ทางวิ่ง": "Runway",
-  "การดันถอย": "Pushback",
-  "ขอกลับเข้าหลุมจอด": "Return to Bay",
-  "เจ้าหน้าที่บริหารหลุมจอด": "Apron Controller",
-  "ลานจอดอากาศยาน": "Apron",
-  "สิ่งแปลกปลอม": "Foreign Object Debris (FOD)",
-  "น้ำมันรั่ว": "Fuel Spill",
-  "น้ำมันล้น": "Fuel Spill",
-  "รถดันอากาศยาน": "Pushback Tractor",
-  "ระบบนำจอด": "Visual Docking Guidance System (VDGS)",
-  "เจ้าหน้าที่ให้สัญญาณ": "Marshaller",
-  "ไม่มีข้อขัดข้อง": "No further issues observed",
-  "เรียบร้อยแล้ว": "Completed",
-  "ช่างอากาศยาน": "Aircraft Technician",
-  "ตรวจสอบและแก้ไข": "Inspection and rectification"
-};
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// ตรวจสอบ API Key
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 /**
- * Helper to extract metadata from Thai text if state is missing
+ * Smart Gemini Translation Engine for CAAT-22
+ * @param {string} thaiText - The current Thai preview text
+ * @param {object} formData - Current state values
+ * @returns {string} - Professional English CAAT-22 report
  */
-const extractFromText = (text, regex) => {
-  if (!text) return null;
-  const match = text.match(regex);
-  return match ? match[1].trim() : null;
-};
-
-/**
- * Translates a single line of Thai text into English using dictionary mapping.
- */
-export const translateIncident = (text) => {
-  if (!text) return '';
-  let translated = text;
-
-  // 1. Time & Quantitative Regex
-  translated = translated.replace(/เมื่อเวลา\s*([0-9]{2}[:.][0-9]{2})\s*น\./g, "At $1 LT,");
-  translated = translated.replace(/เวลาประมาณ\s*([0-9]{2}[:.][0-9]{2})\s*น\./g, "at approximately $1 LT.");
-  translated = translated.replace(/ได้รับแจ้งจาก(.*?)ว่า/g, "Received notification from $1 that");
-  translated = translated.replace(/เที่ยวบินที่\s*([A-Za-z0-9]+)/g, "Flight $1");
-  translated = translated.replace(/หลุมจอดฯ?\s*หมายเลข\s*([A-Za-z0-9]+)/g, "Stand $1");
-
-  // 2. Dictionary Mapping
-  Object.entries(dictionary).forEach(([thai, english]) => {
-    const escapedKey = thai.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    translated = translated.split(new RegExp(escapedKey, 'g')).join(english);
-  });
+export const translateToCAAT22 = async (thaiText, formData) => {
+  if (!apiKey) throw new Error("GEMINI_API_KEY is missing in .env!");
+  if (!thaiText) return "";
   
-  return translated;
-};
+  const safeData = formData || {};
+  const today = new Date().toLocaleDateString('en-GB');
 
-/**
- * BALANCED PARSER: Generates CAAT-22 plaintext report with clipping logic.
- * @param {object} formData - The current form state
- * @param {string} thaiText - Live Thai text from preview box
- */
-export const generateCAAT22 = (formData, thaiText = '') => {
-  if (!formData && !thaiText) return 'No data available.';
-
-  // 1. Mandatory Metadata Hybrid Binding
-  const flightNo = formData.flight_no || extractFromText(thaiText, /เที่ยวบิน:\s*(.+)/) || 'N/A';
-  const registration = formData.registration || extractFromText(thaiText, /ทะเบียน:\s*(.+)/) || 'N/A';
-  const acType = formData.ac_type || extractFromText(thaiText, /แบบอากาศยาน:\s*(.+)/) || 'N/A';
-  const route = formData.route || extractFromText(thaiText, /เส้นทาง:\s*(.+)/) || 'N/A';
-  const standNo = formData.stand_no || formData.return_stand || extractFromText(thaiText, /หลุมจอด:\s*(.+)/) || 'N/A';
-  
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-GB'); // DD/MM/YYYY
-  
-  // 2. Balanced Chronology Extraction (CLIPPING LOGIC)
-  const rawSource = thaiText || (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
-  const lines = rawSource.split('\n');
-  
-  // Header Blacklist
-  const headerBlacklist = [/รายงานเหตุการณ์ไม่ปกติ/i, /วันที่ [0-9]/i];
-  // Footer Blacklist (Force Stop)
-  const footerKeywords = [/รายละเอียดเที่ยวบิน/i, /Apron Control Tel/i, /โทร\./i];
-
-  let resultLines = [];
-  let foundFooter = false;
-
-  for (let line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    
-    // Check if we hit the footer -> Stop immediately
-    if (footerKeywords.some(regex => regex.test(trimmed))) {
-      foundFooter = true;
-      break; 
-    }
-
-    // Skip headers at the beginning
-    if (headerBlacklist.some(regex => regex.test(trimmed))) continue;
-
-    // Otherwise, it's narrative content - Translate it!
-    const translated = translateIncident(trimmed);
-    const alreadyHasBullet = /^\s*(-|\*|[0-9]+\.)/.test(translated);
-    resultLines.push(`${alreadyHasBullet ? '' : '- '}${translated}`);
+  // ใช้โมเดล Flash เพื่อความรวดเร็วและประหยัด (Fallback 2.5 -> 1.5)
+  let model;
+  try {
+    model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash", // Using 1.5 Flash for maximum compatibility
+      systemInstruction: "You are a strict Aviation Expert and Apron Control Officer. Your job is to translate Thai incident narratives into formal CAAT-22 Aviation English. DO NOT output conversational text. DO NOT use markdown code blocks like ```text. Output ONLY the raw CAAT-22 text format."
+    });
+  } catch (e) {
+    throw new Error("Failed to initialize Gemini Model.");
   }
 
-  const chronologyText = resultLines.join('\n');
+  const prompt = `
+Translate and format the following Thai incident report into professional Aviation English.
 
-  // 3. Assembly
-  return `AIRPORT INCIDENT SUMMARY (CAAT-22)
+[Data Variables]
+Flight No: ${safeData.flight_no || 'N/A'}
+A/C Registry: ${safeData.registration || 'N/A'}
+A/C Type: ${safeData.ac_type || 'N/A'}
+Route: ${safeData.route || 'N/A'}
+Final Stand: ${safeData.stand_no || safeData.return_stand || 'N/A'}
+
+[Thai Narrative]
+${thaiText}
+
+[Translation Rules]
+1. Extract ONLY the chronological events. 
+2. Translate to professional Aviation English (e.g., 'หลุมจอด' = Stand/Bay, 'ลากจูง' = Towed, 'รออะไหล่' = Awaiting spare parts/AOG, 'ดันถอย' = Pushback).
+3. Format times properly as 'At HH:MM LT,'.
+4. Assemble the final output EXACTLY in this format:
+
+AIRPORT INCIDENT SUMMARY (CAAT-22)
 ----------------------------------
-Date: ${dateStr}
+Date: ${today}
 Subject: Technical Incident / Operational Disruption
 
 FLIGHT INFORMATION:
-Flight No: ${flightNo}
-A/C Registry: ${registration}
-A/C Type: ${acType}
-Route: ${route}
+Flight No: ${safeData.flight_no || 'N/A'}
+A/C Registry: ${safeData.registration || 'N/A'}
+A/C Type: ${safeData.ac_type || 'N/A'}
+Route: ${safeData.route || 'N/A'}
 
 CHRONOLOGY:
-${chronologyText || '- No narrative content detected.'}
+1. [Translated event...]
+2. [Translated event...]
 
 STATUS:
 Safety protocols followed. No personnel injury reported.
-Final Stand: ${standNo}
+Final Stand: ${safeData.stand_no || safeData.return_stand || 'N/A'}
 
 APRON CONTROL UNIT
-PHUKET INTERNATIONAL AIRPORT`;
+PHUKET INTERNATIONAL AIRPORT
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response.text();
+    // Clean up any stray markdown formatting
+    return response.replace(/```(text|html)?\n?/g, '').replace(/```/g, '').trim();
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    throw new Error("Translation failed. Please ensure VITE_GEMINI_API_KEY is valid.");
+  }
 };
