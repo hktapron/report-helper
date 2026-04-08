@@ -272,6 +272,36 @@ const App = () => {
     alert('คัดลอกรายงานไทยแล้ว');
   };
 
+  // HELPER: Unify loading for all template types to prevent state de-sync
+  const loadAnyTemplate = (item, type = 'template') => {
+    const mode = item.mode || reportMode || 'incident';
+    
+    // 1. Ensure mode is synced
+    setReportMode(mode);
+
+    // 2. Identify fields based on mode if not provided
+    let fields = item.fields;
+    if (!fields && Array.isArray(templatesData)) {
+      const base = templatesData.find(t => t.mode === mode);
+      fields = base?.fields || [];
+    }
+
+    // 3. Set standard SelectedTemplate structure
+    setSelectedTemplate({
+      id: item.id || (type === 'history' ? 'history' : 'custom'),
+      name: item.name || (type === 'history' ? getSmartTitle(item) : 'กำหนดเอง'),
+      mode: mode,
+      content: item.content || item.preview || item.data?.narrative || "",
+      fields: fields
+    });
+
+    // 4. Set data and unlock preview linkage
+    setFormData(item.data || {});
+    setThaiPreview(item.preview || "");
+    setExtraPreview(item.extra_preview || "");
+    isEditingPreview.current = false;
+  };
+
   const handleSaveAsTemplate = async () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
@@ -500,12 +530,7 @@ const App = () => {
                           draggable 
                           onDragStart={(e) => handleDragStart(e, ct)}
                           onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                          onClick={() => {
-                            setFormData(ct.data || {});
-                            setThaiPreview(ct.preview || '');
-                            setExtraPreview(ct.extra_preview || '');
-                            isEditingPreview.current = false;
-                          }}
+                          onClick={() => loadAnyTemplate(ct, 'custom')}
                         >
                           <FileText size={12} style={{ opacity: 0.6 }} />
                           <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
@@ -528,12 +553,7 @@ const App = () => {
                   draggable 
                   onDragStart={(e) => handleDragStart(e, ct)}
                   onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                  onClick={() => {
-                    setFormData(ct.data || {});
-                    setThaiPreview(ct.preview || '');
-                    setExtraPreview(ct.extra_preview || '');
-                    isEditingPreview.current = false;
-                  }}
+                  onClick={() => loadAnyTemplate(ct, 'custom')}
                 >
                   <FileText size={12} style={{ opacity: 0.6 }} />
                   <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
@@ -555,12 +575,7 @@ const App = () => {
               className="history-item" 
               style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
               onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-              onClick={() => {
-                setReportMode(item.mode || 'incident');
-                setFormData(item.data || {});
-                setThaiPreview(item.preview || '');
-                isEditingPreview.current = false;
-              }}
+              onClick={() => loadAnyTemplate(item, 'history')}
             >
               <div className="history-info">
                 <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
@@ -574,12 +589,7 @@ const App = () => {
               key={item.id} 
               className="history-item" 
               onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-              onClick={() => {
-                setReportMode(item.mode || 'incident');
-                setFormData(item.data || {});
-                setThaiPreview(item.preview || '');
-                isEditingPreview.current = false;
-              }}
+              onClick={() => loadAnyTemplate(item, 'history')}
             >
               <div className="history-info">
                 <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
