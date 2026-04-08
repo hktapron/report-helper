@@ -27,8 +27,8 @@ export const translateToCAAT22 = async (thaiText, formData) => {
   let model;
   try {
     model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash", // Using 1.5 Flash for maximum compatibility
-      systemInstruction: "You are a strict Aviation Expert and Apron Control Officer. Your job is to translate Thai incident narratives into formal CAAT-22 Aviation English. DO NOT output conversational text. DO NOT use markdown code blocks like ```text. Output ONLY the raw CAAT-22 text format."
+      model: "gemini-2.5-flash", 
+      systemInstruction: "You are an expert aviation translator. Always translate the provided text using precise standard aviation terminology and maintain a highly formal, professional tone."
     });
   } catch (e) {
     throw new Error("Failed to initialize Gemini Model.");
