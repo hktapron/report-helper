@@ -29,6 +29,9 @@ const App = () => {
   const renameReport = historyData?.renameReport;
   const deleteReport = historyData?.deleteReport;
   const togglePin = historyData?.togglePin;
+  const hasMore = historyData?.hasMore;
+  const loadingHistory = historyData?.loading;
+  const loadMore = historyData?.loadMore;
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -151,6 +154,23 @@ const App = () => {
     
     // Resume dynamic linking even for history items once user starts editing
     isEditingPreview.current = false;
+  };
+
+  const formatRelativeTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffMin < 1) return 'เมื่อครู่นี้';
+    if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+    if (diffHr < 24) return `${diffHr} ชม. ที่แล้ว`;
+    if (diffDay === 1) return 'เมื่อวานนี้';
+    if (diffDay < 7) return `${diffDay} วันที่แล้ว`;
+    return date.toLocaleDateString('en-GB');
   };
 
   const getSmartTitle = (item) => {
@@ -338,8 +358,22 @@ const App = () => {
                   </>
                 )}
               </div>
+              <div className="history-date" style={{ marginTop: '0.2rem' }}>
+                {formatRelativeTime(item.savedAt)}
+              </div>
             </div>
           ))}
+
+          {hasMore && (
+            <button 
+              className="btn btn-ghost btn-full" 
+              style={{ marginTop: '1rem', fontSize: '0.75rem', opacity: 0.7 }} 
+              onClick={loadMore}
+              disabled={loadingHistory}
+            >
+              {loadingHistory ? 'กำลังโหลด...' : 'ดูรายการเก่ากว่านี้...'}
+            </button>
+          )}
         </div>
 
         <div className="mode-switcher">

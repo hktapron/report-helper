@@ -3,19 +3,25 @@ import { supabase } from '../supabaseClient';
 
 export const useHistory = (currentUsername) => {
   const [history, setHistory] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchHistory = async () => {
-    if (!supabase) return;
+  const fetchHistory = async (append = false) => {
+    if (!supabase || !currentUsername) return;
+    setLoading(true);
 
-    // Filter by our custom username directly in the query
+    const limit = 50;
+    const offset = append ? history.length : 0;
+
     const { data, error } = await supabase
       .from('incident_history')
       .select('*')
-      .eq('user_id', currentUsername || 'unknown') // Filter by custom user_id
-      .order('saved_at', { ascending: false });
+      .eq('user_id', currentUsername)
+      .order('saved_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (!error && data) {
-      setHistory(data.map(item => ({
+      const formatted = data.map(item => ({
         id: item.id,
         mode: item.mode,
         templateName: item.template_name,
@@ -25,8 +31,17 @@ export const useHistory = (currentUsername) => {
         customTitle: item.custom_title,
         isPinned: item.is_pinned,
         savedAt: item.saved_at
-      })));
+      }));
+
+      if (append) {
+        setHistory(prev => [...prev, ...formatted]);
+      } else {
+        setHistory(formatted);
+      }
+      
+      setHasMore(data.length === limit);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -81,5 +96,15 @@ export const useHistory = (currentUsername) => {
     if (!error) fetchHistory();
   };
 
-  return { history, saveReport, renameReport, deleteReport, togglePin, refreshHistory: fetchHistory };
+  return { 
+    history, 
+    hasMore, 
+    loading, 
+    saveReport, 
+    renameReport, 
+    deleteReport, 
+    togglePin, 
+    refreshHistory: () => fetchHistory(false),
+    loadMore: () => fetchHistory(true)
+  };
 };
