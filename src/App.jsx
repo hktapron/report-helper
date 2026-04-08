@@ -531,96 +531,39 @@ const App = () => {
           <div className="history-title">ประวัติเหตุการณ์</div>
           
           {pinnedHistory.map(item => (
-            <div key={item.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => {
-              if (renamingHistoryId === item.id) return;
-              setReportMode(item.mode || 'incident');
-              setFormData(item.data || {});
-              setThaiPreview(item.preview || '');
-              isEditingPreview.current = true;
-            }}>
+            <div 
+              key={item.id} 
+              className="history-item" 
+              style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
+              onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+              onClick={() => {
+                setReportMode(item.mode || 'incident');
+                setFormData(item.data || {});
+                setThaiPreview(item.preview || '');
+                isEditingPreview.current = true;
+              }}
+            >
               <div className="history-info">
-                {renamingHistoryId === item.id ? (
-                  <input 
-                    className="search-input"
-                    style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0, flex: 1 }}
-                    value={newHistoryName}
-                    onChange={(e) => setNewHistoryName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        renameReport(item.id, newHistoryName);
-                        setRenamingHistoryId(null);
-                      }
-                    }}
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
-                )}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {renamingHistoryId === item.id ? (
-                    <Check 
-                      size={14} 
-                      style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
-                      onClick={(e) => { e.stopPropagation(); renameReport(item.id, newHistoryName); setRenamingHistoryId(null); }}
-                    />
-                  ) : (
-                    <Edit2 
-                      size={14} 
-                      style={{ cursor: 'pointer', opacity: 0.8 }} 
-                      onClick={(e) => { e.stopPropagation(); setRenamingHistoryId(item.id); setNewHistoryName(getSmartTitle(item)); }}
-                    />
-                  )}
-                  <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
-                </div>
+                <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
+                <Pin size={12} fill="var(--accent-indigo)" style={{ opacity: 0.6 }} />
               </div>
             </div>
           ))}
           
           {normalHistory.map(item => (
-            <div key={item.id} className="history-item" onClick={() => {
-              if (renamingHistoryId === item.id) return;
-              setReportMode(item.mode || 'incident');
-              setFormData(item.data || {});
-              setThaiPreview(item.preview || '');
-              isEditingPreview.current = true;
-            }}>
+            <div 
+              key={item.id} 
+              className="history-item" 
+              onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+              onClick={() => {
+                setReportMode(item.mode || 'incident');
+                setFormData(item.data || {});
+                setThaiPreview(item.preview || '');
+                isEditingPreview.current = true;
+              }}
+            >
               <div className="history-info">
-                {renamingHistoryId === item.id ? (
-                  <input 
-                    className="search-input"
-                    style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0, flex: 1 }}
-                    value={newHistoryName}
-                    onChange={(e) => setNewHistoryName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        renameReport(item.id, newHistoryName);
-                        setRenamingHistoryId(null);
-                      }
-                    }}
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-                )}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {renamingHistoryId === item.id ? (
-                    <Check 
-                      size={14} 
-                      style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
-                      onClick={(e) => { e.stopPropagation(); renameReport(item.id, newHistoryName); setRenamingHistoryId(null); }}
-                    />
-                  ) : (
-                    <Edit2 
-                      size={14} 
-                      style={{ cursor: 'pointer', opacity: 0.4 }} 
-                      onClick={(e) => { e.stopPropagation(); setRenamingHistoryId(item.id); setNewHistoryName(getSmartTitle(item)); }}
-                    />
-                  )}
-                  <Pin size={14} style={{ opacity: 0.4 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, false); }} />
-                  <Trash2 size={14} style={{ opacity: 0.4, color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} />
-                </div>
+                <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
               </div>
               <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
             </div>
@@ -723,10 +666,22 @@ const App = () => {
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
+          {contextMenu.type === 'history' && (
+            <div className="context-item" onClick={() => {
+              togglePin(contextMenu.id, contextMenu.data.isPinned);
+              closeContextMenu();
+            }}>
+              <Pin size={14} fill={contextMenu.data.isPinned ? 'var(--accent-indigo)' : 'none'} /> 
+              {contextMenu.data.isPinned ? 'ยกเลิกปักหมุด' : 'ปักหมุด'}
+            </div>
+          )}
+          
           <div className="context-item" onClick={() => {
-            const newName = window.prompt("เปลี่ยนชื่อเป็น:", contextMenu.data.name);
+            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : contextMenu.data.name;
+            const newName = window.prompt("เปลี่ยนชื่อเป็น:", currentTitle);
             if (newName) {
               if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
+              else if (contextMenu.type === 'history') renameReport(contextMenu.id, newName);
               else updateTemplateName(contextMenu.id, newName);
             }
             closeContextMenu();
@@ -734,8 +689,10 @@ const App = () => {
             <Edit2 size={14} /> เปลี่ยนชื่อ
           </div>
           <div className="context-item danger" onClick={() => {
-            if (window.confirm(`ยืนยันการลบ${contextMenu.type === 'folder' ? 'โฟลเดอร์' : 'ฟอร์ม'}นี้?`)) {
+            const typeLabel = contextMenu.type === 'folder' ? 'โฟลเดอร์' : (contextMenu.type === 'history' ? 'ประวัติ' : 'ฟอร์ม');
+            if (window.confirm(`ยืนยันการลบ${typeLabel}นี้?`)) {
               if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
+              else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
               else deleteTemplate(contextMenu.id);
             }
             closeContextMenu();
