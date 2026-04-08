@@ -59,8 +59,10 @@ export const translateIncident = (text) => {
 
 /**
  * TOTAL REWRITE: Generates CAAT-22 plaintext report from formData state.
+ * @param {object} formData - The current form state
+ * @param {string} thaiText - Optional live Thai text from preview box
  */
-export const generateCAAT22 = (formData) => {
+export const generateCAAT22 = (formData, thaiText = '') => {
   if (!formData) return 'No data available.';
 
   // 1. Mandatory Metadata Binding (Strict from State)
@@ -74,18 +76,38 @@ export const generateCAAT22 = (formData) => {
   const dateStr = today.toLocaleDateString('en-GB'); // DD/MM/YYYY
   
   // 2. Smart Narrative Extraction (CHRONOLOGY ONLY)
-  // We extract only lines starting with digits (e.g., 1., 2.)
-  const rawThaiText = (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
+  // Use thaiText if provided, otherwise fallback to formData
+  const rawThaiText = thaiText || (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
   const lines = rawThaiText.split('\n');
   
-  const chronologyLines = lines
-    .filter(line => /^[0-9]+[\.\)]/.test(line.trim())) // Only numbered lines
-    .map(line => `- ${translateIncident(line.trim())}`); // Translate and prefix with dash
+  // Blacklist for common Thai headers that shouldn't be in the English chronology
+  const blacklist = [
+    /รายงานเหตุการณ์ไม่ปกติ/i,
+    /วันที่ [0-9]/i,
+    /หากมีความคืบหน้า/i,
+    /รายละเอียดเที่ยวบิน/i,
+    /Apron Control Tel/i
+  ];
 
-  // Fallback if no numbered chronology found
+  const chronologyLines = lines
+    .filter(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return false;
+      // 1. Priority: Keep numbered lines
+      if (/^[0-9]+[\.\)]/.test(trimmed)) return true;
+      // 2. Fallback: Keep other lines as long as they aren't in the blacklist
+      return !blacklist.some(regex => regex.test(trimmed));
+    })
+    .map(line => {
+      const trimmed = line.trim();
+      const needsPrefix = !/^[0-9]+[\.\)]/.test(trimmed);
+      return `${needsPrefix ? '- ' : ''}${translateIncident(trimmed)}`;
+    });
+
+  // Fallback if no narrative lines found at all
   const chronologyText = chronologyLines.length > 0 
     ? chronologyLines.join('\n') 
-    : `- At ${formData.incident_time || '--:--'} LT: ${translateIncident(formData.narrative || 'Incident reported')}`;
+    : `- At ${formData.incident_time || '--:--'} LT: Incident reported`;
 
   // 3. Assembly (Pinpoint parity with CAAT-22 format)
   return `AIRPORT INCIDENT SUMMARY (CAAT-22)

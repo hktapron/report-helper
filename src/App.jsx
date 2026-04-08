@@ -135,9 +135,9 @@ const App = () => {
 
   useEffect(() => {
     let text = '';
-    if (showCAAT) text += generateCAAT22(formData);
+    if (showCAAT) text += generateCAAT22(formData, thaiPreview);
     setExtraPreview(text);
-  }, [formData, showCAAT]);
+  }, [formData, showCAAT, thaiPreview]);
 
   // Memoized lists
   const filteredTemplates = useMemo(() => {
