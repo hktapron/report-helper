@@ -309,6 +309,9 @@ const App = () => {
         <section className="card">
           <div className="card-header">
             <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
+            {selectedTemplate && (
+              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
+            )}
           </div>
           <div className="form-body">
             {selectedTemplate?.fields?.map(field => (
@@ -336,15 +339,14 @@ const App = () => {
               </div>
             )}
           </div>
-          <div className="actions" style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-glass)', display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-primary" onClick={copyThai} disabled={!selectedTemplate}>คัดลอกและบันทึก</button>
-            <button className="btn btn-ghost" onClick={() => setFormData({})}>รีเซ็ต</button>
-          </div>
         </section>
 
         <section className="preview-container">
           <div className="card" style={{ flex: 1.2 }}>
-            <div className="card-header"><h2 className="card-title">Preview (Thai)</h2></div>
+            <div className="card-header">
+              <h2 className="card-title">Preview (Thai)</h2>
+              <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={copyThai} disabled={!selectedTemplate}>คัดลอกและบันทึก</button>
+            </div>
             <div className="preview-body-v2">
               <textarea 
                 className="preview-textarea" 
