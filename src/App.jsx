@@ -6,7 +6,7 @@ import Login from './Login';
 import ModeSelector from './components/ModeSelector';
 import { supabase } from './supabaseClient';
 import { useUserTemplates } from './hooks/useUserTemplates';
-import { Trash2, Pin, Save, Plus } from 'lucide-react';
+import { Trash2, Pin, Save, Plus, Edit2, Check } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -35,11 +35,13 @@ const App = () => {
   const loadingHistory = historyData?.loading;
   const loadMore = historyData?.loadMore;
 
-  // Custom Templates Hook
-  const { templates: customTemplates, saveTemplate, deleteTemplate } = useUserTemplates(user?.username, reportMode);
+  const { templates: customTemplates, saveTemplate, deleteTemplate, updateTemplateName } = useUserTemplates(user?.username, reportMode);
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+
+  const [renamingTemplateId, setRenamingTemplateId] = useState(null);
+  const [newTemplateName, setNewTemplateName] = useState('');
 
   // Sync default template
   useEffect(() => {
@@ -80,10 +82,11 @@ const App = () => {
     }
   }, [selectedTemplate]);
 
-  // Advanced Search & Substitution Engine
+  // Advanced Search & Substitution Engine (Optimized for Smart Forms)
   useEffect(() => {
     if (!isEditingPreview.current && selectedTemplate) {
-      let text = selectedTemplate.content || '';
+      // Use narrative from state but fallback to template content if narrative is empty
+      let text = formData.narrative || formData.update_text || selectedTemplate.content || '';
       
       // 1. Mandatory VTSP Date Formatting (DD MMM.YY)
       const now = new Date();
@@ -98,7 +101,7 @@ const App = () => {
       // 2. Dynamic Smart Mapping for all VTSP Keys
       const mapping = {
         incident_time: formData.incident_time || '[incident_time]',
-        narrative: formData.narrative || formData.update_text || '[narrative]',
+        narrative: formData.narrative || '[narrative]',
         airline: formData.airline || '[airline]',
         flight_no: formData.flight_no || '[flight_no]',
         registration: formData.registration || '[registration]',
@@ -112,7 +115,10 @@ const App = () => {
       // Perform replacement for both {key} and [key] formats
       Object.entries(mapping).forEach(([key, value]) => {
         const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-        text = text.replace(regex, value);
+        // Only replace if the value is NOT the token itself (avoid recursiveness)
+        if (value !== `[${key}]` && value !== `{${key}}`) {
+          text = text.replace(regex, value);
+        }
       });
 
       // 3. Fallback for any other fields defined in templates.json
@@ -358,22 +364,55 @@ const App = () => {
                   className="template-item" 
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', borderLeft: '2px solid var(--accent-indigo-soft)' }}
                   onClick={() => {
+                    if (renamingTemplateId === ct.id) return;
                     setFormData(ct.data || {});
                     setThaiPreview(ct.preview || '');
                     setExtraPreview(ct.extra_preview || '');
                     isEditingPreview.current = true;
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
                     <Save size={12} style={{ opacity: 0.6 }} />
-                    <div className="template-name" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{ct.name}</div>
+                    {renamingTemplateId === ct.id ? (
+                      <input 
+                        className="search-input"
+                        style={{ padding: '2px 4px', fontSize: '0.75rem', height: 'auto', margin: 0 }}
+                        value={newTemplateName}
+                        onChange={(e) => setNewTemplateName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updateTemplateName(ct.id, newTemplateName);
+                            setRenamingTemplateId(null);
+                          }
+                        }}
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <div className="template-name" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{ct.name}</div>
+                    )}
                   </div>
-                  <Trash2 
-                    size={12} 
-                    className="delete-icon"
-                    style={{ cursor: 'pointer', opacity: 0.3 }} 
-                    onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }}
-                  />
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {renamingTemplateId === ct.id ? (
+                      <Check 
+                        size={12} 
+                        style={{ cursor: 'pointer', color: 'var(--accent-indigo)' }} 
+                        onClick={(e) => { e.stopPropagation(); updateTemplateName(ct.id, newTemplateName); setRenamingTemplateId(null); }}
+                      />
+                    ) : (
+                      <Edit2 
+                        size={12} 
+                        style={{ cursor: 'pointer', opacity: 0.3 }} 
+                        onClick={(e) => { e.stopPropagation(); setRenamingTemplateId(ct.id); setNewTemplateName(ct.name); }}
+                      />
+                    )}
+                    <Trash2 
+                      size={12} 
+                      className="delete-icon"
+                      style={{ cursor: 'pointer', opacity: 0.3 }} 
+                      onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

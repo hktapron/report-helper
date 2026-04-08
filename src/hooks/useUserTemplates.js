@@ -55,5 +55,16 @@ export const useUserTemplates = (currentUsername, reportMode) => {
     return { error };
   };
 
-  return { templates, loading, saveTemplate, deleteTemplate, refreshTemplates: fetchTemplates };
+  const updateTemplateName = async (id, newName) => {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from('user_templates')
+      .update({ name: newName })
+      .eq('id', id);
+
+    if (!error) fetchTemplates();
+    return { error };
+  };
+
+  return { templates, loading, saveTemplate, deleteTemplate, updateTemplateName, refreshTemplates: fetchTemplates };
 };
