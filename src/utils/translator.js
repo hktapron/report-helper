@@ -44,7 +44,7 @@ const extractFromText = (text, regex) => {
 };
 
 /**
- * Translates a single line of Thai text into English using regex and dictionary mapping.
+ * Translates a single line of Thai text into English using dictionary mapping.
  */
 export const translateIncident = (text) => {
   if (!text) return '';
@@ -67,14 +67,14 @@ export const translateIncident = (text) => {
 };
 
 /**
- * STRICT PARSER: Generates CAAT-22 plaintext report.
+ * BALANCED PARSER: Generates CAAT-22 plaintext report with clipping logic.
  * @param {object} formData - The current form state
- * @param {string} thaiText - Optional live Thai text from preview box
+ * @param {string} thaiText - Live Thai text from preview box
  */
 export const generateCAAT22 = (formData, thaiText = '') => {
   if (!formData && !thaiText) return 'No data available.';
 
-  // 1. Mandatory Metadata Hybrid Binding (State > Regex > Fallback)
+  // 1. Mandatory Metadata Hybrid Binding
   const flightNo = formData.flight_no || extractFromText(thaiText, /เที่ยวบิน:\s*(.+)/) || 'N/A';
   const registration = formData.registration || extractFromText(thaiText, /ทะเบียน:\s*(.+)/) || 'N/A';
   const acType = formData.ac_type || extractFromText(thaiText, /แบบอากาศยาน:\s*(.+)/) || 'N/A';
@@ -84,17 +84,40 @@ export const generateCAAT22 = (formData, thaiText = '') => {
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-GB'); // DD/MM/YYYY
   
-  // 2. Strict Chronology Extraction (NUMBERED LINES ONLY)
-  // Logic: Split by newline, then filter strictly for "/^\d+\./"
+  // 2. Balanced Chronology Extraction (CLIPPING LOGIC)
   const rawSource = thaiText || (formData.narrative || '') + (formData.update_text ? '\n' + formData.update_text : '');
   const lines = rawSource.split('\n');
   
-  const chronologyText = lines
-    .filter(line => /^\d+\./.test(line.trim())) // IRONCLAD RULE: Must start with "1.", "2.", etc.
-    .map(line => `- ${translateIncident(line.trim())}`)
-    .join('\n');
+  // Header Blacklist
+  const headerBlacklist = [/รายงานเหตุการณ์ไม่ปกติ/i, /วันที่ [0-9]/i];
+  // Footer Blacklist (Force Stop)
+  const footerKeywords = [/รายละเอียดเที่ยวบิน/i, /Apron Control Tel/i, /โทร\./i];
 
-  // Assembly (Strict CAAT-22 Structure)
+  let resultLines = [];
+  let foundFooter = false;
+
+  for (let line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    // Check if we hit the footer -> Stop immediately
+    if (footerKeywords.some(regex => regex.test(trimmed))) {
+      foundFooter = true;
+      break; 
+    }
+
+    // Skip headers at the beginning
+    if (headerBlacklist.some(regex => regex.test(trimmed))) continue;
+
+    // Otherwise, it's narrative content - Translate it!
+    const translated = translateIncident(trimmed);
+    const alreadyHasBullet = /^\s*(-|\*|[0-9]+\.)/.test(translated);
+    resultLines.push(`${alreadyHasBullet ? '' : '- '}${translated}`);
+  }
+
+  const chronologyText = resultLines.join('\n');
+
+  // 3. Assembly
   return `AIRPORT INCIDENT SUMMARY (CAAT-22)
 ----------------------------------
 Date: ${dateStr}
@@ -107,7 +130,7 @@ A/C Type: ${acType}
 Route: ${route}
 
 CHRONOLOGY:
-${chronologyText || '- No numbered chronology provided.'}
+${chronologyText || '- No narrative content detected.'}
 
 STATUS:
 Safety protocols followed. No personnel injury reported.
