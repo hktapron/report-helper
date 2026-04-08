@@ -305,10 +305,11 @@ const App = () => {
   const handleSaveAsTemplate = async () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
-      // SMART REVERSE-TEMPLATIZATION:
-      // Convert current filled data back into {tags} so the template is reusable.
-      // We sort entries by value length descending to protect complex strings (e.g., replace "12:00" before "12").
+      // PHASE 45: UNIVERSAL TEMPLATIZER ENGINE
+      // Convert current filled data and raw aviation patterns back into {tags}
       let templateNarrative = thaiPreview;
+
+      // 1. Precise Match: Use current form data first (Sorted by length)
       const sortedEntries = Object.entries(formData).sort((a, b) => {
         const valA = String(a[1] || "");
         const valB = String(b[1] || "");
@@ -322,6 +323,21 @@ const App = () => {
           templateNarrative = templateNarrative.replace(regex, `{${key}}`);
         }
       });
+
+      // 2. Pattern Match: Detect raw aviation data (Flight Nos, Times, Refs)
+      // This helps even if the user didn't fill the fields on the left before saving.
+      
+      // Flight Numbers (e.g., SU284, TG121, PG 999)
+      templateNarrative = templateNarrative.replace(/[A-Z]{2,3}\s?\d{3,4}/g, '{flight_no}');
+      
+      // Times (e.g., 12.14น., 11:51, 12.25น.)
+      templateNarrative = templateNarrative.replace(/\d{1,2}[:.]\d{2}\s?(น\.)?/g, '{incident_time}');
+      
+      // Registrations (e.g., HS-TXX, RA-73141, B-1234)
+      templateNarrative = templateNarrative.replace(/[A-Z0-9]{1,3}-[A-Z0-9]{3,5}/g, '{registration}');
+      
+      // Thai Dates (e.g., วันที่ 27 ธ.ค.68)
+      templateNarrative = templateNarrative.replace(/วันที่\s?\d{1,2}\s+[ก-ฮ]{2,3}\.?\s?(\d{2,4})?/g, 'วันที่ {date}');
 
       // Save with blank formData to ensure it loads empty for the next use
       const { error } = await saveTemplate(name, {}, templateNarrative, extraPreview);
