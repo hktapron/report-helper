@@ -23,11 +23,11 @@ export const translateToCAAT22 = async (thaiText, formData) => {
   const safeData = formData || {};
   const today = new Date().toLocaleDateString('en-GB');
 
-  // ใช้โมเดล Flash เพื่อความรวดเร็วและประหยัด (Fallback 2.5 -> 1.5)
+  // ใช้โมเดล Flash เวอร์ชั่นล่าสุดเพื่อความรวดเร็วและแม่นยำ
   let model;
   try {
     model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.0-flash-lite", 
       systemInstruction: "You are an expert aviation translator. Always translate the provided text using precise standard aviation terminology and maintain a highly formal, professional tone."
     });
   } catch (e) {
