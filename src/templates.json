@@ -59,8 +59,8 @@
       {"id": "violation_detail", "label": "รายละเอียดความผิด", "type": "textarea", "placeholder": "เช่น ขับด้วยความเร็ว 40 กม./ชม."},
       {"id": "seizure_days", "label": "จำนวนวันที่ยึด", "type": "number", "default": "7"},
       {"id": "seizure_start", "label": "เริ่มวันที่", "type": "date", "default": "today"},
-      {"id": "seizure_end", "label": "ถึงวันที่ (Auto)", "type": "text", "readOnly": true},
-      {"id": "retraining_date", "label": "วันเข้าอบรม (Auto)", "type": "text", "readOnly": true}
+      {"id": "seizure_end", "label": "ถึงวันที่", "type": "date"},
+      {"id": "retraining_date", "label": "วันเข้าอบรม", "type": "date"}
     ]
   }
 ]

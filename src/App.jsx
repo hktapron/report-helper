@@ -576,9 +576,13 @@ const App = () => {
           )}
         </div>
 
-        <div className="mode-switcher" style={{ marginTop: 'auto', padding: '1rem' }}>
-           <button className="btn btn-ghost btn-full" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-              สลับเป็น: {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'รายงานเหตุการณ์'}
+        <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
+           <button 
+             className="btn btn-primary btn-full" 
+             style={{ height: '52px', fontSize: '0.9rem', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-blue))' }}
+             onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}
+           >
+              สลับเป็น: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
            </button>
         </div>
       </aside>
@@ -592,7 +596,11 @@ const App = () => {
         >
           <div className={`card ${isDragOver ? 'drop-zone-active' : ''}`}>
             <div className="card-header">
-              <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
+              <h2 className="card-title">
+                {selectedTemplate?.mode === 'incident' && selectedTemplate?.trigger === 'new' 
+                  ? 'รายงานเหตุการณ์ไม่ปกติ' 
+                  : (selectedTemplate?.name || 'กรุณาเลือกแม่แบบ')}
+              </h2>
               <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
             </div>
             <div className="form-body">
@@ -634,8 +642,20 @@ const App = () => {
             <div className="card-header">
               <div className="card-title">Preview</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }} onClick={handleSaveAsTemplate}>บันทึกฟอร์ม</button>
-                <button className="btn btn-primary" style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }} onClick={copyThai}>คัดลอกและบันทึก</button>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', background: 'var(--accent-indigo)' }} 
+                  onClick={handleSaveAsTemplate}
+                >
+                  บันทึกเป็นฟอร์ม
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))' }} 
+                  onClick={copyThai}
+                >
+                  คัดลอกและบันทึกประวัติ
+                </button>
               </div>
             </div>
             <div className="preview-body-v2">
