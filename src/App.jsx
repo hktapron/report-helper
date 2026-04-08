@@ -263,7 +263,7 @@ const App = () => {
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="app-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: 'var(--accent-blue)' }}>
+          <div className="app-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: 'var(--accent-indigo)' }}>
             VTSP Report Helper
           </div>
           <div className="app-title" style={{ fontSize: '1.25rem', opacity: 0.9 }}>
@@ -271,7 +271,7 @@ const App = () => {
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
              <span>ผู้ใช้งาน: <strong>{user.username}</strong></span>
-             <span style={{ cursor: 'pointer', color: 'var(--accent-pink)', fontWeight: '600' }} onClick={() => {setUser(null); setReportMode(null);}}>ออกจากระบบ</span>
+             <span style={{ cursor: 'pointer', color: 'var(--accent-red)', fontWeight: '600' }} onClick={() => {setUser(null); setReportMode(null);}}>ออกจากระบบ</span>
           </div>
         </div>
         
@@ -299,7 +299,7 @@ const App = () => {
 
           {pinnedHistory.length > 0 && (
             <>
-              <div style={{ marginTop: '1.5rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--accent-blue)', fontWeight: 'bold' }}>📌 รายการปักหมุด</div>
+              <div style={{ marginTop: '1.5rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 'bold' }}>📌 รายการปักหมุด</div>
               {pinnedHistory.map(item => (
                 <div key={item.id} className={`template-item ${formData.id === item.id ? 'active' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => {
                   setReportMode(item.mode || 'incident');
@@ -312,7 +312,7 @@ const App = () => {
                   <div className="template-name" style={{ flex: 1 }}>{getSmartTitle(item)}</div>
                   <div 
                     title="เลิกปักหมุด"
-                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '4px', fontSize: '0.9rem' }} 
+                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'var(--accent-indigo-soft)', borderRadius: '4px', fontSize: '0.9rem' }} 
                     onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
                   >📌</div>
                 </div>
@@ -324,7 +324,7 @@ const App = () => {
         <div className="history-section" style={{ flex: 1, overflowY: 'auto' }}>
           <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <div className="history-title" style={{ padding: 0 }}>ประวัติ</div>
-            <button className="btn btn-ghost" style={{ padding: '0.1rem 0.4rem', fontSize: '0.65rem', borderColor: 'rgba(56, 189, 248, 0.3)' }} onClick={exportToCSV}>
+            <button className="btn btn-ghost" style={{ padding: '0.1rem 0.4rem', fontSize: '0.65rem', borderColor: 'var(--border-subtle)' }} onClick={exportToCSV}>
               📥 Export CSV
             </button>
           </div>
@@ -354,7 +354,7 @@ const App = () => {
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} title="ปักหมุด">📍</span>
                     <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-pink)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ">🗑️</span>
+                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ">🗑️</span>
                   </>
                 )}
               </div>
@@ -377,7 +377,7 @@ const App = () => {
         </div>
 
         <div className="mode-switcher">
-           <button className="btn btn-ghost btn-full" style={{ fontSize: '0.85rem', borderColor: 'var(--accent-blue)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+           <button className="btn btn-ghost btn-full" style={{ fontSize: '0.85rem', borderColor: 'var(--accent-indigo)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
               สลับไปที่: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
            </button>
         </div>
@@ -440,7 +440,7 @@ const App = () => {
                 <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>คัดลอก</button>
               </div>
               <div className="preview-body-v2">
-                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-blue)' }} />
+                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-indigo)' }} />
               </div>
             </div>
           )}

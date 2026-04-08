@@ -12,19 +12,19 @@ const ModeSelector = ({ onSelect }) => {
         </p>
         
         <div className="mode-grid">
-          <div className="mode-item" onClick={() => onSelect('incident')}>
+          <div className="mode-item" onClick={() => onSelect('incident')} style={{ padding: '2rem' }}>
             <span className="mode-icon">📋</span>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>รายงานเหตุการณ์ไม่ปกติ</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>รายงานเหตุการณ์ไม่ปกติ</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.5', textAlign: 'center' }}>
               บันทึกเหตุการณ์ทางเทคนิค, ปัญหาหลุมจอด<br/>
               และเหตุการณ์อื่นๆ
             </p>
           </div>
           
-          <div className="mode-item" onClick={() => onSelect('violator')}>
+          <div className="mode-item" onClick={() => onSelect('violator')} style={{ padding: '2rem' }}>
             <span className="mode-icon">⚖️</span>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>รายงานผู้กระทำความผิด</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>บันทึกการกระทำความผิดกฎจราจร และการยึดบัตรอนุญาตเข้าเขตการบิน</p>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>รายงานผู้กระทำความผิด</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.5', textAlign: 'center' }}>บันทึกการกระทำความผิดกฎจราจร<br/>และการยึดบัตรอนุญาตเข้าเขตการบิน</p>
           </div>
         </div>
 

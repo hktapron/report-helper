@@ -49,33 +49,31 @@ const Login = ({ onLogin }) => {
           <p style={{ color: 'var(--text-secondary)', marginTop: '1.5rem', marginBottom: '2rem', fontSize: '1.1rem' }}>กรุณาเข้าสู่ระบบ</p>
         </div>
         
-        <form className="login-form" onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <form className="login-form" onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="input-group">
-            <label style={{ marginBottom: '0.75rem', display: 'block' }}>ชื่อผู้ใช้งาน (Username)</label>
+            <label style={{ marginBottom: '0.5rem', display: 'block' }}>ชื่อผู้ใช้งาน (Username)</label>
             <input 
               type="text" 
-              placeholder="กรอกชื่อผู้ใช้งาน..." 
+              placeholder="Username" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              style={{ padding: '1.1rem' }}
             />
           </div>
           <div className="input-group">
-            <label style={{ marginBottom: '0.75rem', display: 'block' }}>รหัสผ่าน (Password)</label>
+            <label style={{ marginBottom: '0.5rem', display: 'block' }}>รหัสผ่าน (Password)</label>
             <input 
               type="password" 
-              placeholder="กรอกรหัสผ่าน..." 
+              placeholder="Password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{ padding: '1.1rem' }}
             />
           </div>
           
-          {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>{error}</div>}
+          {error && <div style={{ color: 'var(--accent-red)', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.05)', padding: '0.5rem', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>{error}</div>}
           
-          <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1.5rem', padding: '1.2rem' }}>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1rem' }}>
             {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
