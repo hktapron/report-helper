@@ -231,13 +231,18 @@ const App = () => {
       const oldValue = prevFormDataRef.current[id];
       const newValue = value;
       
-      // PHASE 51: HARDENED SYNC PROTECTION
-      // Only sync if the old value is meaningful (not blank, not just whitespace, and not a single character)
-      // This prevents the "Global Overwrite" bug when typing initial characters or clearing fields.
-      const isMeaningful = oldValue && String(oldValue).trim().length > 1;
+      // PHASE 52: DUAL-TRACK ADAPTIVE SYNC
+      // Track 1: Placeholder Replacement (Delayed Filling)
+      const tagRegex = new RegExp(`\\{${id}\\}|\\[${id}\\]`, 'g');
+      if (tagRegex.test(thaiPreview)) {
+        setThaiPreview(current => current.replace(tagRegex, String(newValue)));
+      }
+
+      // Track 2: Precision Semantic Sync (Existing Data Update)
+      // Only trigger if we have an oldValue and it's meaningful or anchored
+      const isMeaningful = oldValue && String(oldValue).trim().length > 0;
 
       if (isMeaningful && newValue !== oldValue) {
-        // PHASE 50: PRECISION SEMANTIC SYNC 
         const keywordMap = {
           flight_no: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)/,
           registration: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)/,
@@ -248,18 +253,24 @@ const App = () => {
           atd: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)/,
           airline: /(สายการบิน)/,
           stand_no: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)/,
-          pax: /(ผู้โดยสาร|จำนวนผู้โดยสาร)/
+          pax: /(ผู้โดยสาร|จำนวนผู้โดยสาร)/,
+          time_1: /(เมื่อเวลา|เวลา)/,
+          time_2: /(ต่อมาเวลา|เวลา)/,
+          time_3: /(ต่อมาเวลา|เวลา)/,
+          time_4: /(ต่อมาเวลา|เวลา)/,
+          time_5: /(ต่อมาเวลา|เวลา)/,
+          time_6: /(ต่อมาเวลา|เวลา)/
         };
 
         const kw = keywordMap[id];
         const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         if (kw) {
-          // Surgical Replacement: (Keyword) (Optional Separator) (Value)
+          // Surgical Replacement with keywords
           const regex = new RegExp(`(${kw.source}\\s?[:：]?\\s?)${escapedOld}`, 'g');
           setThaiPreview(current => current.replace(regex, `$1${newValue}`));
         } else if (String(oldValue).length > 2) {
-          // Fallback: Only replace globally if the value is unique enough (>2 chars)
+          // Fallback global replacement only for long identifiers
           const regex = new RegExp(escapedOld, 'g');
           setThaiPreview(current => current.replace(regex, String(newValue)));
         }
