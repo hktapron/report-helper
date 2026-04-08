@@ -27,7 +27,7 @@ export const translateToCAAT22 = async (thaiText, formData) => {
   let model;
   try {
     model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-lite", 
+      model: "gemini-2.5-flash-lite", 
       systemInstruction: "You are an expert aviation translator. Always translate the provided text using precise standard aviation terminology and maintain a highly formal, professional tone."
     });
   } catch (e) {
