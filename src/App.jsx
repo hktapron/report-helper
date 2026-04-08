@@ -9,7 +9,7 @@ import { useUserTemplates } from './hooks/useUserTemplates';
 import { 
   Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
   Search, Calendar, Clock, ChevronRight, User, Terminal, 
-  ArrowRight, History 
+  ArrowRight, History, FileText
 } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
