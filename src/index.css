@@ -362,6 +362,7 @@ input:focus, textarea:focus {
   padding: 4rem; /* Increased from 3rem */
   border-radius: 32px;
   text-align: center;
+  transform: translateY(-5%); /* Lift slightly higher for balance */
 }
 
 .mode-grid {
@@ -525,6 +526,8 @@ input:focus, textarea:focus {
 
   .mode-card {
     padding: 2rem 1.5rem;
+    margin-top: -10vh; /* Specific mobile lift */
+    transform: translateY(0);
   }
 
   .app-title {

@@ -231,8 +231,13 @@ const App = () => {
       const oldValue = prevFormDataRef.current[id];
       const newValue = value;
       
-      if (oldValue && newValue && oldValue !== newValue) {
-        // PHASE 50: PRECISION SEMANTIC SYNC (Fixes Global Overwrite Bug)
+      // PHASE 51: HARDENED SYNC PROTECTION
+      // Only sync if the old value is meaningful (not blank, not just whitespace, and not a single character)
+      // This prevents the "Global Overwrite" bug when typing initial characters or clearing fields.
+      const isMeaningful = oldValue && String(oldValue).trim().length > 1;
+
+      if (isMeaningful && newValue !== oldValue) {
+        // PHASE 50: PRECISION SEMANTIC SYNC 
         const keywordMap = {
           flight_no: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)/,
           registration: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)/,
@@ -251,7 +256,6 @@ const App = () => {
 
         if (kw) {
           // Surgical Replacement: (Keyword) (Optional Separator) (Value)
-          // We replace only the value part following the keyword.
           const regex = new RegExp(`(${kw.source}\\s?[:：]?\\s?)${escapedOld}`, 'g');
           setThaiPreview(current => current.replace(regex, `$1${newValue}`));
         } else if (String(oldValue).length > 2) {
