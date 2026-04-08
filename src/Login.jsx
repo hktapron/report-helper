@@ -78,9 +78,9 @@ const Login = ({ onLogin }) => {
           </button>
         </form>
 
-        <div style={{ marginTop: '3.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.6', opacity: 0.8 }}>
-          ส่วนปฏิบัติการเขตการบิน ฝ่ายปฏิบัติการเขตการบิน<br/>
-          ท่าอากาศยานภูเก็ต (Apron Control)
+        <div style={{ marginTop: '3.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.8', opacity: 0.8 }}>
+          งานบริการเขตการบิน ส่วนปฏิบัติการเขตการบิน<br/>
+          ฝ่ายปฏิบัติการเขตการบิน ท่าอากาศยานภูเก็ต (Apron Control)
         </div>
       </div>
     </div>

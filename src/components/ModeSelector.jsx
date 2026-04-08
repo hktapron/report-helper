@@ -33,9 +33,9 @@ const ModeSelector = ({ onSelect }) => {
           </div>
         </div>
 
-        <div style={{ marginTop: '4rem', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.6' }}>
-          งานเขตการบิน ส่วนบริการเขตการบิน<br/>
-          ฝ่ายปฏิบัติการเขตการบิน ท่าอากาศยานภูเก็ต
+        <div style={{ marginTop: '4rem', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.8' }}>
+          งานบริการเขตการบิน ส่วนปฏิบัติการเขตการบิน<br/>
+          ฝ่ายปฏิบัติการเขตการบิน ท่าอากาศยานภูเก็ต (Apron Control)
         </div>
       </div>
     </div>

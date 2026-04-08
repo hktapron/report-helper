@@ -307,7 +307,8 @@ input:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 2rem 1rem;
   background: var(--bg-dark);
   position: relative;
 }
