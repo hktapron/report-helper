@@ -139,8 +139,8 @@ const App = () => {
       });
   }, [history, reportMode, searchTerm]);
 
-  const pinnedHistory = filteredHistory.filter(h => h.isPinned);
-  const normalHistory = filteredHistory.filter(h => !h.isPinned);
+  // Note: pinnedHistory and normalHistory are no longer needed as separate constants 
+  // because we sort them together in filteredHistory as requested.
 
   const handleInputChange = (id, value) => {
     setFormData(prev => {
@@ -213,10 +213,15 @@ const App = () => {
   };
 
   const handleSaveAsTemplate = async () => {
-    const name = window.prompt("กรุณาตั้งชื่อแม่แบบฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
+    const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
       const { error } = await saveTemplate(name, formData, thaiPreview, extraPreview);
-      if (!error) alert("บันทึกเป็นแม่แบบแล้ว");
+      if (!error) {
+        alert("บันทึกฟอร์มเรียบร้อยแล้ว");
+      } else {
+        alert("เกิดข้อผิดพลาดในการบันทึก: " + (error.message || "โปรดตรวจสอบ SQL Migration"));
+        console.error("Save template error:", error);
+      }
     }
   };
   const startRename = (e, item) => {
@@ -270,57 +275,91 @@ const App = () => {
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
   return (
-    <div className="app-container">
-      <div className="mobile-header">
-        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
-        <div className="app-title" style={{ fontSize: '1.1rem' }}>
-          {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
+    <div className="app-container" style={{ flexDirection: 'column' }}>
+      {/* Unified Enterprise Header */}
+      <header className="enterprise-header" style={{ 
+        height: '64px', 
+        borderBottom: '1px solid var(--border-subtle)', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'var(--bg-dark)',
+        position: 'relative',
+        zIndex: 20
+      }}>
+        {/* Left Side: Logo & Workspace Title */}
+        <div style={{ position: 'absolute', left: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ padding: '8px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '12px' }}>
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#fbbf24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+             </svg>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: '800', fontSize: '1rem', letterSpacing: '-0.02em' }}>VTSP Report Helper</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>ฝ่ายปฏิบัติการเขตการบิน</span>
+          </div>
         </div>
-      </div>
 
-      <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+        {/* Center: Mode Indicator */}
+        <div className="report-mode-badge" style={{ 
+          background: 'var(--bg-card)', 
+          border: '1px solid var(--border-subtle)', 
+          padding: '4px 12px', 
+          borderRadius: '99px',
+          fontSize: '0.85rem',
+          fontWeight: '700',
+          color: 'var(--accent-indigo)'
+        }}>
+          {reportMode === 'incident' ? '🚨 รายงานเหตุการณ์ไม่ปกติ' : '⚖️ รายงานผู้กระทำความผิด'}
+        </div>
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="app-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: 'var(--accent-indigo)' }}>
-            VTSP Report Helper
-          </div>
-          <div className="app-title" style={{ fontSize: '1.25rem', opacity: 0.9 }}>
-            {reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด'}
-          </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-             <span>ผู้ใช้งาน: <strong>{user.username}</strong></span>
-             <span style={{ cursor: 'pointer', color: 'var(--accent-red)', fontWeight: '600' }} onClick={() => {setUser(null); setReportMode(null);}}>ออกจากระบบ</span>
+        {/* Right Side: User Controls */}
+        <div style={{ position: 'absolute', right: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>{user.username}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => {setUser(null); setReportMode(null);}}>Sign Out</div>
           </div>
         </div>
+      </header>
+
+      {/* Main 3-Column Workspace */}
+      <div className="workspace-grid" style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '280px 1fr 1fr', 
+        height: 'calc(100vh - 64px)',
+        overflow: 'hidden'
+      }}>
         
-        <div className="search-box">
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="ค้นหาแม่แบบ/ประวัติ..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        {/* Column 1: Navigator (Templates & History) */}
+        <aside className="sidebar" style={{ height: 'auto', borderRight: '1px solid var(--border-subtle)' }}>
+          <div className="search-box">
+             <input 
+              type="text" 
+              className="search-input" 
+              placeholder="ค้นหาแม่แบบ/ประวัติ..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-        <div className="template-list">
-          {filteredTemplates.map(t => (
-            <div 
-              key={t.id} 
-              className={`template-item ${selectedTemplate?.id === t.id ? 'active' : ''}`}
-              onClick={() => setSelectedTemplate(t)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Plus size={14} />
-              <div className="template-name">{t.name}</div>
+          <div className="sidebar-content" style={{ flex: 1, overflowY: 'auto' }}>
+            {/* Template Action */}
+            <div style={{ padding: '0 1rem 0.5rem' }}>
+              <button 
+                className="btn btn-primary btn-full" 
+                style={{ justifyContent: 'center', gap: '0.5rem', display: 'flex', alignItems: 'center' }}
+                onClick={() => setFormData({})}
+              >
+                <Plus size={16} /> สร้างรายงานใหม่
+              </button>
             </div>
-          ))}
 
-          {customTemplates && customTemplates.length > 0 && (
-            <>
-              <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>แม่แบบของฉัน</div>
-              {customTemplates.map(ct => (
+            {/* Custom Templates (Template Manager) */}
+            <div className="template-list">
+              <div className="section-title" style={{ padding: '1rem 0.5rem 0.5rem', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                แม่แบบฟอร์มของฉัน
+              </div>
+              {customTemplates && customTemplates.map(ct => (
                 <div 
                   key={ct.id} 
                   className="template-item" 
@@ -333,181 +372,142 @@ const App = () => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Save size={14} />
+                    <Save size={14} style={{ color: 'var(--accent-indigo)' }} />
                     <div className="template-name">{ct.name}</div>
                   </div>
                   <Trash2 
                     size={14} 
-                    style={{ cursor: 'pointer', opacity: 0.5 }} 
-                    onMouseOver={(e) => e.target.style.opacity = 1}
-                    onMouseOut={(e) => e.target.style.opacity = 0.5}
-                    onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบแม่แบบนี้?")) deleteTemplate(ct.id); }}
+                    className="delete-icon"
+                    style={{ cursor: 'pointer', opacity: 0.4 }} 
+                    onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }}
                   />
                 </div>
               ))}
-            </>
-          )}
+              {(!customTemplates || customTemplates.length === 0) && (
+                <div style={{ padding: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>ยังไม่มีแม่แบบฟอร์ม</div>
+              )}
+            </div>
 
-          {pinnedHistory.length > 0 && (
-            <>
-              <div style={{ marginTop: '1.5rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 'bold' }}>📌 รายการปักหมุด</div>
-              {pinnedHistory.map(item => (
-                <div key={item.id} className={`template-item ${formData.id === item.id ? 'active' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => {
+            {/* History List (Pinned Items first) */}
+            <div className="history-list" style={{ padding: '1rem 0.5rem' }}>
+              <div className="section-title" style={{ padding: '0.5rem', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                <span>ประวัติรายการ</span>
+                <span style={{ cursor: 'pointer' }} onClick={exportToCSV}>CSV</span>
+              </div>
+              {filteredHistory.map(item => (
+                <div key={item.id} className={`history-item ${formData.id === item.id ? 'active' : ''}`} onClick={() => {
                   setReportMode(item.mode || 'incident');
                   const t = templatesData.find(x => x.name === item.templateName);
                   setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
                   setFormData({ ...item.data, id: item.id });
                   setThaiPreview(item.preview || '');
-                  isEditingPreview.current = false; // Allow re-linking
+                  isEditingPreview.current = true;
                 }}>
-                  <div className="template-name" style={{ flex: 1 }}>{getSmartTitle(item)}</div>
-                  <div 
-                    title="เลิกปักหมุด"
-                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'var(--accent-indigo-soft)', borderRadius: '4px', fontSize: '0.9rem', color: 'var(--accent-red)' }} 
-                    onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
-                  >
-                    <Pin size={14} fill="var(--accent-red)" />
+                  <div className="history-info">
+                     {renamingId === item.id ? (
+                      <form onSubmit={submitRename} style={{ flex: 1, display: 'flex' }}>
+                        <input autoFocus className="search-input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onBlur={() => setRenamingId(null)} />
+                      </form>
+                    ) : (
+                      <>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <span 
+                            style={{ cursor: 'pointer', color: item.isPinned ? 'var(--accent-gold)' : 'var(--text-muted)' }} 
+                            onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
+                          >
+                            <Pin size={14} fill={item.isPinned ? "var(--accent-gold)" : "none"} />
+                          </span>
+                          <span style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={(e) => handleDelete(e, item.id)}><Trash2 size={14} /></span>
+                        </div>
+                      </>
+                    )}
                   </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '2px' }}>{formatRelativeTime(item.savedAt)}</div>
                 </div>
               ))}
-            </>
-          )}
-        </div>
-
-        <div className="history-section" style={{ flex: 1, overflowY: 'auto' }}>
-          <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div className="history-title" style={{ padding: 0 }}>ประวัติ</div>
-            <button className="btn btn-ghost" style={{ padding: '0.1rem 0.4rem', fontSize: '0.65rem', borderColor: 'var(--border-subtle)' }} onClick={exportToCSV}>
-              📥 Export CSV
-            </button>
-          </div>
-          {normalHistory.map(item => (
-            <div key={item.id} className="history-item" onClick={() => {
-              setReportMode(item.mode || 'incident');
-              const t = templatesData.find(x => x.name === item.templateName);
-              setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
-              setFormData(item.data || {});
-              setThaiPreview(item.preview || '');
-              isEditingPreview.current = true;
-            }}>
-              <div className="history-info">
-                {renamingId === item.id ? (
-                  <form onSubmit={submitRename} style={{ flex: 1, display: 'flex' }}>
-                    <input 
-                      autoFocus
-                      className="search-input" 
-                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
-                      value={renameValue} 
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onBlur={() => setRenamingId(null)}
-                    />
-                  </form>
-                ) : (
-                  <>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
-                    <span 
-                      style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} 
-                      onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }} 
-                      title="ปักหมุด"
-                    >
-                      <Pin size={16} />
-                    </span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem' }} onClick={(e) => startRename(e, item)} title="เปลี่ยนชื่อ">✎</span>
-                    <span style={{ cursor: 'pointer', opacity: 0.5, marginLeft: '0.5rem', fontSize: '1.1rem', color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} title="ลบประวัติ"><Trash2 size={16} /></span>
-                  </>
-                )}
-              </div>
-              <div className="history-date" style={{ marginTop: '0.2rem' }}>
-                {formatRelativeTime(item.savedAt)}
-              </div>
             </div>
-          ))}
-
-          {hasMore && (
-            <button 
-              className="btn btn-ghost btn-full" 
-              style={{ marginTop: '1rem', fontSize: '0.75rem', opacity: 0.7 }} 
-              onClick={loadMore}
-              disabled={loadingHistory}
-            >
-              {loadingHistory ? 'กำลังโหลด...' : 'ดูรายการเก่ากว่านี้...'}
-            </button>
-          )}
-        </div>
-
-        <div className="mode-switcher">
-           <button className="btn btn-ghost btn-full" style={{ fontSize: '0.85rem', borderColor: 'var(--accent-indigo)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-              สลับไปที่: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
-           </button>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <section className="card">
-          <div className="card-header">
-            <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
-            {selectedTemplate && (
-              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
-            )}
           </div>
-          <div className="form-body">
-            {selectedTemplate?.fields?.map(field => (
-              <div key={field.id} className={`form-field ${field.type === 'textarea' ? 'full' : ''}`}>
-                <label>{field.label}</label>
-                {field.type === 'textarea' ? (
-                  <textarea rows={3} value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
-                ) : (
-                  <input 
-                    type={field.type} 
-                    value={formData[field.id] || ''} 
-                    onChange={(e) => handleInputChange(field.id, e.target.value)}
-                    readOnly={field.readOnly}
-                  />
-                )}
-              </div>
-            ))}
 
-            {reportMode === 'incident' && (
-              <div className="special-section" style={{ gridColumn: '1 / -1' }}>
-                <label className="toggle-container">
-                  <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
-                  <span className="toggle-label">ต้องการรายงาน กพท.22 (ภาษาอังกฤษ)</span>
-                </label>
-              </div>
-            )}
+          <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+             <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+                สลับเป็น: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
+             </button>
           </div>
-        </section>
+        </aside>
 
-        <section className="preview-container">
-          <div className="card" style={{ flex: 1.2 }}>
+        {/* Column 2: Editor (Form) */}
+        <section className="editor-column" style={{ overflowY: 'auto', padding: '1.5rem', background: '#0d0d10' }}>
+          <div className="card" style={{ height: 'fit-content' }}>
             <div className="card-header">
-              <h2 className="card-title">Preview (Thai)</h2>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={handleSaveAsTemplate} title="บันทึกฟอร์มนี้เป็นแม่แบบไว้ใช้คราวหน้า">💾 บันทึกเป็นแม่แบบ</button>
-                <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={copyThai}>คัดลอกและบันทึก</button>
-              </div>
+              <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
+              <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={() => setFormData({})}>ล้างข้อมูล</button>
             </div>
-            <div className="preview-body-v2">
-              <textarea 
-                className="preview-textarea" 
-                value={thaiPreview} 
-                onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }} 
-              />
+            <div className="form-body">
+              {selectedTemplate?.fields?.map(field => (
+                <div key={field.id} className={`form-field ${field.type === 'textarea' ? 'full' : ''}`}>
+                  <label>{field.label}</label>
+                  {field.type === 'textarea' ? (
+                    <textarea rows={4} value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
+                  ) : (
+                    <input type={field.type} value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} readOnly={field.readOnly} />
+                  )}
+                </div>
+              ))}
+
+              {reportMode === 'incident' && (
+                <div className="special-section" style={{ gridColumn: '1 / -1' }}>
+                  <label className="toggle-container">
+                    <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
+                    <span className="toggle-label">แสดงรายงาน กพท.22 (ภาษาอังกฤษ)</span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
-          {(extraPreview && reportMode === 'incident') && (
-            <div className="card" style={{ flex: 0.8 }}>
-              <div className="card-header">
-                <h2 className="card-title">CAAT-22 (ENG)</h2>
-                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>คัดลอก</button>
-              </div>
-              <div className="preview-body-v2">
-                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-indigo)' }} />
-              </div>
-            </div>
-          )}
         </section>
-      </main>
+
+        {/* Column 3: Previews */}
+        <section className="preview-column" style={{ overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'var(--bg-dark)' }}>
+           {/* Thai Preview */}
+           <div className="card" style={{ flex: 'none', minHeight: '400px' }}>
+              <div className="card-header">
+                <h2 className="card-title">Preview (Thai)</h2>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-ghost" onClick={handleSaveAsTemplate} title="บันทึกเป็นแม่แบบฟอร์ม">💾 บันทึกแม่แบบ</button>
+                  <button className="btn btn-primary" onClick={copyThai}>บันทึกประวัติ</button>
+                </div>
+              </div>
+              <div style={{ flex: 1, padding: '1.5rem', display: 'flex' }}>
+                <textarea 
+                  className="sarabun-preview" 
+                  value={thaiPreview} 
+                  onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }}
+                  style={{ flex: 1, background: 'transparent', border: 'none', resize: 'none', color: 'var(--text-primary)', outline: 'none' }}
+                />
+              </div>
+           </div>
+
+           {/* CAAT-22 Preview (Conditional) */}
+           {(extraPreview && reportMode === 'incident') && (
+             <div className="card" style={{ flex: 'none', minHeight: '300px' }}>
+                <div className="card-header">
+                  <h2 className="card-title">CAAT-22 (ENG)</h2>
+                  <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>คัดลอก</button>
+                </div>
+                <div style={{ flex: 1, padding: '1.5rem', display: 'flex' }}>
+                  <textarea 
+                    className="sarabun-preview" 
+                    value={extraPreview} 
+                    readOnly 
+                    style={{ flex: 1, background: 'transparent', border: 'none', resize: 'none', color: 'var(--accent-indigo)', outline: 'none' }}
+                  />
+                </div>
+             </div>
+           )}
+        </section>
+
+      </div>
     </div>
   );
 };
