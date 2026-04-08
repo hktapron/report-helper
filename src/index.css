@@ -1,30 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap');
-
-/* TH Sarabun PSK - Local/Standard fallback */
-@font-face {
-  font-family: 'TH Sarabun PSK';
-  src: local('TH Sarabun PSK');
-}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Strict Enterprise Zinc Palette (shadcn/ui style) */
-  --bg-dark: #09090b;       /* Zinc 950 */
-  --bg-sidebar: #09090b;    /* Mirror main dark */
-  --bg-card: #18181b;       /* Zinc 900 */
-  --bg-input: #09090b;      /* Zinc 950 */
+  /* Premium Muted Palette (Original Phase 20) */
+  --bg-dark: #09090b;
+  --bg-sidebar: #0f0f12;
+  --bg-card: #09090b;
+  --bg-input: #121217;
   
-  --accent-indigo: #6366f1; /* Indigo 500 */
+  --accent-indigo: #6366f1;
   --accent-indigo-soft: rgba(99, 102, 241, 0.1);
-  --accent-blue: #3b82f6;   /* Blue 600 */
-  --accent-red: #ef4444;    /* Red 500 */
-  --accent-gold: #fbbf24;   /* Amber 400 */
+  --accent-blue: #3b82f6;
+  --accent-red: #ef4444;
   
-  --text-primary: #f4f4f5;  /* Zinc 100 */
-  --text-secondary: #a1a1aa;/* Zinc 400 */
-  --text-muted: #71717a;    /* Zinc 500 */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
   
-  --border-subtle: #27272a;  /* Zinc 800 */
-  --border-active: #3f3f46;  /* Zinc 700 */
+  --border-subtle: #27272a;
+  --border-active: #3f3f46;
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
 }
@@ -36,18 +29,13 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg-dark);
   color: var(--text-primary);
   height: 100vh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
-}
-
-.sarabun-preview {
-  font-family: 'TH Sarabun PSK', 'Sarabun', sans-serif !important;
-  font-size: 22px !important; /* 16pt */
-  line-height: 1.25 !important;
+  font-size: 14px; /* Set smaller base font size */
 }
 
 /* Scrollbars */
@@ -290,29 +278,29 @@ input:focus, textarea:focus {
 }
 
 .btn-primary {
-  background: var(--accent-indigo);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-indigo);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: var(--accent-indigo-soft);
+  color: var(--accent-indigo);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-secondary);
-  border-color: var(--border-subtle);
+  color: var(--text-muted);
+  border: 1px solid transparent;
 }
 
 .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.03);
-  color: var(--text-primary);
-  border-color: var(--border-active);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
 }
 
-.btn-full { width: 100%; }
+.btn-full { width: 100%; margin-bottom: 0.5rem; }
 
 /* Login Styling */
 .login-container {

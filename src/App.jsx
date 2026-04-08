@@ -133,14 +133,14 @@ const App = () => {
       })
       .sort((a, b) => {
         // Sort by Pinned First, then by Date
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return new Date(b.savedAt) - new Date(a.savedAt);
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.saved_at || b.savedAt) - new Date(a.saved_at || a.savedAt);
       });
   }, [history, reportMode, searchTerm]);
 
-  // Note: pinnedHistory and normalHistory are no longer needed as separate constants 
-  // because we sort them together in filteredHistory as requested.
+  const pinnedHistory = filteredHistory.filter(h => h.is_pinned || h.isPinned);
+  const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
     setFormData(prev => {
@@ -275,95 +275,61 @@ const App = () => {
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
   return (
-    <div className="app-container" style={{ flexDirection: 'column' }}>
-      {/* Unified Enterprise Header */}
-      <header className="enterprise-header" style={{ 
-        height: '64px', 
-        borderBottom: '1px solid var(--border-subtle)', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: 'var(--bg-dark)',
-        position: 'relative',
-        zIndex: 20
-      }}>
-        {/* Left Side: Logo & Workspace Title */}
-        <div style={{ position: 'absolute', left: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '8px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '12px' }}>
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#fbbf24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-             </svg>
+    <div className="app-container">
+      <div className="mobile-header">
+        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
+        <div className="app-title" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+          {reportMode === 'incident' ? 'Incident Report' : 'Violator Report'}
+        </div>
+      </div>
+
+      <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
+          <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>
+            VTSP
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: '800', fontSize: '1rem', letterSpacing: '-0.02em' }}>VTSP Report Helper</span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>ฝ่ายปฏิบัติการเขตการบิน</span>
+          <div className="app-title" style={{ fontSize: '1.1rem', fontWeight: '600', opacity: 0.8 }}>
+            Report Helper
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+             User: <strong>{user.username}</strong> | <span style={{ cursor: 'pointer', color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}}>Logout</span>
           </div>
         </div>
-
-        {/* Center: Mode Indicator */}
-        <div className="report-mode-badge" style={{ 
-          background: 'var(--bg-card)', 
-          border: '1px solid var(--border-subtle)', 
-          padding: '4px 12px', 
-          borderRadius: '99px',
-          fontSize: '0.85rem',
-          fontWeight: '700',
-          color: 'var(--accent-indigo)'
-        }}>
-          {reportMode === 'incident' ? '🚨 รายงานเหตุการณ์ไม่ปกติ' : '⚖️ รายงานผู้กระทำความผิด'}
-        </div>
-
-        {/* Right Side: User Controls */}
-        <div style={{ position: 'absolute', right: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: '700' }}>{user.username}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => {setUser(null); setReportMode(null);}}>Sign Out</div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main 3-Column Workspace */}
-      <div className="workspace-grid" style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '280px 1fr 1fr', 
-        height: 'calc(100vh - 64px)',
-        overflow: 'hidden'
-      }}>
         
-        {/* Column 1: Navigator (Templates & History) */}
-        <aside className="sidebar" style={{ height: 'auto', borderRight: '1px solid var(--border-subtle)' }}>
-          <div className="search-box">
-             <input 
-              type="text" 
-              className="search-input" 
-              placeholder="ค้นหาแม่แบบ/ประวัติ..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="search-box">
+          <input 
+            type="text" 
+            className="search-input" 
+            placeholder="ค้นหา..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-          <div className="sidebar-content" style={{ flex: 1, overflowY: 'auto' }}>
-            {/* Template Action */}
-            <div style={{ padding: '0 1rem 0.5rem' }}>
-              <button 
-                className="btn btn-primary btn-full" 
-                style={{ justifyContent: 'center', gap: '0.5rem', display: 'flex', alignItems: 'center' }}
-                onClick={() => setFormData({})}
-              >
-                <Plus size={16} /> สร้างรายงานใหม่
-              </button>
-            </div>
+        <button 
+          className="btn btn-primary" 
+          style={{ margin: '0 1rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+          onClick={() => {
+            const first = templatesData.find(t => t.mode === reportMode);
+            setSelectedTemplate(first);
+            setFormData({});
+          }}
+        >
+          <Plus size={16} /> สร้างรายงานใหม่
+        </button>
 
-            {/* Custom Templates (Template Manager) */}
-            <div className="template-list">
-              <div className="section-title" style={{ padding: '1rem 0.5rem 0.5rem', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                แม่แบบฟอร์มของฉัน
-              </div>
-              {customTemplates && customTemplates.map(ct => (
+        <div className="template-list" style={{ padding: '0 0.5rem' }}>
+          {/* Custom Templates Section (Integrated subtly) */}
+          {customTemplates && customTemplates.length > 0 && (
+            <div className="history-section" style={{ border: 'none', paddingTop: 0 }}>
+              <div className="history-title">แม่แบบฟอร์มของฉัน</div>
+              {customTemplates.map(ct => (
                 <div 
                   key={ct.id} 
                   className="template-item" 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}
                   onClick={() => {
                     setFormData(ct.data || {});
                     setThaiPreview(ct.preview || '');
@@ -372,7 +338,7 @@ const App = () => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Save size={14} style={{ color: 'var(--accent-indigo)' }} />
+                    <Save size={14} style={{ opacity: 0.6 }} />
                     <div className="template-name">{ct.name}</div>
                   </div>
                   <Trash2 
@@ -383,65 +349,66 @@ const App = () => {
                   />
                 </div>
               ))}
-              {(!customTemplates || customTemplates.length === 0) && (
-                <div style={{ padding: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>ยังไม่มีแม่แบบฟอร์ม</div>
-              )}
             </div>
+          )}
 
-            {/* History List (Pinned Items first) */}
-            <div className="history-list" style={{ padding: '1rem 0.5rem' }}>
-              <div className="section-title" style={{ padding: '0.5rem', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
-                <span>ประวัติรายการ</span>
-                <span style={{ cursor: 'pointer' }} onClick={exportToCSV}>CSV</span>
-              </div>
-              {filteredHistory.map(item => (
-                <div key={item.id} className={`history-item ${formData.id === item.id ? 'active' : ''}`} onClick={() => {
-                  setReportMode(item.mode || 'incident');
-                  const t = templatesData.find(x => x.name === item.templateName);
-                  setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
-                  setFormData({ ...item.data, id: item.id });
-                  setThaiPreview(item.preview || '');
-                  isEditingPreview.current = true;
-                }}>
-                  <div className="history-info">
-                     {renamingId === item.id ? (
-                      <form onSubmit={submitRename} style={{ flex: 1, display: 'flex' }}>
-                        <input autoFocus className="search-input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onBlur={() => setRenamingId(null)} />
-                      </form>
-                    ) : (
-                      <>
-                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getSmartTitle(item)}</span>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <span 
-                            style={{ cursor: 'pointer', color: item.isPinned ? 'var(--accent-gold)' : 'var(--text-muted)' }} 
-                            onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
-                          >
-                            <Pin size={14} fill={item.isPinned ? "var(--accent-gold)" : "none"} />
-                          </span>
-                          <span style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={(e) => handleDelete(e, item.id)}><Trash2 size={14} /></span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '2px' }}>{formatRelativeTime(item.savedAt)}</div>
+          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
+
+          <div className="history-section" style={{ border: 'none', paddingTop: 0 }}>
+            <div className="history-title">ประวัติรายการ</div>
+            {pinnedHistory.map(item => (
+              <div key={item.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => {
+                setReportMode(item.mode || 'incident');
+                setFormData(item.data || {});
+                setThaiPreview(item.preview || '');
+                isEditingPreview.current = true;
+              }}>
+                <div className="history-info">
+                   <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                   <Pin size={14} fill="var(--accent-indigo)" style={{ opacity: 0.8 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, true); }} />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+            
+            {normalHistory.map(item => (
+              <div key={item.id} className="history-item" onClick={() => {
+                setReportMode(item.mode || 'incident');
+                setFormData(item.data || {});
+                setThaiPreview(item.preview || '');
+                isEditingPreview.current = true;
+              }}>
+                <div className="history-info">
+                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Pin size={14} style={{ opacity: 0.4 }} onClick={(e) => { e.stopPropagation(); togglePin(item.id, false); }} />
+                    <Trash2 size={14} style={{ opacity: 0.4, color: 'var(--accent-red)' }} onClick={(e) => handleDelete(e, item.id)} />
+                  </div>
+                </div>
+                <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
+              </div>
+            ))}
           </div>
 
-          <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
-             <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-                สลับเป็น: {reportMode === 'incident' ? 'รายงานผู้กระทำความผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
-             </button>
-          </div>
-        </aside>
+          {hasMore && (
+            <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
+              โหลดเพิ่ม...
+            </button>
+          )}
+        </div>
 
-        {/* Column 2: Editor (Form) */}
-        <section className="editor-column" style={{ overflowY: 'auto', padding: '1.5rem', background: '#0d0d10' }}>
-          <div className="card" style={{ height: 'fit-content' }}>
+        <div className="mode-switcher" style={{ marginTop: 'auto', padding: '1rem' }}>
+           <button className="btn btn-ghost btn-full" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+              สลับเป็น: {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'รายงานเหตุการณ์'}
+           </button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <section style={{ flex: '0 0 55%' }}>
+          <div className="card">
             <div className="card-header">
               <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
-              <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={() => setFormData({})}>ล้างข้อมูล</button>
+              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
             </div>
             <div className="form-body">
               {selectedTemplate?.fields?.map(field => (
@@ -454,12 +421,11 @@ const App = () => {
                   )}
                 </div>
               ))}
-
               {reportMode === 'incident' && (
                 <div className="special-section" style={{ gridColumn: '1 / -1' }}>
                   <label className="toggle-container">
                     <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
-                    <span className="toggle-label">แสดงรายงาน กพท.22 (ภาษาอังกฤษ)</span>
+                    <span className="toggle-label">Thai CAAT-22 Report (English)</span>
                   </label>
                 </div>
               )}
@@ -467,47 +433,30 @@ const App = () => {
           </div>
         </section>
 
-        {/* Column 3: Previews */}
-        <section className="preview-column" style={{ overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'var(--bg-dark)' }}>
-           {/* Thai Preview */}
-           <div className="card" style={{ flex: 'none', minHeight: '400px' }}>
-              <div className="card-header">
-                <h2 className="card-title">Preview (Thai)</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-ghost" onClick={handleSaveAsTemplate} title="บันทึกเป็นแม่แบบฟอร์ม">💾 บันทึกแม่แบบ</button>
-                  <button className="btn btn-primary" onClick={copyThai}>บันทึกประวัติ</button>
-                </div>
+        <section className="preview-container" style={{ flex: '0 0 45%' }}>
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Preview</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }} onClick={handleSaveAsTemplate}>บันทึกฟอร์ม</button>
+                <button className="btn btn-primary" style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }} onClick={copyThai}>คัดลอกและบันทึก</button>
               </div>
-              <div style={{ flex: 1, padding: '1.5rem', display: 'flex' }}>
-                <textarea 
-                  className="sarabun-preview" 
-                  value={thaiPreview} 
-                  onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }}
-                  style={{ flex: 1, background: 'transparent', border: 'none', resize: 'none', color: 'var(--text-primary)', outline: 'none' }}
-                />
+            </div>
+            <div className="preview-body-v2">
+              <textarea 
+                className="preview-textarea" 
+                value={thaiPreview} 
+                onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }} 
+              />
+            </div>
+            {extraPreview && reportMode === 'incident' && (
+              <div className="preview-body-v2" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--accent-indigo-soft)' }}>
+                <textarea className="preview-textarea" value={extraPreview} readOnly style={{ color: 'var(--accent-indigo)' }} />
               </div>
-           </div>
-
-           {/* CAAT-22 Preview (Conditional) */}
-           {(extraPreview && reportMode === 'incident') && (
-             <div className="card" style={{ flex: 'none', minHeight: '300px' }}>
-                <div className="card-header">
-                  <h2 className="card-title">CAAT-22 (ENG)</h2>
-                  <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={() => navigator.clipboard.writeText(extraPreview)}>คัดลอก</button>
-                </div>
-                <div style={{ flex: 1, padding: '1.5rem', display: 'flex' }}>
-                  <textarea 
-                    className="sarabun-preview" 
-                    value={extraPreview} 
-                    readOnly 
-                    style={{ flex: 1, background: 'transparent', border: 'none', resize: 'none', color: 'var(--accent-indigo)', outline: 'none' }}
-                  />
-                </div>
-             </div>
-           )}
+            )}
+          </div>
         </section>
-
-      </div>
+      </main>
     </div>
   );
 };
