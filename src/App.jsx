@@ -51,6 +51,7 @@ const App = () => {
 
   const [renamingHistoryId, setRenamingHistoryId] = useState(null);
   const [newHistoryName, setNewHistoryName] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Sync default template
   useEffect(() => {
@@ -316,6 +317,37 @@ const App = () => {
     document.body.removeChild(link);
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e, ct) => {
+    e.dataTransfer.setData("vtsp/templateId", ct.id);
+    e.dataTransfer.effectAllowed = "copy";
+    // Add dragging class to the card if needed via state or ref
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const templateId = e.dataTransfer.getData("vtsp/templateId");
+    if (templateId && customTemplates) {
+      const ct = customTemplates.find(t => t.id === templateId);
+      if (ct) {
+        setFormData(ct.data || {});
+        setThaiPreview(ct.preview || '');
+        setExtraPreview(ct.extra_preview || '');
+        isEditingPreview.current = true;
+      }
+    }
+  };
+
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
 
@@ -370,27 +402,49 @@ const App = () => {
 
           {customTemplates && customTemplates.length > 0 && (
             <div style={{ marginTop: '0.5rem' }}>
-              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>ฟอร์มเหตุการณ์</div>
-              <div style={{ position: 'relative' }}>
-                <select 
-                  className="search-input" 
-                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', appearance: 'auto' }}
-                  onChange={(e) => {
-                    const ct = customTemplates.find(t => t.id === e.target.value);
-                    if (ct) {
+              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>ฟอร์มเหตุการณ์ (ลากเพื่อใช้งาน)</div>
+              <div className="app-grid">
+                {customTemplates.map(ct => (
+                  <div 
+                    key={ct.id} 
+                    className="app-card"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, ct)}
+                    onClick={() => {
+                      if (renamingTemplateId === ct.id) return;
                       setFormData(ct.data || {});
                       setThaiPreview(ct.preview || '');
                       setExtraPreview(ct.extra_preview || '');
                       isEditingPreview.current = true;
-                    }
-                  }}
-                  value=""
-                >
-                  <option value="" disabled>--- เลือกฟอร์มเหตุการณ์ ---</option>
-                  {customTemplates.map(ct => (
-                    <option key={ct.id} value={ct.id}>{ct.name}</option>
-                  ))}
-                </select>
+                    }}
+                  >
+                    <div className="app-icon-container">
+                      <FileText size={24} />
+                      <div className="app-actions">
+                        <Edit2 size={12} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setRenamingTemplateId(ct.id); setNewTemplateName(ct.name); }} />
+                        <Trash2 size={12} style={{ cursor: 'pointer', color: 'var(--accent-red)' }} onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }} />
+                      </div>
+                    </div>
+                    {renamingTemplateId === ct.id ? (
+                      <input 
+                        className="search-input"
+                        style={{ padding: '2px 4px', fontSize: '0.65rem', height: 'auto', margin: 0 }}
+                        value={newTemplateName}
+                        onChange={(e) => setNewTemplateName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updateTemplateName(ct.id, newTemplateName);
+                            setRenamingTemplateId(null);
+                          }
+                        }}
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <div className="app-label">{ct.name}</div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -513,8 +567,13 @@ const App = () => {
       </aside>
 
       <main className="main-content">
-        <section style={{ flex: '0 0 55%' }}>
-          <div className="card">
+        <section 
+          style={{ flex: '0 0 55%' }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className={`card ${isDragOver ? 'drop-zone-active' : ''}`}>
             <div className="card-header">
               <h2 className="card-title">{selectedTemplate?.name || 'กรุณาเลือกแม่แบบ'}</h2>
               <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>

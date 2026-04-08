@@ -544,3 +544,103 @@ input:focus, textarea:focus {
     z-index: 15;
   }
 }
+
+/* Phase 38: Visual Dashboard & App Grid Styles */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 1rem 0.5rem;
+  max-width: 100%;
+}
+
+.app-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: grab;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 8px 4px;
+  border-radius: 12px;
+  position: relative;
+  user-select: none;
+}
+
+.app-card:active {
+  cursor: grabbing;
+  transform: scale(0.9);
+}
+
+.app-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.app-icon-container {
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, var(--accent-indigo), var(--accent-blue));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.app-icon-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+}
+
+.app-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-card:hover .app-icon-container {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Drag State */
+.app-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.8);
+}
+
+/* Drop Zone Highlight */
+.drop-zone-active {
+  background: rgba(99, 102, 241, 0.05) !important;
+  border: 1px dashed var(--accent-indigo) !important;
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.1) inset !important;
+}
+
+/* Context Menu on App Card (Small buttons) */
+.app-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: rgba(0,0,0,0.8);
+  border-radius: 6px;
+  padding: 2px;
+  z-index: 5;
+}
+
+.app-card:hover .app-actions {
+  opacity: 1;
+}
