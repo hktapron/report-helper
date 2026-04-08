@@ -275,7 +275,20 @@ const App = () => {
   const handleSaveAsTemplate = async () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
-      const { error } = await saveTemplate(name, formData, thaiPreview, extraPreview);
+      // SMART REVERSE-TEMPLATIZATION:
+      // Convert current filled data back into {tags} so the template is reusable
+      let templateNarrative = thaiPreview;
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value && String(value).trim().length > 0) {
+          // Escape special regex characters in the value to avoid crashes
+          const escapedValue = String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(escapedValue, 'g');
+          templateNarrative = templateNarrative.replace(regex, `{${key}}`);
+        }
+      });
+
+      // Save with blank formData to ensure it loads empty for the next use
+      const { error } = await saveTemplate(name, {}, templateNarrative, extraPreview);
       if (!error) {
         alert("บันทึกฟอร์มเรียบร้อยแล้ว");
       } else {
@@ -672,7 +685,7 @@ const App = () => {
                   value={extraPreview} 
                   readOnly 
                   style={{ color: 'var(--accent-indigo)' }} 
-                  placeholder={isTranslating ? "กำลังประมวลผลการแปลโดย AI..." : "กดปุ่ม 'แปลภาษาด้วย AI' เพื่อสร้างรายงานภาษาอังกฤษ"}
+                  placeholder={isTranslating ? "กำลังประมวลผลการแปลโดย AI..." : "กดปุ่ม 'ยืนยันแปลภาษา' เพื่อสร้างรายงานภาษาอังกฤษ"}
                 />
               </div>
             )}
