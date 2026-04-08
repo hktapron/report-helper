@@ -106,12 +106,36 @@ const App = () => {
     }
   }, [selectedTemplate]);
 
-  // --- Smart Form (Auto-map) Substitution Engine ---
+  // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
+  // Extra variables from the narrative to generate the form dynamically
+  const dynamicFields = useMemo(() => {
+    const text = selectedTemplate?.content || selectedTemplate?.data?.narrative || "";
+    // Match both {key} and [key]
+    const matches = text.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
+    const uniqueKeys = [...new Set(matches.map(m => m.replace(/[\{\}\[\]]/g, '')))];
+    
+    // Map these keys to a professional field list
+    return uniqueKeys.map(key => {
+      // Semantic UI Mapping
+      let label = key;
+      if (key === 'flight_no') label = 'เที่ยวบินที่ (Flight No)';
+      else if (key === 'registration') label = 'ทะเบียน (Registration)';
+      else if (key === 'ac_type') label = 'แบบอากาศยาน (AC Type)';
+      else if (key === 'sta') label = 'เวลาลง ทภก. (STA)';
+      else if (key === 'std') label = 'เวลาออก ทภก. (STD)';
+      else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
+      else if (key.startsWith('time_')) {
+        const num = key.split('_')[1];
+        label = `ลำดับเวลาที่ ${num}`;
+      }
+      
+      return { id: key, label: label, type: 'text' };
+    });
+  }, [selectedTemplate]);
+
   useEffect(() => {
-    if (selectedTemplate && reportMode && !isEditingPreview.current) {
-      // 1. Source the base text from the original template narrative structure
-      // we use template data to ensure we are always replacing fresh brackets.
-      let text = selectedTemplate?.data?.narrative || selectedTemplate?.content || '';
+    if (selectedTemplate && !isEditingPreview.current) {
+      let text = selectedTemplate?.content || selectedTemplate?.data?.narrative || '';
       
       const now = new Date();
       const d = now.getDate();
@@ -119,34 +143,13 @@ const App = () => {
       const y = (now.getFullYear() + 543).toString().slice(-2);
       const vtspDate = `${d} ${m} ${y}`;
       
-      // Replace {date} and [date]
       text = text.replace(/\{date\}|\[date\]/g, vtspDate);
 
-      // 2. Comprehensive Variable Mapping (The "10+ Keys")
-      const mapping = {
-        incident_time: formData.incident_time || '[incident_time]',
-        airline: formData.airline || '[airline]',
-        flight_no: formData.flight_no || '[flight_no]',
-        registration: formData.registration || '[registration]',
-        ac_type: formData.ac_type || '[ac_type]',
-        route: formData.route || '[route]',
-        std_sta: formData.std_sta || '[std_sta]',
-        ata: formData.ata || formData.atd || '[ata]',
-        stand_no: formData.stand_no || formData.return_stand || '[stand_no]'
-      };
-
-      // 3. Perform dynamic replacement for both {key} and [key] formats
-      Object.entries(mapping).forEach(([key, value]) => {
-        const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-        const cleanValue = value ? value.toString() : `[${key}]`;
-        text = text.replace(regex, cleanValue);
-      });
-
-      // 4. Fallback for any other custom fields defined in custom templates
+      // Perform dynamic replacement for all detected fields
       Object.entries(formData).forEach(([key, value]) => {
-        if (!mapping[key] && key !== 'narrative' && key !== 'update_text') {
-          const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-          if (value) text = text.replace(regex, value);
+        const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
+        if (value && String(value).trim().length > 0) {
+          text = text.replace(regex, value);
         }
       });
 
@@ -305,39 +308,43 @@ const App = () => {
   const handleSaveAsTemplate = async () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
-      // PHASE 45: UNIVERSAL TEMPLATIZER ENGINE
-      // Convert current filled data and raw aviation patterns back into {tags}
+      // PHASE 46: SEMANTIC CONTEXTUAL PARSER
+      // Uses "Preceding Keywords" to identify data types with high precision.
       let templateNarrative = thaiPreview;
 
-      // 1. Precise Match: Use current form data first (Sorted by length)
-      const sortedEntries = Object.entries(formData).sort((a, b) => {
-        const valA = String(a[1] || "");
-        const valB = String(b[1] || "");
-        return valB.length - valA.length;
-      });
-
+      // 1. Precise Match: If user filled the form, use that first
+      const sortedEntries = Object.entries(formData).sort((a, b) => String(b[1] || "").length - String(a[1] || "").length);
       sortedEntries.forEach(([key, value]) => {
         if (value && String(value).trim().length > 0) {
           const escapedValue = String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(escapedValue, 'g');
-          templateNarrative = templateNarrative.replace(regex, `{${key}}`);
+          templateNarrative = templateNarrative.replace(new RegExp(escapedValue, 'g'), `{${key}}`);
         }
       });
 
-      // 2. Pattern Match: Detect raw aviation data (Flight Nos, Times, Refs)
-      // This helps even if the user didn't fill the fields on the left before saving.
-      
-      // Flight Numbers (e.g., SU284, TG121, PG 999)
-      templateNarrative = templateNarrative.replace(/[A-Z]{2,3}\s?\d{3,4}/g, '{flight_no}');
-      
-      // Times (e.g., 12.14น., 11:51, 12.25น.)
-      templateNarrative = templateNarrative.replace(/\d{1,2}[:.]\d{2}\s?(น\.)?/g, '{incident_time}');
-      
-      // Registrations (e.g., HS-TXX, RA-73141, B-1234)
-      templateNarrative = templateNarrative.replace(/[A-Z0-9]{1,3}-[A-Z0-9]{3,5}/g, '{registration}');
-      
-      // Thai Dates (e.g., วันที่ 27 ธ.ค.68)
-      templateNarrative = templateNarrative.replace(/วันที่\s?\d{1,2}\s+[ก-ฮ]{2,3}\.?\s?(\d{2,4})?/g, 'วันที่ {date}');
+      // 2. Semantic Mapping (Keyword Patterns)
+      // Map keywords to standard semantic tags
+      const semanticRules = [
+        { kw: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)\s?[:：]?\s?/g, tag: 'flight_no', pat: /[A-Z0-9\/]+\b/ },
+        { kw: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)\s?[:：]?\s?/g, tag: 'registration', pat: /[A-Z0-9-]+\b/ },
+        { kw: /(แบบอากาศยาน)\s?[:：]?\s?/g, tag: 'ac_type', pat: /[A-Z0-9]+\b/ },
+        { kw: /(เส้นทางบิน)\s?[:：]?\s?/g, tag: 'route', pat: /[A-Z-]+\b/ },
+        { kw: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)\s?[:：]?\s?/g, tag: 'sta', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(เวลาออกจากทภก\.|เวลาออกตามตารางบิน)\s?[:：]?\s?/g, tag: 'std', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)\s?[:：]?\s?/g, tag: 'stand_no', pat: /\d+[A-Z]?\b/ },
+        { kw: /(ผู้โดยสาร|จำนวนผู้โดยสาร)\s?[:：]?\s?/g, tag: 'pax', pat: /[\d+ ]+คน/ }
+      ];
+
+      semanticRules.forEach(rule => {
+        const fullRegex = new RegExp(`(${rule.kw.source})(${rule.pat.source})`, 'g');
+        templateNarrative = templateNarrative.replace(fullRegex, `$1{${rule.tag}}`);
+      });
+
+      // 3. Sequence Timing (เมื่อเวลา, ต่อมาเวลา)
+      let timeCount = 1;
+      const timeKeywords = /(เมื่อเวลา|ต่อมาเวลา|เวลา)\s?(\d{1,2}[:.]\d{2}\s?(น\.)?)/g;
+      templateNarrative = templateNarrative.replace(timeKeywords, (match, p1, p2) => {
+        return `${p1} {time_${timeCount++}}`;
+      });
 
       // Save with blank formData to ensure it loads empty for the next use
       const { error } = await saveTemplate(name, {}, templateNarrative, extraPreview);
@@ -649,16 +656,18 @@ const App = () => {
               <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
             </div>
             <div className="form-body">
-              {selectedTemplate?.fields?.map(field => (
-                <div key={field.id} className={`form-field ${field.type === 'textarea' ? 'full' : ''}`}>
-                  <label>{field.label}</label>
-                  {field.type === 'textarea' ? (
-                    <textarea rows={4} value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
-                  ) : (
-                    <input type={field.type} value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} readOnly={field.readOnly} />
-                  )}
+              {dynamicFields.length > 0 ? (
+                dynamicFields.map(field => (
+                  <div key={field.id} className="form-field">
+                    <label>{field.label}</label>
+                    <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
+                  </div>
+                ))
+              ) : (
+                <div style={{ gridColumn: '1/-1', opacity: 0.5, textAlign: 'center', padding: '2rem' }}>
+                  {isDragOver ? 'วางที่นี่เพื่อวิเคราะห์ข้อมูล...' : 'กรุณาเลือกแม่แบบหรือพิมพ์รายงานเพื่อเริ่มใช้งาน'}
                 </div>
-              ))}
+              )}
               {reportMode === 'incident' && (
                 <div className="special-section" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="toggle-container">
