@@ -85,12 +85,12 @@ const App = () => {
     if (!isEditingPreview.current && selectedTemplate) {
       let text = selectedTemplate.content || '';
       
-      // 1. Mandatory VTSP Date Formatting (วันที่ DD MMM.YY)
+      // 1. Mandatory VTSP Date Formatting (DD MMM.YY)
       const now = new Date();
       const d = now.getDate();
       const m = THAI_MONTHS_SHORT[now.getMonth()];
       const y = (now.getFullYear() + 543).toString().slice(-2);
-      const vtspDate = `วันที่ ${d} ${m} ${y}`;
+      const vtspDate = `${d} ${m} ${y}`;
       
       // Replace {date} and [date]
       text = text.replace(/\{date\}|\[date\]/g, vtspDate);
