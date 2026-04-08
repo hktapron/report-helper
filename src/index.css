@@ -644,3 +644,114 @@ input:focus, textarea:focus {
 .app-card:hover .app-actions {
   opacity: 1;
 }
+
+/* Phase 39: Folder Management & Context Menu Styles */
+.folder-item {
+  margin: 0.25rem 0.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.folder-header {
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  transition: all 0.23s;
+  user-select: none;
+}
+
+.folder-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle);
+}
+
+.folder-header.drop-target {
+  background: var(--accent-indigo-soft);
+  border: 1px dashed var(--accent-indigo);
+  transform: scale(1.02);
+}
+
+.folder-icon {
+  color: var(--accent-indigo);
+  transition: transform 0.2s;
+}
+
+.folder-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.folder-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.folder-content {
+  padding: 0.25rem 0 0.25rem 1.5rem;
+  border-left: 1px dashed var(--border-subtle);
+  margin-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Custom Context Menu */
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(21, 21, 27, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-active);
+  border-radius: 10px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  min-width: 180px;
+  padding: 6px;
+  animation: contextFadeIn 0.12s ease-out;
+}
+
+@keyframes contextFadeIn {
+  from { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.context-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.context-item:hover {
+  background: var(--accent-indigo-soft);
+  color: var(--text-primary);
+}
+
+.context-item.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--accent-red);
+}
+
+/* Uncategorized Section */
+.uncategorized-section {
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.folder-empty-text {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.75rem;
+  font-style: italic;
+}

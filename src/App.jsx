@@ -9,7 +9,8 @@ import { useUserTemplates } from './hooks/useUserTemplates';
 import { 
   Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
   Search, Calendar, Clock, ChevronRight, User, Terminal, 
-  ArrowRight, History, FileText
+  ArrowRight, History, FileText, Folder, FolderPlus, MoreVertical,
+  ChevronDown
 } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -41,7 +42,18 @@ const App = () => {
   const loadingHistory = historyData?.loading;
   const loadMore = historyData?.loadMore;
 
-  const { templates: customTemplates, saveTemplate, deleteTemplate, updateTemplateName } = useUserTemplates(user?.username, reportMode);
+  const { 
+    templates: customTemplates, 
+    folders,
+    saveTemplate, 
+    deleteTemplate, 
+    updateTemplateName,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    moveTemplateToFolder,
+    toggleFolderExpansion
+  } = useUserTemplates(user?.username, reportMode);
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -52,6 +64,8 @@ const App = () => {
   const [renamingHistoryId, setRenamingHistoryId] = useState(null);
   const [newHistoryName, setNewHistoryName] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [dropTargetFolderId, setDropTargetFolderId] = useState(null);
 
   // Sync default template
   useEffect(() => {
@@ -320,8 +334,7 @@ const App = () => {
   // Drag and Drop Handlers
   const handleDragStart = (e, ct) => {
     e.dataTransfer.setData("vtsp/templateId", ct.id);
-    e.dataTransfer.effectAllowed = "copy";
-    // Add dragging class to the card if needed via state or ref
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e) => {
@@ -347,6 +360,36 @@ const App = () => {
       }
     }
   };
+
+  const handleFolderDrop = (e, folderId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropTargetFolderId(null);
+    const templateId = e.dataTransfer.getData("vtsp/templateId");
+    if (templateId) {
+      moveTemplateToFolder(templateId, folderId);
+    }
+  };
+
+  // Context Menu Handlers
+  const onContextMenu = (e, type, id, data) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.pageX,
+      y: e.pageY,
+      type,
+      id,
+      data
+    });
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
 
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
@@ -400,54 +443,85 @@ const App = () => {
             <Plus size={16} /> สร้างรายงานใหม่
           </button>
 
-          {customTemplates && customTemplates.length > 0 && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <div className="history-title" style={{ color: 'var(--accent-indigo)', opacity: 0.8, fontSize: '0.7rem' }}>ฟอร์มเหตุการณ์ (ลากเพื่อใช้งาน)</div>
-              <div className="app-grid">
-                {customTemplates.map(ct => (
+          {/* PHASE 39: FOLDER SYSTEM */}
+          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
+             <div className="history-title" style={{ margin: 0 }}>ฟอร์มเหตุการณ์</div>
+             <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
+                const name = window.prompt("ชื่อโฟลเดอร์ใหม่:");
+                if (name) createFolder(name);
+             }} />
+          </div>
+
+          <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
+            {folders.map(folder => {
+              const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
+              return (
+                <div key={folder.id} className="folder-item">
                   <div 
-                    key={ct.id} 
-                    className="app-card"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, ct)}
-                    onClick={() => {
-                      if (renamingTemplateId === ct.id) return;
-                      setFormData(ct.data || {});
-                      setThaiPreview(ct.preview || '');
-                      setExtraPreview(ct.extra_preview || '');
-                      isEditingPreview.current = true;
-                    }}
+                    className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
+                    onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
+                    onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
+                    onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
+                    onDragLeave={() => setDropTargetFolderId(null)}
+                    onDrop={(e) => handleFolderDrop(e, folder.id)}
                   >
-                    <div className="app-icon-container">
-                      <FileText size={24} />
-                      <div className="app-actions">
-                        <Edit2 size={12} style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setRenamingTemplateId(ct.id); setNewTemplateName(ct.name); }} />
-                        <Trash2 size={12} style={{ cursor: 'pointer', color: 'var(--accent-red)' }} onClick={(e) => { e.stopPropagation(); if(window.confirm("ลบฟอร์มนี้?")) deleteTemplate(ct.id); }} />
-                      </div>
-                    </div>
-                    {renamingTemplateId === ct.id ? (
-                      <input 
-                        className="search-input"
-                        style={{ padding: '2px 4px', fontSize: '0.65rem', height: 'auto', margin: 0 }}
-                        value={newTemplateName}
-                        onChange={(e) => setNewTemplateName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            updateTemplateName(ct.id, newTemplateName);
-                            setRenamingTemplateId(null);
-                          }
-                        }}
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div className="app-label">{ct.name}</div>
-                    )}
+                    <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
+                    <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
+                    <span className="folder-name">{folder.name}</span>
+                    <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
                   </div>
-                ))}
-              </div>
+                  
+                  {folder.is_expanded && (
+                    <div className="folder-content">
+                      {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
+                      {folderTemplates.map(ct => (
+                        <div 
+                          key={ct.id} 
+                          className="template-item" 
+                          draggable 
+                          onDragStart={(e) => handleDragStart(e, ct)}
+                          onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                          onClick={() => {
+                            setFormData(ct.data || {});
+                            setThaiPreview(ct.preview || '');
+                            setExtraPreview(ct.extra_preview || '');
+                            isEditingPreview.current = true;
+                          }}
+                        >
+                          <FileText size={12} style={{ opacity: 0.6 }} />
+                          <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* General Templates (No folder) */}
+            <div className="uncategorized-section">
+              <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
+              {customTemplates.filter(t => !t.folder_id).map(ct => (
+                <div 
+                  key={ct.id} 
+                  className="template-item" 
+                  style={{ marginLeft: '1.25rem' }}
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, ct)}
+                  onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                  onClick={() => {
+                    setFormData(ct.data || {});
+                    setThaiPreview(ct.preview || '');
+                    setExtraPreview(ct.extra_preview || '');
+                    isEditingPreview.current = true;
+                  }}
+                >
+                  <FileText size={12} style={{ opacity: 0.6 }} />
+                  <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
@@ -642,6 +716,34 @@ const App = () => {
           </div>
         </section>
       </main>
+      {/* CUSTOM CONTEXT MENU */}
+      {contextMenu && (
+        <div 
+          className="context-menu" 
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="context-item" onClick={() => {
+            const newName = window.prompt("เปลี่ยนชื่อเป็น:", contextMenu.data.name);
+            if (newName) {
+              if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
+              else updateTemplateName(contextMenu.id, newName);
+            }
+            closeContextMenu();
+          }}>
+            <Edit2 size={14} /> เปลี่ยนชื่อ
+          </div>
+          <div className="context-item danger" onClick={() => {
+            if (window.confirm(`ยืนยันการลบ${contextMenu.type === 'folder' ? 'โฟลเดอร์' : 'ฟอร์ม'}นี้?`)) {
+              if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
+              else deleteTemplate(contextMenu.id);
+            }
+            closeContextMenu();
+          }}>
+            <Trash2 size={14} /> ลบทิ้ง
+          </div>
+        </div>
+      )}
     </div>
   );
 };
