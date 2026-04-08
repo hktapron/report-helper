@@ -515,8 +515,8 @@ const App = () => {
                       onClick={handleTranslate}
                       disabled={isTranslating || !thaiPreview}
                     >
-                      {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      {isTranslating ? 'กำลังแปลภาษา...' : 'แปลภาษาด้วย AI'}
+                      {isTranslating ? <Loader2 size={14} className="animate-spin" /> : null}
+                      {isTranslating ? 'กำลังแปลภาษา...' : 'ยืนยันแปลภาษา'}
                     </button>
                   )}
                 </div>
