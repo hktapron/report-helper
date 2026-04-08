@@ -11,7 +11,13 @@ const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
  * @returns {string} - Professional English CAAT-22 report
  */
 export const translateToCAAT22 = async (thaiText, formData) => {
-  if (!apiKey) throw new Error("GEMINI_API_KEY is missing in .env!");
+  // Debug Log to verify ENV loading
+  console.log("API Key Status:", import.meta.env.VITE_GEMINI_API_KEY ? "Found" : "Missing");
+
+  if (!import.meta.env.VITE_GEMINI_API_KEY) {
+    throw new Error("Error: หา VITE_GEMINI_API_KEY ไม่พบ กรุณาเช็ค Vercel Environment");
+  }
+  
   if (!thaiText) return "";
   
   const safeData = formData || {};
