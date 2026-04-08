@@ -116,7 +116,28 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.isPinned);
 
   const handleInputChange = (id, value) => {
-    setFormData(prev => ({ ...prev, [id]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [id]: value };
+      
+      // Smart Guessing (Pattern detection in Narrative)
+      if (id === 'narrative' || id === 'update_text') {
+        // Detect Time (HH:mm or HH.mm)
+        const timeMatch = value.match(/([01]?[0-9]|2[0-3])[:.][0-5][0-9]/);
+        if (timeMatch && !newData.incident_time) {
+          newData.incident_time = timeMatch[0].replace('.', ':');
+        }
+
+        // Detect Flight No (Airline Prefix + 3-4 Digits)
+        const flightMatch = value.match(/[A-Z]{2,3}\s?[0-9]{3,4}/i);
+        if (flightMatch && !newData.flight_no) {
+          newData.flight_no = flightMatch[0].toUpperCase().replace(/\s/g, '');
+        }
+      }
+
+      return newData;
+    });
+    
+    // Resume dynamic linking even for history items once user starts editing
     isEditingPreview.current = false;
   };
 
@@ -221,16 +242,20 @@ const App = () => {
             <>
               <div style={{ marginTop: '1.5rem', marginBottom: '0.75rem', fontSize: '0.85rem', color: 'var(--accent-blue)', fontWeight: 'bold' }}>📌 รายการปักหมุด</div>
               {pinnedHistory.map(item => (
-                <div key={item.id} className="template-item" onClick={() => {
+                <div key={item.id} className={`template-item ${formData.id === item.id ? 'active' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => {
                   setReportMode(item.mode || 'incident');
                   const t = templatesData.find(x => x.name === item.templateName);
                   setSelectedTemplate(t || templatesData.find(x => x.mode === (item.mode || 'incident')));
-                  setFormData(item.data || {});
+                  setFormData({ ...item.data, id: item.id });
                   setThaiPreview(item.preview || '');
-                  isEditingPreview.current = true;
+                  isEditingPreview.current = false; // Allow re-linking
                 }}>
-                  <div className="template-name">{getSmartTitle(item)}</div>
-                  <div className="template-trigger" style={{ cursor: 'pointer', zIndex: 10, color: 'var(--accent-pink)' }} onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}>เลิกปักหมุด</div>
+                  <div className="template-name" style={{ flex: 1 }}>{getSmartTitle(item)}</div>
+                  <div 
+                    title="เลิกปักหมุด"
+                    style={{ cursor: 'pointer', zIndex: 10, padding: '0.2rem 0.5rem', marginLeft: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '4px', fontSize: '0.9rem' }} 
+                    onClick={(e) => { e.stopPropagation(); togglePin && togglePin(item.id, item.isPinned); }}
+                  >📌</div>
                 </div>
               ))}
             </>

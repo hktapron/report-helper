@@ -15,6 +15,11 @@ const dictionary = {
   "เติมน้ำมันเพิ่ม": "Refueling required",
   "ไม่มีข้อขัดข้อง": "No further issues observed",
   "เรียบร้อยแล้ว": "Completed",
+  "ช่างอากาศยาน": "Aircraft Technician / Maintenance Engineers",
+  "ตรวจสอบและแก้ไข": "Inspection and rectification",
+  "ไม่สามารถทำการบินออกได้": "Unable to depart / Flight cancellation",
+  "เนื่องจากมีปัญหาเกี่ยวกับ Flaps": "due to Flaps malfunction / Technical fault",
+  "ปัญหาทางเทคนิคอื่นๆ": "Other technical issues",
 };
 
 export const translateIncident = (text) => {
