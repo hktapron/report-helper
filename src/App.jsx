@@ -53,15 +53,14 @@ const App = () => {
     return `${d} ${m} ${y}`;
   };
 
-  // PHASE 59: ATOMIC LOCKING ARCHITECTURE (STRICT ADHERENCE)
-  // Ensures every form field is wrapped in a protected, atomic span.
+  // PHASE 59/71: ATOMIC LOCKING ARCHITECTURE (ULITMATUM FIX)
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
     
-    // 1. PHASE 66: GLOBAL AUTO-DATE INJECTION (Greedy match for Thai date formats)
+    // 1. PHASE 66: GLOBAL AUTO-DATE INJECTION
     let processed = text.replace(/วันที่\s?([^\n\r]*)/g, `วันที่ ${getCurrentThaiDate()}`);
 
-    // 3. PHASE 71: CALLBACK COUNTER LOGIC (USER MANDATED)
+    // 2. PHASE 71: COUNTER-BASED SEQUENTIAL LOGIC (EXACT AS REQUESTED)
     let counter = 1;
     processed = processed.replace(/หมายเลข\s+([^\s{]+)/g, (match, p1) => {
       const varName = `item_no_${counter}`;
@@ -69,7 +68,7 @@ const App = () => {
       return `หมายเลข {${varName}}`;
     });
 
-    // 2. Variable hydration ({key}, [key])
+    // 3. Variable hydration ({key}, [key])
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
@@ -78,7 +77,7 @@ const App = () => {
     return processed;
   };
 
-  // PHASE 55/68: NUCLEAR RESET FUNCTION with MODE-BASED DEFAULTS
+  // PHASE 55/68/71: NUCLEAR RESET FUNCTION (HARDCODED)
   const handleFullReset = () => {
     setFormData({});
     setExtraPreview('');
@@ -87,11 +86,11 @@ const App = () => {
     prevFormDataRef.current = {};
     setShowCAAT(false);
     
-    // PHASE 71: HARDCODED MODE-BASED INITIALIZATION
+    // PHASE 71: THE ULTIMATUM TEMPLATES (EXACT TEXT)
     let defaultText = '';
     
     if (reportMode === 'violator') {
-      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} -  {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     } else {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     }
@@ -215,7 +214,6 @@ const App = () => {
     
     // Map these keys to a professional field list
     return uniqueKeys.map(key => {
-      // Semantic UI Mapping
       let label = key;
       let type = 'text';
       
@@ -248,10 +246,6 @@ const App = () => {
       else if (key === 'impact_list') {
         label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
         type = 'list';
-      }
-      else if (key.startsWith('time_')) {
-        const num = key.split('_')[1];
-        label = `ลำดับเวลาที่ ${num}`;
       }
       
       return { id: key, label: label, type: type };
