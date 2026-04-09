@@ -200,10 +200,11 @@ const App = () => {
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
     
-    // PHASE 66/67/69/70: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL INDEXING
+    // PHASE 66/67/69/70: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL CALLBACK MATCH
     let sidebarCounter = 1;
-    const implicitMatches = combinedText.match(/หมายเลข\s+[^\s<{}]+/g) || [];
-    implicitMatches.forEach((match) => {
+    // We use the EXACT same logic as hydration to ensure IDs match
+    const implicitMatches = combinedText.match(/หมายเลข\s+([^\s<{}]+)/g) || [];
+    implicitMatches.forEach(() => {
       const fieldId = `item_no_${sidebarCounter++}`;
       if (!keys.includes(fieldId)) {
         keys.push(fieldId);
@@ -255,7 +256,7 @@ const App = () => {
       
       return { id: key, label: label, type: type };
     });
-  }, [selectedTemplate]);
+  }, [selectedTemplate, thaiPreview, reportMode]);
 
   // PHASE 60: REMOVED NUCLEAR EFFECT
   // We no longer use a generic useEffect to overwrite the Preview based on formData.
