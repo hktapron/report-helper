@@ -44,26 +44,52 @@ const App = () => {
     return clean;
   };
 
+  // PHASE 66: DYNAMIC THAI DATE HELPER
+  const getCurrentThaiDate = () => {
+    const date = new Date();
+    const d = date.getDate();
+    const m = THAI_MONTHS_SHORT[date.getMonth()];
+    const y = (date.getFullYear() + 543).toString().slice(-2);
+    return `${d} ${m} ${y}`;
+  };
+
   // PHASE 59: ATOMIC LOCKING ARCHITECTURE (STRICT ADHERENCE)
   // Ensures every form field is wrapped in a protected, atomic span.
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
-    return text.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
+    
+    // 1. PHASE 66: GLOBAL AUTO-DATE INJECTION (Greedy match for Thai date formats)
+    let processed = text.replace(/วันที่\s?([^\n\r]*)/g, `วันที่ ${getCurrentThaiDate()}`);
+
+    // 2. Variable hydration ({key}, [key])
+    processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
     });
+
+    // 3. PHASE 66: IMPLICIT "หมายเลข" PATTERN DETECTION
+    // If "หมายเลข XXX" is found as raw text, wrap the XXX part in an atomic span
+    processed = processed.replace(/(หมายเลข)\s?([A-Z0-9-.]+)\b/g, (match, p1, p2) => {
+      return `${p1} <span class="sync-field" data-field="item_no" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p2}</span>`;
+    });
+    
+    return processed;
   };
 
   // PHASE 55: NUCLEAR RESET FUNCTION
   const handleFullReset = () => {
     setFormData({});
-    setThaiPreview('');
     setExtraPreview('');
     setSelectedTemplate(null);
     isEditingPreview.current = false;
     prevFormDataRef.current = {};
-    // Ensure hidden state for CAAT is reset if needed
     setShowCAAT(false);
+    
+    // PHASE 66: DEFAULT WORKSTATION TEMPLATE
+    const defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n🚨 Apron Control 🚨\nงขบ.สบข.ฝปข.ทภก. โทร. 1581\nสรุปงานรอบนี้:`;
+    const hydrated = hydrateHtmlTemplate(defaultText);
+    setThaiPreview(hydrated);
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
   };
 
   const [isTranslating, setIsTranslating] = useState(false);
@@ -152,10 +178,21 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    const text = selectedTemplate?.content || selectedTemplate?.data?.narrative || "";
+    const baseText = selectedTemplate?.content || selectedTemplate?.data?.narrative || "";
+    // PHASE 66 RECOVERY: Scan BOTH template and current preview (stripped of HTML) for real-time discovery
+    const cleanPreview = thaiPreview.replace(/<[^>]*>?/gm, '');
+    const combinedText = baseText + " " + cleanPreview;
+
     // Match both {key} and [key]
-    const matches = text.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
-    const uniqueKeys = [...new Set(matches.map(m => m.replace(/[\{\}\[\]]/g, '')))];
+    const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
+    const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
+    
+    // PHASE 66: IMPLICIT "หมายเลข" DISCOVERY
+    if (combinedText.includes('หมายเลข') && !keys.includes('item_no')) {
+      keys.push('item_no');
+    }
+
+    const uniqueKeys = [...new Set(keys)];
     
     // Map these keys to a professional field list
     return uniqueKeys.map(key => {
@@ -172,6 +209,7 @@ const App = () => {
       else if (key === 'airline') label = 'สายการบิน (Airline)';
       else if (key === 'route') label = 'เส้นทางบิน (Route)';
       else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
+      else if (key === 'item_no') label = 'หมายเลข';
       else if (key === 'impact_list') {
         label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
         type = 'list';
@@ -400,6 +438,7 @@ const App = () => {
         { kw: /(สายการบิน)\s?[:：]?\s?/g, tag: 'airline', pat: /[a-zA-Z\s]+\b/ },
         { kw: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)\s?[:：]?\s?/g, tag: 'stand_no', pat: /\d+[A-Z]?\b/ },
         { kw: /(ผู้โดยสาร|จำนวนผู้โดยสาร)\s?[:：]?\s?/g, tag: 'pax', pat: /[\d+ ]+คน/ },
+        { kw: /(หมายเลข)\s?[:：]?\s?/g, tag: 'item_no', pat: /[A-Z0-9-.]+\b/ },
         { kw: /(ส่งผลกระทบต่อเที่ยวบิน ดังนี้)\s?[:：]?\s?/g, tag: 'impact_list', pat: /[\s\S]+/ }
       ];
 
