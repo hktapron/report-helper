@@ -195,22 +195,29 @@ const App = () => {
       }
     }
 
-    // 2. ถ้าเปิดฟอร์มเก่า (ดึงตัวแปรมาสร้างช่อง)
+    // 2. ถ้าเปิดฟอร์มเก่า (ดึงตัวแปรมาสร้างช่อง ตามลำดับจากซ้ายไปขวา)
     const textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || "");
-    const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
-    const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
-
+    
+    const keysInOrder = [];
     let counter = 1;
-    // จับคำว่า "หมายเลข TLM-xxx"
-    const implicitMatches = textToParse.match(/หมายเลข\s+(?!\{)([^\s<]+)/g) || [];
-    implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
+    
+    // Regex นี้จะสแกนหาทั้ง {ตัวแปร}, [ตัวแปร], และ "หมายเลข xxx" ไปพร้อมๆ กันตามลำดับประโยค
+    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]|หมายเลข\s+(?!\{)([^\s<]+)|\{item_no\}/g;
+    let match;
+    
+    while ((match = regex.exec(textToParse)) !== null) {
+      if (match[1]) {
+        keysInOrder.push(match[1]); // เจอ {var}
+      } else if (match[2]) {
+        keysInOrder.push(match[2]); // เจอ [var]
+      } else if (match[0] === '{item_no}') {
+        keysInOrder.push(`item_no_${counter++}`); // เจอ {item_no} ดิบๆ
+      } else {
+        keysInOrder.push(`item_no_${counter++}`); // เจอ หมายเลข xxx
+      }
+    }
 
-    // จับคำว่า "{item_no}" ดิบๆ ที่ค้างในระบบเก่า
-    const itemNoMatches = textToParse.match(/\{item_no\}/g) || [];
-    itemNoMatches.forEach(() => keys.push(`item_no_${counter++}`));
-
-    // กรอง key ที่ซ้ำ หรือ item_no ดิบๆ ทิ้ง
-    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
+    const uniqueKeys = [...new Set(keysInOrder)].filter(k => k !== 'item_no');
 
     return uniqueKeys.map(key => {
       let label = key;
