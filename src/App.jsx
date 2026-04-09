@@ -64,7 +64,12 @@ const App = () => {
 
     // 2. ล้าง {item_no} ซ้ำซ้อนให้เป็น item_no_1, item_no_2 (แก้บั๊กตัวแปรชนกัน)
     let counter = 1;
-    processed = processed.replace(/หมายเลข\s*(\{item_no\}|\{[^\}]+\}|[^\s<]+)/g, () => {
+    processed = processed.replace(/หมายเลข\s+([^\s<]+)/g, (match, p1) => {
+      // ถ้าเป็นตัวแปรที่มีปีกกาอยู่แล้ว (เช่น {id_card}, {vehicle_no}) ให้ข้ามไปเลย!
+      if (p1.startsWith('{') && p1.endsWith('}')) {
+        if (p1 === '{item_no}') return `หมายเลข {item_no_${counter++}}`; // แก้แค่ {item_no} เปล่าๆ
+        return match; 
+      }
       return `หมายเลข {item_no_${counter++}}`;
     });
     // ดักเก็บตกกรณีมี {item_no} เดี่ยวๆ หลุดมา
@@ -209,12 +214,18 @@ const App = () => {
     // 2. ถ้าสร้างใหม่ โหมดผู้กระทำผิด -> ฟิกซ์ 12 ฟิลด์นี้เท่านั้น
     if (reportMode === 'violator' && !selectedTemplate) {
       return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
-        { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
-        { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
-        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
-        { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรมทบทวน' }
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, 
+        { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
+        { id: 'id_card', label: 'หมายเลขบัตร' }, 
+        { id: 'company', label: 'สังกัด' },
+        { id: 'position', label: 'ตำแหน่ง' }, 
+        { id: 'vehicle_type', label: 'ประเภทรถ' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ' }, 
+        { id: 'location', label: 'บริเวณ' },
+        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, 
+        { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
+        { id: 'seizure_end', label: 'ถึงวันที่' }, 
+        { id: 'retraining_date', label: 'วันอบรมทบทวน' }
       ];
     }
 
@@ -486,6 +497,7 @@ const App = () => {
       });
 
       // Save with blank formData to ensure it loads empty for the next use
+      // Robust handle for null selectedTemplate case - creating a new template
       const { error } = await saveTemplate(name, {}, templateNarrative, extraPreview);
       if (!error) {
         alert("บันทึกฟอร์มเรียบร้อยแล้ว");
