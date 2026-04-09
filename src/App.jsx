@@ -151,6 +151,8 @@ const App = () => {
         if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
       }
     }
+  }, [reportMode]);
+
   // PHASE 69.2: FORCE RESET ON MODE SWITCH to prevent ghost fields/template leakage
   useEffect(() => {
     handleFullReset();
