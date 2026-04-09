@@ -27,8 +27,33 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
+  
+  const thaiPreviewRef = useRef(null);
+  const extraPreviewRef = useRef(null);
   const isEditingPreview = useRef(false);
   const prevFormDataRef = useRef({});
+
+  // PHASE 59: ATOMIC LOCKING ARCHITECTURE (STRICT ADHERENCE)
+  // Ensures every form field is wrapped in a protected, atomic span.
+  const hydrateHtmlTemplate = (text) => {
+    if (!text) return '';
+    return text.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
+      const id = p1 || p2;
+      return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
+    });
+  };
+
+  // PHASE 55: NUCLEAR RESET FUNCTION
+  const handleFullReset = () => {
+    setFormData({});
+    setThaiPreview('');
+    setExtraPreview('');
+    setSelectedTemplate(null);
+    isEditingPreview.current = false;
+    prevFormDataRef.current = {};
+    // Ensure hidden state for CAAT is reset if needed
+    setShowCAAT(false);
+  };
 
   const [isTranslating, setIsTranslating] = useState(false);
 
@@ -72,7 +97,13 @@ const App = () => {
   useEffect(() => {
     if (reportMode && Array.isArray(templatesData)) {
       const first = templatesData.find(t => t.mode === reportMode);
-      if (first) setSelectedTemplate(first);
+      if (first) {
+        setSelectedTemplate(first);
+        const hydrated = hydrateHtmlTemplate(first.preview || '');
+        setThaiPreview(hydrated);
+        // Ensure DOM is updated if ref is ready
+        if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
+      }
     }
     setIsSidebarOpen(false);
   }, [reportMode]);
@@ -224,57 +255,15 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
-    // PHASE 48: HYBRID STATE SYNC (DIRECT INJECTION)
-    // If user is manually editing the preview, we replace only the changed value
-    // instead of reverting the whole template.
-    if (isEditingPreview.current && thaiPreview) {
-      const oldValue = prevFormDataRef.current[id];
-      const newValue = value;
-      
-      // PHASE 52: DUAL-TRACK ADAPTIVE SYNC
-      // Track 1: Placeholder Replacement (Delayed Filling)
-      const tagRegex = new RegExp(`\\{${id}\\}|\\[${id}\\]`, 'g');
-      if (tagRegex.test(thaiPreview)) {
-        setThaiPreview(current => current.replace(tagRegex, String(newValue)));
-      }
-
-      // Track 2: Precision Semantic Sync (Existing Data Update)
-      // Only trigger if we have an oldValue and it's meaningful or anchored
-      const isMeaningful = oldValue && String(oldValue).trim().length > 0;
-
-      if (isMeaningful && newValue !== oldValue) {
-        const keywordMap = {
-          flight_no: /(เที่ยวบิน|เที่ยวบินที่|เทียวบิน)/,
-          registration: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)/,
-          ac_type: /(แบบอากาศยาน)/,
-          route: /(เส้นทางบิน)/,
-          sta: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)/,
-          std: /(เวลาออกตามตารางบิน|เวลาออกตามตาราง)/,
-          atd: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)/,
-          airline: /(สายการบิน)/,
-          stand_no: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)/,
-          pax: /(ผู้โดยสาร|จำนวนผู้โดยสาร)/,
-          time_1: /(เมื่อเวลา|เวลา)/,
-          time_2: /(ต่อมาเวลา|เวลา)/,
-          time_3: /(ต่อมาเวลา|เวลา)/,
-          time_4: /(ต่อมาเวลา|เวลา)/,
-          time_5: /(ต่อมาเวลา|เวลา)/,
-          time_6: /(ต่อมาเวลา|เวลา)/
-        };
-
-        const kw = keywordMap[id];
-        const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-        if (kw) {
-          // Surgical Replacement with keywords
-          const regex = new RegExp(`(${kw.source}\\s?[:：]?\\s?)${escapedOld}`, 'g');
-          setThaiPreview(current => current.replace(regex, `$1${newValue}`));
-        } else if (String(oldValue).length > 2) {
-          // Fallback global replacement only for long identifiers
-          const regex = new RegExp(escapedOld, 'g');
-          setThaiPreview(current => current.replace(regex, String(newValue)));
-        }
-      }
+    // PHASE 59: SURGICAL DOM INJECTION (Plan B Logic in Plan A Architecture)
+    // Find the specific atomic span and update its innerText directly.
+    if (thaiPreviewRef.current) {
+        const targetSpans = thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`);
+        targetSpans.forEach(targetSpan => {
+            targetSpan.innerText = value || `{${id}}`;
+            // Visual feedback of sync
+            targetSpan.style.background = value ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.1)";
+        });
     }
 
     setFormData(prev => {
@@ -286,22 +275,29 @@ const App = () => {
         const timeMatch = value.match(/([01]?[0-9]|2[0-3])[:.][0-5][0-9]/);
         if (timeMatch && !newData.incident_time) {
           newData.incident_time = timeMatch[0].replace('.', ':');
+          // Update DOM for time immediately if guessed
+          if (thaiPreviewRef.current) {
+            const timeSpan = thaiPreviewRef.current.querySelector(`[data-field="incident_time"]`);
+            if (timeSpan) timeSpan.textContent = newData.incident_time;
+          }
         }
 
         // Detect Flight No (Airline Prefix + 3-4 Digits)
         const flightMatch = value.match(/[A-Z]{2,3}\s?[0-9]{3,4}/i);
         if (flightMatch && !newData.flight_no) {
           newData.flight_no = flightMatch[0].toUpperCase().replace(/\s/g, '');
+          // Update DOM for flight_no immediately if guessed
+          if (thaiPreviewRef.current) {
+            const flightSpan = thaiPreviewRef.current.querySelector(`[data-field="flight_no"]`);
+            if (flightSpan) flightSpan.textContent = newData.flight_no;
+          }
         }
       }
 
-      // Keep prevRef in sync
+      // Synchronize back to Ref so the data is preserved
       prevFormDataRef.current = newData;
       return newData;
     });
-    
-    // We NO LONGER set isEditingPreview.current = false here.
-    // This allows the hybrid mode to persist.
   };
 
   const formatRelativeTime = (isoString) => {
@@ -334,13 +330,15 @@ const App = () => {
   };
 
   const copyThai = () => {
-    if (!thaiPreview) return;
-    navigator.clipboard.writeText(thaiPreview);
+    const cleanText = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : (thaiPreview || '');
+    if (!cleanText) return;
+    
+    navigator.clipboard.writeText(cleanText);
     if (saveReport) {
       saveReport({
         mode: reportMode,
         templateName: selectedTemplate?.name || 'กำหนดเอง',
-        preview: thaiPreview,
+        preview: cleanText,
         extraPreview: extraPreview,
         data: formData
       });
@@ -375,7 +373,11 @@ const App = () => {
     const initialData = item.data || {};
     setFormData(initialData);
     prevFormDataRef.current = initialData; // PHASE 48 SYNC
-    setThaiPreview(item.preview || "");
+    
+    const hydrated = hydrateHtmlTemplate(item.preview || "");
+    setThaiPreview(hydrated);
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
+    
     setExtraPreview(item.extra_preview || "");
     isEditingPreview.current = type === 'history';
   };
@@ -383,9 +385,9 @@ const App = () => {
   const handleSaveAsTemplate = async () => {
     const name = window.prompt("กรุณาตั้งชื่อฟอร์มนี้ (เช่น: เครื่องบินขัดข้อง, ล้อยางแตก):");
     if (name && saveTemplate) {
-      // PHASE 46: SEMANTIC CONTEXTUAL PARSER
-      // Uses "Preceding Keywords" to identify data types with high precision.
-      let templateNarrative = thaiPreview;
+      // PHASE 57: DOM-BASED EXTRACTION
+      // Extract clean text from DOM before template discovery
+      let templateNarrative = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : (thaiPreview || '');
 
       // 1. Precise Match: If user filled the form, use that first
       const sortedEntries = Object.entries(formData).sort((a, b) => String(b[1] || "").length - String(a[1] || "").length);
@@ -509,7 +511,10 @@ const App = () => {
       const ct = customTemplates.find(t => t.id === templateId);
       if (ct) {
         setFormData(ct.data || {});
-        setThaiPreview(ct.preview || '');
+        const hydrated = hydrateHtmlTemplate(ct.preview || '');
+        setThaiPreview(hydrated);
+        if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
+        
         setExtraPreview(ct.extra_preview || '');
         isEditingPreview.current = false;
       }
@@ -590,9 +595,8 @@ const App = () => {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             onClick={() => {
               const first = templatesData.find(t => t.mode === reportMode);
+              handleFullReset();
               setSelectedTemplate(first);
-              setFormData({});
-              isEditingPreview.current = false;
             }}
           >
             <Plus size={16} /> สร้างรายงานใหม่
@@ -736,7 +740,7 @@ const App = () => {
                   ? 'รายงานเหตุการณ์ไม่ปกติ' 
                   : (selectedTemplate?.name || 'กรุณาเลือกแม่แบบ')}
               </h2>
-              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setFormData({})}>รีเซ็ต</button>
+              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={handleFullReset}>รีเซ็ต</button>
             </div>
             <div className="form-body">
               {dynamicFields.length > 0 ? (
@@ -827,20 +831,22 @@ const App = () => {
               </div>
             </div>
             <div className="preview-body-v2">
-              <textarea 
+              <div 
+                ref={thaiPreviewRef}
                 className="preview-textarea" 
-                value={thaiPreview} 
-                onChange={(e) => { setThaiPreview(e.target.value); isEditingPreview.current = true; }} 
+                contentEditable={true}
+                suppressContentEditableWarning={true}
+                onInput={() => isEditingPreview.current = true}
+                dangerouslySetInnerHTML={{ __html: thaiPreview }}
+                style={{ whiteSpace: 'pre-wrap', minHeight: '300px' }}
               />
             </div>
             {showCAAT && reportMode === 'incident' && (
               <div className="preview-body-v2" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--accent-indigo-soft)', minHeight: '100px' }}>
-                <textarea 
+                <div 
                   className="preview-textarea" 
-                  value={extraPreview} 
-                  readOnly 
-                  style={{ color: 'var(--accent-indigo)' }} 
-                  placeholder={isTranslating ? "กำลังประมวลผลการแปลโดย AI..." : "กดปุ่ม 'ยืนยันแปลภาษา' เพื่อสร้างรายงานภาษาอังกฤษ"}
+                  style={{ color: 'var(--accent-indigo)', whiteSpace: 'pre-wrap' }} 
+                  dangerouslySetInnerHTML={{ __html: extraPreview }}
                 />
               </div>
             )}
