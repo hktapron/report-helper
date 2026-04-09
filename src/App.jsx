@@ -56,22 +56,24 @@ const App = () => {
   // PHASE 59/71: ATOMIC LOCKING ARCHITECTURE (ULITMATUM FIX)
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
-    
-    // 1. PHASE 66: GLOBAL AUTO-DATE INJECTION
-    let processed = text.replace(/วันที่\s?([^\n\r]*)/g, `วันที่ ${getCurrentThaiDate()}`);
+    let processed = text;
 
-    // 2. PHASE 71: COUNTER-BASED SEQUENTIAL LOGIC (EXACT AS REQUESTED)
+    // 1. Auto Date
+    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+    processed = processed.replace(/วันที่\s?([^\n\r<]*)/g, `วันที่ ${dateStr}`);
+
+    // 2. ล้าง {item_no} ซ้ำซ้อนให้เป็น item_no_1, item_no_2 (แก้บั๊กตัวแปรชนกัน)
     let counter = 1;
-    processed = processed.replace(/หมายเลข\s+([^\s{]+)/g, (match, p1) => {
-      const varName = `item_no_${counter}`;
-      counter++;
-      return `หมายเลข {${varName}}`;
+    processed = processed.replace(/หมายเลข\s*(\{item_no\}|\{[^\}]+\}|[^\s<]+)/g, () => {
+      return `หมายเลข {item_no_${counter++}}`;
     });
+    // ดักเก็บตกกรณีมี {item_no} เดี่ยวๆ หลุดมา
+    processed = processed.replace(/\{item_no\}/g, () => `{item_no_${counter++}}`);
 
-    // 3. Variable hydration ({key}, [key])
+    // 3. แปลง {} ให้เป็น span 
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
-      return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
+      return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
     });
     
     return processed;
