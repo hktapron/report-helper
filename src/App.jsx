@@ -67,12 +67,12 @@ const App = () => {
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
     });
 
-    // 3. PHASE 67/69: SEQUENTIAL INDEXING FIX (Callback-based Counter)
-    // As per user instruction: Use a callback with a local counter to ensure unique IDs
-    let itemNoIndex = 1;
+    // 3. PHASE 67/69/69.2: SEQUENTIAL INDEXING FIX (EXACT CALLBACK LOGIC)
+    let counter = 1;
     processed = processed.replace(/หมายเลข\s+([^\s<{}]+)/g, (match, p1) => {
-      const fieldId = `item_no_${itemNoIndex++}`;
-      return `หมายเลข <span class="sync-field" data-field="${fieldId}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p1}</span>`;
+      const variableName = `item_no_${counter}`;
+      counter++;
+      return `หมายเลข <span class="sync-field" data-field="${variableName}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p1}</span>`;
     });
     
     return processed;
@@ -87,11 +87,11 @@ const App = () => {
     prevFormDataRef.current = {};
     setShowCAAT(false);
     
-    // PHASE 68: MODE-BASED INITIALIZATION
+    // PHASE 68/69.2: MODE-BASED INITIALIZATION (RE-MAPPED)
     let defaultText = '';
     
     if (reportMode === 'violator') {
-      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระแทดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     } else {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     }
@@ -151,6 +151,9 @@ const App = () => {
         if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
       }
     }
+  // PHASE 69.2: FORCE RESET ON MODE SWITCH to prevent ghost fields/template leakage
+  useEffect(() => {
+    handleFullReset();
     setIsSidebarOpen(false);
   }, [reportMode]);
 
@@ -196,10 +199,11 @@ const App = () => {
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
     
-    // PHASE 66/67/69: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL CALLBACK MATCH
+    // PHASE 66/67/69/69.2: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL CALLBACK MATCH
+    let sidebarCounter = 1;
     const implicitMatches = combinedText.match(/หมายเลข\s+[^\s<{}]+/g) || [];
-    implicitMatches.forEach((match, idx) => {
-      const fieldId = `item_no_${idx + 1}`;
+    implicitMatches.forEach((match) => {
+      const fieldId = `item_no_${sidebarCounter++}`;
       if (!keys.includes(fieldId)) {
         keys.push(fieldId);
       }
