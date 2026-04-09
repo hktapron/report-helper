@@ -238,8 +238,8 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
-    // PHASE 60: TWO-WAY STATE SYNCHRONIZATION
-    // Step A: Surgical DOM Injection
+    // PHASE 60: THE SURGICAL SNAPSHOT
+    // 1. Surgical DOM Injection (Target specific atomic spans)
     if (thaiPreviewRef.current) {
         const targetSpans = thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`);
         targetSpans.forEach(targetSpan => {
@@ -247,12 +247,16 @@ const App = () => {
             targetSpan.style.background = value ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.1)";
         });
 
-        // Step B: Master Snapshot (Capture new HTML into State)
+        // 2. State Snapshot (Capture new HTML into State so React remembers it)
         setThaiPreview(thaiPreviewRef.current.innerHTML);
     }
 
+    // PHASE 62: CENTRALIZED TIME MASKING
+    const isTimeField = /time|std|sta|atd|ata/i.test(id);
+    const finalValue = isTimeField && typeof value === 'string' ? formatTimeInput(value) : value;
+
     setFormData(prev => {
-      const newData = { ...prev, [id]: value };
+      const newData = { ...prev, [id]: finalValue };
       
       // Smart Guessing (Pattern detection in Narrative) - only in dynamic mode
       if (!isEditingPreview.current && (id === 'narrative' || id === 'update_text')) {
@@ -774,12 +778,7 @@ const App = () => {
                       <input 
                         type="text" 
                         value={formData[field.id] || ''} 
-                        onChange={(e) => {
-                          // PHASE 62: INPUT MASKING FOR TIME FIELDS
-                          const isTimeField = field.id.includes('time') || ['std', 'sta', 'atd', 'ata'].includes(field.id);
-                          const val = isTimeField ? formatTimeInput(e.target.value) : e.target.value;
-                          handleInputChange(field.id, val);
-                        }} 
+                        onChange={(e) => handleInputChange(field.id, e.target.value)} 
                       />
                     )}
                   </div>
