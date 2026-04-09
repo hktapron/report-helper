@@ -58,48 +58,42 @@ const App = () => {
     if (!text) return '';
     let processed = text;
 
-    // 1. Auto Date
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
     processed = processed.replace(/วันที่\s?([^\n\r<]*)/g, `วันที่ ${dateStr}`);
 
-    // 2. ล้าง {item_no} ซ้ำซ้อนให้เป็น item_no_1, item_no_2 (แก้บั๊กตัวแปรชนกัน)
+    // สำคัญมาก: Regex นี้บังคับไม่ให้ไปยุ่งกับตัวแปรที่มีปีกกาอยู่แล้ว (?!\{)
     let counter = 1;
-    processed = processed.replace(/หมายเลข\s+([^\s<]+)/g, (match, p1) => {
-      // ถ้าเป็นตัวแปรที่มีปีกกาอยู่แล้ว (เช่น {id_card}, {vehicle_no}) ให้ข้ามไปเลย!
-      if (p1.startsWith('{') && p1.endsWith('}')) {
-        if (p1 === '{item_no}') return `หมายเลข {item_no_${counter++}}`; // แก้แค่ {item_no} เปล่าๆ
-        return match; 
-      }
+    processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => {
       return `หมายเลข {item_no_${counter++}}`;
     });
-    // ดักเก็บตกกรณีมี {item_no} เดี่ยวๆ หลุดมา
+    // เก็บตกอันเก่าที่เซฟพัง
     processed = processed.replace(/\{item_no\}/g, () => `{item_no_${counter++}}`);
 
-    // 3. แปลง {} ให้เป็น span 
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
     });
-    
+
     return processed;
   };
 
   // PHASE 55/68/71: NUCLEAR RESET FUNCTION (HARDCODED)
   const handleFullReset = () => {
-    setSelectedTemplate(null); // สำคัญมาก ต้องบังคับล้างค่า!
+    setSelectedTemplate(null); // บังคับให้หน้าจอรู้ว่านี่คือ "สร้างใหม่"
     setFormData({});
-    
+
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
     let defaultText = '';
-    
+
     if (reportMode === 'incident') {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     } else {
       defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     }
-    
-    setThaiPreview(defaultText);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerText = defaultText;
+
+    const hydratedText = hydrateHtmlTemplate(defaultText);
+    setThaiPreview(hydratedText);
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydratedText;
   };
 
   const [isTranslating, setIsTranslating] = useState(false);
@@ -208,35 +202,28 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    // 1. ถ้าสร้างใหม่ โหมดเหตุการณ์ -> ไม่ต้องมีฟิลด์
+    // 1. กดสร้างใหม่ - เหตุการณ์ไม่ปกติ (ต้องว่างเปล่า)
     if (reportMode === 'incident' && !selectedTemplate) return [];
 
-    // 2. ถ้าสร้างใหม่ โหมดผู้กระทำผิด -> ฟิกซ์ 12 ฟิลด์นี้เท่านั้น
+    // 2. กดสร้างใหม่ - ผู้กระทำผิด (บังคับ 12 ฟิลด์เป๊ะๆ)
     if (reportMode === 'violator' && !selectedTemplate) {
       return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, 
-        { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
-        { id: 'id_card', label: 'หมายเลขบัตร' }, 
-        { id: 'company', label: 'สังกัด' },
-        { id: 'position', label: 'ตำแหน่ง' }, 
-        { id: 'vehicle_type', label: 'ประเภทรถ' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ' }, 
-        { id: 'location', label: 'บริเวณ' },
-        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, 
-        { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
-        { id: 'seizure_end', label: 'ถึงวันที่' }, 
-        { id: 'retraining_date', label: 'วันอบรมทบทวน' }
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
+        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' }, { id: 'company', label: 'สังกัด', type: 'text' },
+        { id: 'position', label: 'ตำแหน่ง', type: 'text' }, { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' }, { id: 'location', label: 'บริเวณ', type: 'text' },
+        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
+        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' }, { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
       ];
     }
 
-    // 3. ถ้าดึงจาก Template เดิม ให้ดึงจากข้อความตั้งต้นเท่านั้น! (ห้ามดึงจาก thaiPreview)
-    const textToParse = selectedTemplate ? (selectedTemplate.content || selectedTemplate.data?.narrative || "") : "";
+    // 3. กรณีเปิดฟอร์มเก่า
+    const textToParse = selectedTemplate ? (selectedTemplate.content || selectedTemplate.data?.narrative || selectedTemplate.preview || "") : "";
     const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
 
-    // รันลำดับหมายเลขจาก Template ตั้งต้น
     let counter = 1;
-    const implicitMatches = textToParse.match(/หมายเลข\s+([^\s{<]+)/g) || [];
+    const implicitMatches = textToParse.match(/หมายเลข\s+(?!\{)([^\s<]+)/g) || [];
     implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
 
     const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
@@ -247,6 +234,19 @@ const App = () => {
       else if (key === 'time_1') label = 'ลำดับเวลาที่ 1';
       else if (key === 'time_2') label = 'ลำดับเวลาที่ 2';
       else if (key.startsWith('item_no_')) label = `หมายเลข ${key.split('_')[2]}`;
+      else if (key === 'incident_time') label = 'เวลาเกิดเหตุ';
+      else if (key === 'violator_name') label = 'ชื่อผู้กระทำความผิด';
+      else if (key === 'id_card') label = 'หมายเลขบัตร';
+      else if (key === 'company') label = 'สังกัด';
+      else if (key === 'position') label = 'ตำแหน่ง';
+      else if (key === 'vehicle_type') label = 'ประเภทรถ';
+      else if (key === 'vehicle_no') label = 'หมายเลขรถ';
+      else if (key === 'location') label = 'บริเวณ';
+      else if (key === 'seizure_days') label = 'จำนวนวันยึดบัตร';
+      else if (key === 'seizure_start') label = 'เริ่มยึดวันที่';
+      else if (key === 'seizure_end') label = 'ถึงวันที่';
+      else if (key === 'retraining_date') label = 'วันอบรมทบทวน';
+
       return { id: key, label: label, type: 'text' };
     });
   }, [selectedTemplate, reportMode]);
