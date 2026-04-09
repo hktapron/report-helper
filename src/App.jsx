@@ -394,9 +394,9 @@ const App = () => {
         { kw: /(ทะเบียน|ทะเบียนฯ|ทะเบียนอากาศยาน|ทะเบียนและสัญชาติ)\s?[:：]?\s?/g, tag: 'registration', pat: /[A-Z0-9-]+\b/ },
         { kw: /(แบบอากาศยาน)\s?[:：]?\s?/g, tag: 'ac_type', pat: /[A-Z0-9]+\b/ },
         { kw: /(เส้นทางบิน)\s?[:：]?\s?/g, tag: 'route', pat: /[A-Z0-9 -]+\b/ },
-        { kw: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)\s?[:：]?\s?/g, tag: 'sta', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
-        { kw: /(เวลาออกตามตารางบิน|เวลาออกตามตาราง)\s?[:：]?\s?/g, tag: 'std', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
-        { kw: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)\s?[:：]?\s?/g, tag: 'atd', pat: /\d{1,2}[:.]\d{2}\s?(น\.)?/ },
+        { kw: /(เวลาลง ทภก\.|เวลาเข้าตามตารางบิน)\s?[:：]?\s?/g, tag: 'sta', pat: /\d{1,2}[:.]\d{2}/ },
+        { kw: /(เวลาออกตามตารางบิน|เวลาออกตามตาราง)\s?[:：]?\s?/g, tag: 'std', pat: /\d{1,2}[:.]\d{2}/ },
+        { kw: /(เวลาออกจากทภก\.|เวลาออกจาก ทภก\.|เวลาออกจาก ทภก)\s?[:：]?\s?/g, tag: 'atd', pat: /\d{1,2}[:.]\d{2}/ },
         { kw: /(สายการบิน)\s?[:：]?\s?/g, tag: 'airline', pat: /[a-zA-Z\s]+\b/ },
         { kw: /(หลุมจอดฯ หมายเลข|หลุมจอด|หลุมจอด ฯ หมายเลข)\s?[:：]?\s?/g, tag: 'stand_no', pat: /\d+[A-Z]?\b/ },
         { kw: /(ผู้โดยสาร|จำนวนผู้โดยสาร)\s?[:：]?\s?/g, tag: 'pax', pat: /[\d+ ]+คน/ },
@@ -586,131 +586,133 @@ const App = () => {
           />
         </div>
 
-        {/* TOP SECTION: Actions & Custom Forms */}
-        <div style={{ padding: '0 1rem' }}>
-          <button 
-            className="btn btn-primary btn-full" 
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-            onClick={() => {
-              const first = templatesData.find(t => t.mode === reportMode);
-              handleFullReset();
-              setSelectedTemplate(first);
-            }}
-          >
-            <Plus size={16} /> สร้างรายงานใหม่
-          </button>
-
-          {/* PHASE 39: FOLDER SYSTEM */}
-          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
-             <div className="history-title" style={{ margin: 0 }}>ฟอร์มเหตุการณ์</div>
-             <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
-                const name = window.prompt("ชื่อโฟลเดอร์ใหม่:");
-                if (name) createFolder(name);
-             }} />
-          </div>
-
-          <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
-            {folders.map(folder => {
-              const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
-              return (
-                <div key={folder.id} className="folder-item">
-                  <div 
-                    className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
-                    onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
-                    onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                    onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
-                    onDragLeave={() => setDropTargetFolderId(null)}
-                    onDrop={(e) => handleFolderDrop(e, folder.id)}
-                  >
-                    <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
-                    <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
-                    <span className="folder-name">{folder.name}</span>
-                    <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
-                  </div>
-                  
-                  {folder.is_expanded && (
-                    <div className="folder-content">
-                      {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
-                      {folderTemplates.map(ct => (
-                        <div 
-                          key={ct.id} 
-                          className="template-item" 
-                          draggable 
-                          onDragStart={(e) => handleDragStart(e, ct)}
-                          onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                          onClick={() => loadAnyTemplate(ct, 'custom')}
-                        >
-                          <FileText size={12} style={{ opacity: 0.6 }} />
-                          <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* General Templates (No folder) */}
-            <div className="uncategorized-section">
-              <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
-              {customTemplates.filter(t => !t.folder_id).map(ct => (
-                <div 
-                  key={ct.id} 
-                  className="template-item" 
-                  style={{ marginLeft: '1.25rem' }}
-                  draggable 
-                  onDragStart={(e) => handleDragStart(e, ct)}
-                  onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                  onClick={() => loadAnyTemplate(ct, 'custom')}
-                >
-                  <FileText size={12} style={{ opacity: 0.6 }} />
-                  <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
-
-        {/* BOTTOM SECTION: History with Strict Pinning */}
-        <div className="history-section" style={{ border: 'none', paddingTop: 0, flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
-          <div className="history-title">ประวัติเหตุการณ์</div>
-          
-          {pinnedHistory.map(item => (
-            <div 
-              key={item.id} 
-              className="history-item" 
-              style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
-              onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-              onClick={() => loadAnyTemplate(item, 'history')}
+        <div className="sidebar-scroll-area">
+          {/* TOP SECTION: Actions & Custom Forms */}
+          <div style={{ padding: '0 0.5rem' }}>
+            <button 
+              className="btn btn-primary btn-full" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
+              onClick={() => {
+                const first = templatesData.find(t => t.mode === reportMode);
+                handleFullReset();
+                setSelectedTemplate(first);
+              }}
             >
-              <div className="history-info">
-                <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
-                <Pin size={12} fill="var(--accent-indigo)" style={{ opacity: 0.6 }} />
-              </div>
-            </div>
-          ))}
-          
-          {normalHistory.map(item => (
-            <div 
-              key={item.id} 
-              className="history-item" 
-              onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-              onClick={() => loadAnyTemplate(item, 'history')}
-            >
-              <div className="history-info">
-                <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-              </div>
-              <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
-            </div>
-          ))}
-
-          {hasMore && (
-            <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
-              โหลดเพิ่ม...
+              <Plus size={16} /> สร้างรายงานใหม่
             </button>
-          )}
+
+            {/* PHASE 39: FOLDER SYSTEM */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
+               <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
+               <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
+                  const name = window.prompt("ชื่อโฟลเดอร์ใหม่:");
+                  if (name) createFolder(name);
+               }} />
+            </div>
+
+            <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
+              {folders.map(folder => {
+                const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
+                return (
+                  <div key={folder.id} className="folder-item">
+                    <div 
+                      className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
+                      onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
+                      onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
+                      onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
+                      onDragLeave={() => setDropTargetFolderId(null)}
+                      onDrop={(e) => handleFolderDrop(e, folder.id)}
+                    >
+                      <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
+                      <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
+                      <span className="folder-name">{folder.name}</span>
+                      <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
+                    </div>
+                    
+                    {folder.is_expanded && (
+                      <div className="folder-content">
+                        {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
+                        {folderTemplates.map(ct => (
+                          <div 
+                            key={ct.id} 
+                            className="template-item" 
+                            draggable 
+                            onDragStart={(e) => handleDragStart(e, ct)}
+                            onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                            onClick={() => loadAnyTemplate(ct, 'custom')}
+                          >
+                            <FileText size={12} style={{ opacity: 0.6 }} />
+                            <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* General Templates (No folder) */}
+              <div className="uncategorized-section">
+                <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
+                {customTemplates.filter(t => !t.folder_id).map(ct => (
+                  <div 
+                    key={ct.id} 
+                    className="template-item" 
+                    style={{ marginLeft: '1.25rem' }}
+                    draggable 
+                    onDragStart={(e) => handleDragStart(e, ct)}
+                    onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                    onClick={() => loadAnyTemplate(ct, 'custom')}
+                  >
+                    <FileText size={12} style={{ opacity: 0.6 }} />
+                    <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
+
+          {/* BOTTOM SECTION: History with Strict Pinning */}
+          <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
+            <div className="history-title">ประวัติเหตุการณ์</div>
+            
+            {pinnedHistory.map(item => (
+              <div 
+                key={item.id} 
+                className="history-item" 
+                style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
+                onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+                onClick={() => loadAnyTemplate(item, 'history')}
+              >
+                <div className="history-info">
+                  <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
+                  <Pin size={12} fill="var(--accent-indigo)" style={{ opacity: 0.6 }} />
+                </div>
+              </div>
+            ))}
+            
+            {normalHistory.map(item => (
+              <div 
+                key={item.id} 
+                className="history-item" 
+                onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+                onClick={() => loadAnyTemplate(item, 'history')}
+              >
+                <div className="history-info">
+                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                </div>
+                <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
+              </div>
+            ))}
+
+            {hasMore && (
+              <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
+                โหลดเพิ่ม...
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
@@ -743,7 +745,7 @@ const App = () => {
             <div className="form-body">
               {dynamicFields.length > 0 ? (
                 dynamicFields.map(field => (
-                  <div key={field.id} className="form-field">
+                  <div key={field.id} className={`form-field ${field.type === 'list' || field.id.toLowerCase().includes('narrative') || field.id.toLowerCase().includes('update_text') ? 'full' : ''}`}>
                     <label>{field.label}</label>
                     {field.type === 'list' ? (
                       <div className="infinity-list">
@@ -789,7 +791,7 @@ const App = () => {
                 </div>
               )}
               {reportMode === 'incident' && (
-                <div className="special-section" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="special-section full" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
                   <label className="toggle-container">
                     <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
                     <span className="toggle-label">จัดทำรายงาน กพท.22</span>
