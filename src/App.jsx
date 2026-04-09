@@ -16,6 +16,10 @@ import {
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
+const getIncidentDefault = () => `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
+
+const getViolatorDefault = () => `รายงานผู้กระทำความผิด\nวันที่ ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [reportMode, setReportMode] = useState(null); 
@@ -79,18 +83,12 @@ const App = () => {
 
   // PHASE 55/68/71: NUCLEAR RESET FUNCTION (HARDCODED)
   const handleFullReset = () => {
-    setSelectedTemplate(null); // บังคับให้หน้าจอรู้ว่านี่คือ "สร้างใหม่"
+    setSelectedTemplate(null); // ต้องเคลียร์ค่าให้เป็น null จริงๆ
     setFormData({});
-
-    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-    let defaultText = '';
-
-    if (reportMode === 'incident') {
-      defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
-    } else {
-      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
-    }
-
+    
+    // ดึงข้อความจาก Constants ที่เราสร้างไว้ข้างบน จะได้เหมือนกันทุกจุด
+    const defaultText = reportMode === 'incident' ? getIncidentDefault() : getViolatorDefault();
+    
     const hydratedText = hydrateHtmlTemplate(defaultText);
     setThaiPreview(hydratedText);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydratedText;
@@ -150,22 +148,8 @@ const App = () => {
 
   useEffect(() => {
     if (reportMode) {
-      setSelectedTemplate(null); // ล้างเทมเพลตเก่า
-      setFormData({});
-      
-      const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-      let defaultText = '';
-      
-      if (reportMode === 'incident') {
-        defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
-      } else {
-        defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
-      }
-      
-      // โหลดข้อความและแปลงตัวแปรให้เป็นไฮไลท์สีฟ้า (Mapping) ทันที
-      const hydratedText = hydrateHtmlTemplate(defaultText);
-      setThaiPreview(hydratedText);
-      if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydratedText;
+      handleFullReset();
+      setIsSidebarOpen(false);
     }
   }, [reportMode]); 
 
@@ -202,31 +186,27 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    // 1. กดสร้างใหม่ - เหตุการณ์ไม่ปกติ (ต้องว่างเปล่า)
-    if (reportMode === 'incident' && !selectedTemplate) return [];
-
-    // 2. กดสร้างใหม่ - ผู้กระทำผิด (บังคับ 12 ฟิลด์เป๊ะๆ)
-    if (reportMode === 'violator' && !selectedTemplate) {
-      return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
-        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' }, { id: 'company', label: 'สังกัด', type: 'text' },
-        { id: 'position', label: 'ตำแหน่ง', type: 'text' }, { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' }, { id: 'location', label: 'บริเวณ', type: 'text' },
-        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
-        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' }, { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
-      ];
+    // กรณีสร้างรายงานใหม่ (หน้าต้องว่าง หรือมี 12 ฟิลด์เป๊ะๆ)
+    if (!selectedTemplate) {
+      if (reportMode === 'incident') return [];
+      if (reportMode === 'violator') {
+        return [
+          { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
+          { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
+          { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
+          { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
+          { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
+          { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรมทบทวน' }
+        ];
+      }
     }
 
-    // 3. กรณีเปิดฟอร์มเก่า
-    const textToParse = selectedTemplate ? (selectedTemplate.content || selectedTemplate.data?.narrative || selectedTemplate.preview || "") : "";
+    // กรณีเปิดรายงานเก่า (สกัดตัวแปรทุกตัวใน {} ออกมาสร้างช่องกรอก)
+    const textToParse = selectedTemplate.preview || selectedTemplate.content || selectedTemplate.data?.narrative || "";
     const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
 
-    let counter = 1;
-    const implicitMatches = textToParse.match(/หมายเลข\s+(?!\{)([^\s<]+)/g) || [];
-    implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
-
-    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
+    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no'); // กรองขยะทิ้ง
 
     return uniqueKeys.map(key => {
       let label = key;
@@ -234,6 +214,7 @@ const App = () => {
       else if (key === 'time_1') label = 'ลำดับเวลาที่ 1';
       else if (key === 'time_2') label = 'ลำดับเวลาที่ 2';
       else if (key.startsWith('item_no_')) label = `หมายเลข ${key.split('_')[2]}`;
+      // ฟอลแบ็คชื่อฟิลด์ของหน้าผู้กระทำผิด
       else if (key === 'incident_time') label = 'เวลาเกิดเหตุ';
       else if (key === 'violator_name') label = 'ชื่อผู้กระทำความผิด';
       else if (key === 'id_card') label = 'หมายเลขบัตร';
@@ -246,7 +227,7 @@ const App = () => {
       else if (key === 'seizure_start') label = 'เริ่มยึดวันที่';
       else if (key === 'seizure_end') label = 'ถึงวันที่';
       else if (key === 'retraining_date') label = 'วันอบรมทบทวน';
-
+      
       return { id: key, label: label, type: 'text' };
     });
   }, [selectedTemplate, reportMode]);
