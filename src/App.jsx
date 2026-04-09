@@ -238,22 +238,22 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
+    // PHASE 62: CENTRALIZED TIME MASKING (CALCULATE FIRST)
+    const isTimeField = /time|std|sta|atd|ata/i.test(id);
+    const finalValue = isTimeField && typeof value === 'string' ? formatTimeInput(value) : value;
+
     // PHASE 60: THE SURGICAL SNAPSHOT
     // 1. Surgical DOM Injection (Target specific atomic spans)
     if (thaiPreviewRef.current) {
         const targetSpans = thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`);
         targetSpans.forEach(targetSpan => {
-            targetSpan.innerText = value || `{${id}}`;
-            targetSpan.style.background = value ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.1)";
+            targetSpan.innerText = finalValue || `{${id}}`;
+            targetSpan.style.background = finalValue ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.1)";
         });
 
         // 2. State Snapshot (Capture new HTML into State so React remembers it)
         setThaiPreview(thaiPreviewRef.current.innerHTML);
     }
-
-    // PHASE 62: CENTRALIZED TIME MASKING
-    const isTimeField = /time|std|sta|atd|ata/i.test(id);
-    const finalValue = isTimeField && typeof value === 'string' ? formatTimeInput(value) : value;
 
     setFormData(prev => {
       const newData = { ...prev, [id]: finalValue };
