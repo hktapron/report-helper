@@ -90,7 +90,7 @@ const App = () => {
     let defaultText = '';
     
     if (reportMode === 'violator') {
-      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระแทดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     } else {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     }
@@ -191,65 +191,53 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
+    // 1. โหมด "เหตุการณ์ไม่ปกติ" (ถ้าไม่ได้เลือก Template เดิมอยู่ ให้ฟอร์มว่างเปล่า 100%)
+    if (reportMode === 'incident' && !selectedTemplate) {
+      return [];
+    }
+
+    // 2. โหมด "ผู้กระทำความผิด" (ถ้าไม่ได้เลือก Template เดิม ให้บังคับ 12 ฟิลด์นี้เท่านั้น)
+    if (reportMode === 'violator' && !selectedTemplate) {
+      return [
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' },
+        { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
+        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' },
+        { id: 'company', label: 'สังกัด', type: 'text' },
+        { id: 'position', label: 'ตำแหน่ง', type: 'text' },
+        { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' },
+        { id: 'location', label: 'บริเวณ', type: 'text' },
+        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' },
+        { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
+        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' },
+        { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
+      ];
+    }
+
+    // 3. กรณีเปิด Template เดิม (เช่น ฟอร์มรถบัสเสีย) ให้ดึงตัวแปรจากวงเล็บ {} มาสร้างฟิลด์
     const baseText = selectedTemplate?.content || selectedTemplate?.data?.narrative || "";
-    // PHASE 66 RECOVERY: Scan BOTH template and current preview (stripped of HTML) for real-time discovery
     const cleanPreview = thaiPreview.replace(/<[^>]*>?/gm, '');
     const combinedText = baseText + " " + cleanPreview;
-
-    // Match both {key} and [key]
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
-    
-    // PHASE 66/67/69/71: IMPLICIT "หมายเลข" DISCOVERY with USER-PROVIDED CALLBACK LOGIC
-    let sidebarCounter = 1;
-    const implicitMatches = combinedText.match(/หมายเลข\s+([^\s{]+)/g) || [];
-    implicitMatches.forEach(() => {
-      const fieldId = `item_no_${sidebarCounter++}`;
-      if (!keys.includes(fieldId)) {
-        keys.push(fieldId);
-      }
-    });
 
+    // ลบระบบ implicitMatches สแกนคำว่า "หมายเลข" ทิ้งไปเลย เพราะมันทำให้บั๊กฟิลด์งอก!
     const uniqueKeys = [...new Set(keys)];
-    
-    // Map these keys to a professional field list
+
     return uniqueKeys.map(key => {
       let label = key;
       let type = 'text';
       
-      if (key === 'flight_no') label = 'เที่ยวบินที่ (Flight No)';
-      else if (key === 'registration') label = 'ทะเบียน (Registration)';
-      else if (key === 'ac_type') label = 'แบบอากาศยาน (AC Type)';
-      else if (key === 'sta') label = 'เวลาลง ทภก. (STA)';
-      else if (key === 'std') label = 'เวลาออก ทภก. (STD)';
-      else if (key === 'atd') label = 'เวลาออกจาก ทภก. (ATD)';
-      else if (key === 'airline') label = 'สายการบิน (Airline)';
-      else if (key === 'route') label = 'เส้นทางบิน (Route)';
-      else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
-      else if (key === 'violator_name') label = 'ชื่อผู้กระทำความผิด';
-      else if (key === 'incident_time') label = 'เวลาเกิดเหตุ';
-      else if (key === 'id_card') label = 'หมายเลขบัตร';
-      else if (key === 'company') label = 'สังกัด';
-      else if (key === 'position') label = 'ตำแหน่ง';
-      else if (key === 'vehicle_type') label = 'ประเภทรถ';
-      else if (key === 'vehicle_no') label = 'หมายเลขรถ';
-      else if (key === 'location') label = 'บริเวณ';
-      else if (key === 'seizure_days') label = 'จำนวนวันยึดบัตร';
-      else if (key === 'seizure_start') label = 'เริ่มยึดวันที่';
-      else if (key === 'seizure_end') label = 'ถึงวันที่';
-      else if (key === 'retraining_date') label = 'วันอบรมทบทวน';
+      if (key === 'airline') label = 'สายการบิน (Airline)';
+      else if (key === 'time_1') label = 'ลำดับเวลาที่ 1';
+      else if (key === 'time_2') label = 'ลำดับเวลาที่ 2';
       else if (key.startsWith('item_no_')) {
         const num = key.split('_')[2];
         label = `หมายเลข ${num}`;
       }
-      else if (key === 'item_no') label = 'หมายเลข';
-      else if (key === 'impact_list') {
-        label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
-        type = 'list';
-      }
       
       return { id: key, label: label, type: type };
-    });
+    }).filter(field => field.id !== 'item_no'); // กรอง item_no ทื่อๆ ทิ้งไป ป้องกันบั๊ก
   }, [selectedTemplate, thaiPreview, reportMode]);
 
   // PHASE 60: REMOVED NUCLEAR EFFECT
@@ -860,7 +848,7 @@ const App = () => {
               )}
               {reportMode === 'incident' && (
                 <div className="special-section full" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                  <label className="toggle-container">
+                   <label className="toggle-container">
                     <input type="checkbox" checked={showCAAT} onChange={(e) => setShowCAAT(e.target.checked)} />
                     <span className="toggle-label">จัดทำรายงาน กพท.22</span>
                   </label>
