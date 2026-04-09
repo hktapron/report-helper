@@ -67,12 +67,12 @@ const App = () => {
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
     });
 
-    // 3. PHASE 66/67: IMPLICIT "หมายเลข" PATTERN DETECTION with SEQUENCING
-    // If "หมายเลข XXX" is found as raw text, wrap the XXX part in an atomic span with a unique index
+    // 3. PHASE 67/69: SEQUENTIAL INDEXING FIX (Callback-based Counter)
+    // As per user instruction: Use a callback with a local counter to ensure unique IDs
     let itemNoIndex = 1;
-    processed = processed.replace(/(หมายเลข)\s?([A-Z0-9-.]+)\b/g, (match, p1, p2) => {
+    processed = processed.replace(/หมายเลข\s+([^\s<{}]+)/g, (match, p1) => {
       const fieldId = `item_no_${itemNoIndex++}`;
-      return `${p1} <span class="sync-field" data-field="${fieldId}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p2}</span>`;
+      return `หมายเลข <span class="sync-field" data-field="${fieldId}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p1}</span>`;
     });
     
     return processed;
@@ -91,7 +91,7 @@ const App = () => {
     let defaultText = '';
     
     if (reportMode === 'violator') {
-      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {time_no1} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {name1} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {name1} เป็นเวลา {takeamount} วัน ตั้งแต่วันที่ {startdate} - {enddate} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {recurrentdate}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     } else {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     }
@@ -196,8 +196,8 @@ const App = () => {
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
     
-    // PHASE 66/67: IMPLICIT "หมายเลข" DISCOVERY with SEQUENCING
-    const implicitMatches = combinedText.match(/หมายเลข\s?[A-Z0-9-.]+\b/g) || [];
+    // PHASE 66/67/69: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL CALLBACK MATCH
+    const implicitMatches = combinedText.match(/หมายเลข\s+[^\s<{}]+/g) || [];
     implicitMatches.forEach((match, idx) => {
       const fieldId = `item_no_${idx + 1}`;
       if (!keys.includes(fieldId)) {
@@ -222,11 +222,23 @@ const App = () => {
       else if (key === 'airline') label = 'สายการบิน (Airline)';
       else if (key === 'route') label = 'เส้นทางบิน (Route)';
       else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
+      else if (key === 'violator_name') label = 'ชื่อผู้กระทำความผิด';
+      else if (key === 'incident_time') label = 'เวลาเกิดเหตุ';
+      else if (key === 'id_card') label = 'หมายเลขบัตร';
+      else if (key === 'company') label = 'สังกัด';
+      else if (key === 'position') label = 'ตำแหน่ง';
+      else if (key === 'vehicle_type') label = 'ประเภทรถ';
+      else if (key === 'vehicle_no') label = 'หมายเลขรถ';
+      else if (key === 'location') label = 'บริเวณ';
+      else if (key === 'seizure_days') label = 'จำนวนวันยึดบัตร';
+      else if (key === 'seizure_start') label = 'เริ่มยึดวันที่';
+      else if (key === 'seizure_end') label = 'ถึงวันที่';
+      else if (key === 'retraining_date') label = 'วันอบรมทบทวน';
       else if (key.startsWith('item_no_')) {
         const num = key.split('_')[2];
         label = `หมายเลข ${num}`;
       }
-      else if (key === 'item_no') label = 'หมายเลข'; // Fallback
+      else if (key === 'item_no') label = 'หมายเลข';
       else if (key === 'impact_list') {
         label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
         type = 'list';
