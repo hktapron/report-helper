@@ -149,11 +149,26 @@ const App = () => {
     }
   }, [reportMode]);
 
-  // PHASE 69.2: FORCE RESET ON MODE SWITCH to prevent ghost fields/template leakage
   useEffect(() => {
-    handleFullReset();
-    setIsSidebarOpen(false);
-  }, [reportMode]);
+    if (reportMode) {
+      setSelectedTemplate(null); // ล้างเทมเพลตเก่า
+      setFormData({});
+      
+      const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+      let defaultText = '';
+      
+      if (reportMode === 'incident') {
+        defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
+      } else {
+        defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+      }
+      
+      // โหลดข้อความและแปลงตัวแปรให้เป็นไฮไลท์สีฟ้า (Mapping) ทันที
+      const hydratedText = hydrateHtmlTemplate(defaultText);
+      setThaiPreview(hydratedText);
+      if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydratedText;
+    }
+  }, [reportMode]); 
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -188,54 +203,42 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    // 1. โหมด "เหตุการณ์ไม่ปกติ" (ถ้าไม่ได้เลือก Template เดิมอยู่ ให้ฟอร์มว่างเปล่า 100%)
-    if (reportMode === 'incident' && !selectedTemplate) {
-      return [];
-    }
+    // 1. ถ้าสร้างใหม่ โหมดเหตุการณ์ -> ไม่ต้องมีฟิลด์
+    if (reportMode === 'incident' && !selectedTemplate) return [];
 
-    // 2. โหมด "ผู้กระทำความผิด" (ถ้าไม่ได้เลือก Template เดิม ให้บังคับ 12 ฟิลด์นี้เท่านั้น)
+    // 2. ถ้าสร้างใหม่ โหมดผู้กระทำผิด -> ฟิกซ์ 12 ฟิลด์นี้เท่านั้น
     if (reportMode === 'violator' && !selectedTemplate) {
       return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' },
-        { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
-        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' },
-        { id: 'company', label: 'สังกัด', type: 'text' },
-        { id: 'position', label: 'ตำแหน่ง', type: 'text' },
-        { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' },
-        { id: 'location', label: 'บริเวณ', type: 'text' },
-        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' },
-        { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
-        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' },
-        { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
+        { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
+        { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
+        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
+        { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรมทบทวน' }
       ];
     }
 
-    // 3. กรณีเปิด Template เดิม (เช่น ฟอร์มรถบัสเสีย) ให้ดึงตัวแปรจากวงเล็บ {} มาสร้างฟิลด์
-    const baseText = selectedTemplate?.content || selectedTemplate?.data?.narrative || "";
-    const cleanPreview = thaiPreview.replace(/<[^>]*>?/gm, '');
-    const combinedText = baseText + " " + cleanPreview;
-    const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
+    // 3. ถ้าดึงจาก Template เดิม ให้ดึงจากข้อความตั้งต้นเท่านั้น! (ห้ามดึงจาก thaiPreview)
+    const textToParse = selectedTemplate ? (selectedTemplate.content || selectedTemplate.data?.narrative || "") : "";
+    const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
 
-    // ลบระบบ implicitMatches สแกนคำว่า "หมายเลข" ทิ้งไปเลย เพราะมันทำให้บั๊กฟิลด์งอก!
-    const uniqueKeys = [...new Set(keys)];
+    // รันลำดับหมายเลขจาก Template ตั้งต้น
+    let counter = 1;
+    const implicitMatches = textToParse.match(/หมายเลข\s+([^\s{<]+)/g) || [];
+    implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
+
+    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
 
     return uniqueKeys.map(key => {
       let label = key;
-      let type = 'text';
-      
       if (key === 'airline') label = 'สายการบิน (Airline)';
       else if (key === 'time_1') label = 'ลำดับเวลาที่ 1';
       else if (key === 'time_2') label = 'ลำดับเวลาที่ 2';
-      else if (key.startsWith('item_no_')) {
-        const num = key.split('_')[2];
-        label = `หมายเลข ${num}`;
-      }
-      
-      return { id: key, label: label, type: type };
-    }).filter(field => field.id !== 'item_no'); // กรอง item_no ทื่อๆ ทิ้งไป ป้องกันบั๊ก
-  }, [selectedTemplate, thaiPreview, reportMode]);
+      else if (key.startsWith('item_no_')) label = `หมายเลข ${key.split('_')[2]}`;
+      return { id: key, label: label, type: 'text' };
+    });
+  }, [selectedTemplate, reportMode]);
 
   // PHASE 60: REMOVED NUCLEAR EFFECT
   // We no longer use a generic useEffect to overwrite the Preview based on formData.
