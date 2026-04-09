@@ -178,26 +178,38 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    if (!selectedTemplate) {
+    // 1. ตรวจสอบการ "สร้างรายงานใหม่" (ถ้าเป็น null หรือ object ว่าง)
+    const isNewReport = !selectedTemplate || Object.keys(selectedTemplate).length === 0;
+
+    if (isNewReport) {
       if (reportMode === 'incident') return [];
-      return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
-        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' }, { id: 'company', label: 'สังกัด', type: 'text' },
-        { id: 'position', label: 'ตำแหน่ง', type: 'text' }, { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' }, { id: 'location', label: 'บริเวณ', type: 'text' },
-        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
-        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' }, { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
-      ];
+      if (reportMode === 'violator') {
+        return [
+          { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
+          { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' }, { id: 'company', label: 'สังกัด', type: 'text' },
+          { id: 'position', label: 'ตำแหน่ง', type: 'text' }, { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
+          { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' }, { id: 'location', label: 'บริเวณ', type: 'text' },
+          { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
+          { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' }, { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
+        ];
+      }
     }
 
-    const textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || ""); // เซฟตี้
+    // 2. ถ้าเปิดฟอร์มเก่า (ดึงตัวแปรมาสร้างช่อง)
+    const textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || "");
     const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
 
     let counter = 1;
+    // จับคำว่า "หมายเลข TLM-xxx"
     const implicitMatches = textToParse.match(/หมายเลข\s+(?!\{)([^\s<]+)/g) || [];
     implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
 
+    // จับคำว่า "{item_no}" ดิบๆ ที่ค้างในระบบเก่า
+    const itemNoMatches = textToParse.match(/\{item_no\}/g) || [];
+    itemNoMatches.forEach(() => keys.push(`item_no_${counter++}`));
+
+    // กรอง key ที่ซ้ำ หรือ item_no ดิบๆ ทิ้ง
     const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
 
     return uniqueKeys.map(key => {
