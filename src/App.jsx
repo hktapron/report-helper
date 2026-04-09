@@ -174,37 +174,9 @@ const App = () => {
     });
   }, [selectedTemplate]);
 
-  useEffect(() => {
-    if (selectedTemplate && !isEditingPreview.current) {
-      let text = selectedTemplate?.content || selectedTemplate?.data?.narrative || '';
-      
-      const now = new Date();
-      const d = now.getDate();
-      const m = THAI_MONTHS_SHORT[now.getMonth()];
-      const y = (now.getFullYear() + 543).toString().slice(-2);
-      const vtspDate = `${d} ${m} ${y}`;
-      
-      text = text.replace(/\{date\}|\[date\]/g, vtspDate);
-
-      // Perform dynamic replacement for all detected fields
-      Object.entries(formData).forEach(([key, value]) => {
-        const regex = new RegExp(`\\{${key}\\}|\\[${key}\\]`, 'g');
-        
-        // PHASE 47: INFINITY LIST FORMATTER (VERTICAL NUMBERED)
-        if (key === 'impact_list' && Array.isArray(value)) {
-          const listContent = value
-            .filter(v => v && v.trim())
-            .map((v, i) => `${i + 1} ${v}`)
-            .join('\n');
-          text = text.replace(regex, listContent);
-        } else if (value && String(value).trim().length > 0) {
-          text = text.replace(regex, value);
-        }
-      });
-
-      setThaiPreview(text);
-    }
-  }, [formData, selectedTemplate, reportMode]);
+  // PHASE 60: REMOVED NUCLEAR EFFECT
+  // We no longer use a generic useEffect to overwrite the Preview based on formData.
+  // Instead, we use Surgical Injection + Snapshotting to preserve manual edits.
 
   const handleTranslate = async () => {
     if (!thaiPreview) return;
@@ -255,15 +227,17 @@ const App = () => {
   const normalHistory = filteredHistory.filter(h => !h.is_pinned && !h.isPinned);
 
   const handleInputChange = (id, value) => {
-    // PHASE 59: SURGICAL DOM INJECTION (Plan B Logic in Plan A Architecture)
-    // Find the specific atomic span and update its innerText directly.
+    // PHASE 60: TWO-WAY STATE SYNCHRONIZATION
+    // Step A: Surgical DOM Injection
     if (thaiPreviewRef.current) {
         const targetSpans = thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`);
         targetSpans.forEach(targetSpan => {
             targetSpan.innerText = value || `{${id}}`;
-            // Visual feedback of sync
             targetSpan.style.background = value ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.1)";
         });
+
+        // Step B: Master Snapshot (Capture new HTML into State)
+        setThaiPreview(thaiPreviewRef.current.innerHTML);
     }
 
     setFormData(prev => {
@@ -836,7 +810,15 @@ const App = () => {
                 className="preview-textarea" 
                 contentEditable={true}
                 suppressContentEditableWarning={true}
-                onInput={() => isEditingPreview.current = true}
+                onInput={(e) => {
+                  // PHASE 60: MASTER SYNC (Capture Manual Edits)
+                  setThaiPreview(e.currentTarget.innerHTML);
+                  isEditingPreview.current = true;
+                }}
+                onBlur={(e) => {
+                  // Final Safety Sync
+                  setThaiPreview(e.currentTarget.innerHTML);
+                }}
                 dangerouslySetInnerHTML={{ __html: thaiPreview }}
                 style={{ whiteSpace: 'pre-wrap', minHeight: '300px' }}
               />
