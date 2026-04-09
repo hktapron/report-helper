@@ -67,12 +67,11 @@ const App = () => {
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
     });
 
-    // 3. PHASE 67/69/69.2: SEQUENTIAL INDEXING FIX (EXACT CALLBACK LOGIC)
+    // 3. PHASE 67/69/70: PRECISION SEQUENTIAL INDEXING (EXACT CALLBACK LOGIC)
     let counter = 1;
     processed = processed.replace(/หมายเลข\s+([^\s<{}]+)/g, (match, p1) => {
-      const variableName = `item_no_${counter}`;
-      counter++;
-      return `หมายเลข <span class="sync-field" data-field="${variableName}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p1}</span>`;
+      const fieldId = `item_no_${counter++}`;
+      return `หมายเลข <span class="sync-field" data-field="${fieldId}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p1}</span>`;
     });
     
     return processed;
@@ -201,7 +200,7 @@ const App = () => {
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
     
-    // PHASE 66/67/69/69.2: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL CALLBACK MATCH
+    // PHASE 66/67/69/70: IMPLICIT "หมายเลข" DISCOVERY with SEQUENTIAL INDEXING
     let sidebarCounter = 1;
     const implicitMatches = combinedText.match(/หมายเลข\s+[^\s<{}]+/g) || [];
     implicitMatches.forEach((match) => {
