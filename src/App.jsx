@@ -811,13 +811,14 @@ const App = () => {
                 contentEditable={true}
                 suppressContentEditableWarning={true}
                 onInput={(e) => {
-                  // PHASE 60: MASTER SYNC (Capture Manual Edits)
-                  setThaiPreview(e.currentTarget.innerHTML);
+                  // PHASE 61: MUTE REAL-TIME RENDER (Prevent Cursor Jump)
+                  // We mark editing, but DO NOT call setThaiPreview here.
                   isEditingPreview.current = true;
                 }}
                 onBlur={(e) => {
-                  // Final Safety Sync
+                  // PHASE 61: ADAPTIVE SYNC (Sync state on focus loss)
                   setThaiPreview(e.currentTarget.innerHTML);
+                  isEditingPreview.current = false;
                 }}
                 dangerouslySetInnerHTML={{ __html: thaiPreview }}
                 style={{ whiteSpace: 'pre-wrap', minHeight: '300px' }}
