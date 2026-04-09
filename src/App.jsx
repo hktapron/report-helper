@@ -78,7 +78,7 @@ const App = () => {
     return processed;
   };
 
-  // PHASE 55: NUCLEAR RESET FUNCTION
+  // PHASE 55/68: NUCLEAR RESET FUNCTION with MODE-BASED DEFAULTS
   const handleFullReset = () => {
     setFormData({});
     setExtraPreview('');
@@ -87,8 +87,15 @@ const App = () => {
     prevFormDataRef.current = {};
     setShowCAAT(false);
     
-    // PHASE 66: DEFAULT WORKSTATION TEMPLATE
-    const defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n🚨 Apron Control 🚨\nงขบ.สบข.ฝปข.ทภก. โทร. 1581\nสรุปงานรอบนี้:`;
+    // PHASE 68: MODE-BASED INITIALIZATION
+    let defaultText = '';
+    
+    if (reportMode === 'violator') {
+      defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${getCurrentThaiDate()}\n\nเมื่อเวลา {time_no1} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {name1} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {name1} เป็นเวลา {takeamount} วัน ตั้งแต่วันที่ {startdate} - {enddate} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {recurrentdate}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
+    } else {
+      defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${getCurrentThaiDate()}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
+    }
+    
     const hydrated = hydrateHtmlTemplate(defaultText);
     setThaiPreview(hydrated);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;

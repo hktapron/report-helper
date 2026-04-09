@@ -207,6 +207,8 @@ body {
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
+  height: 100%; /* PHASE 68: Ensure cards fill their 100vh containers */
+  overflow: hidden; /* PHASE 68: Force children (body) to handle scroll */
 }
 
 .card-header {
