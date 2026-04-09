@@ -176,9 +176,7 @@ const App = () => {
   }, [selectedTemplate]);
 
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
-  // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    // 1. ตรวจสอบการ "สร้างรายงานใหม่" (ถ้าเป็น null หรือ object ว่าง)
     const isNewReport = !selectedTemplate || Object.keys(selectedTemplate).length === 0;
 
     if (isNewReport) {
@@ -195,19 +193,22 @@ const App = () => {
       }
     }
 
-    // 2. ถ้าเปิดฟอร์มเก่า (ดึงตัวแปรมาสร้างช่อง ตามลำดับจากซ้ายไปขวา)
-    const textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || "");
-    
+    // ดึงข้อความมาล้าง HTML ทิ้ง เพื่อป้องกันการสแกนบั๊ก
+    let textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || "");
+    textToParse = textToParse.replace(/<[^>]*>?/gm, '');
+
     const keysInOrder = [];
     let counter = 1;
-    
-    // Regex นี้จะสแกนหาทั้ง {ตัวแปร}, [ตัวแปร], และ "หมายเลข xxx" ไปพร้อมๆ กันตามลำดับประโยค
-    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]|หมายเลข\s+(?!\{)([^\s<]+)|\{item_no\}/g;
+
+    // สแกนกวาดสายตาจากซ้ายไปขวา: {ตัวแปร}, [ตัวแปร], หรือ "หมายเลข xxx"
+    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]|หมายเลข\s+(?!\{)([^\s]+)/g;
     let match;
-    
+
     while ((match = regex.exec(textToParse)) !== null) {
       if (match[1]) {
-        keysInOrder.push(match[1]); // เจอ {var}
+        // ถ้าเจอ {item_no} ดิบๆ ให้รันเลขเป็น item_no_1, 2
+        if (match[1] === 'item_no') keysInOrder.push(`item_no_${counter++}`);
+        else keysInOrder.push(match[1]);
       } else if (match[2]) {
         keysInOrder.push(match[2]); // เจอ [var]
       } else if (match[0] === '{item_no}') {
