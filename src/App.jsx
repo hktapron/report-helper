@@ -33,6 +33,17 @@ const App = () => {
   const isEditingPreview = useRef(false);
   const prevFormDataRef = useRef({});
 
+  // PHASE 62: SMART TIME FORMATTER
+  const formatTimeInput = (val) => {
+    // Remove all non-digits and non-dots first
+    const clean = val.replace(/[^0-9.]/g, "");
+    // If it matches exactly 4 digits (e.g., 1942), transform to 19.42
+    if (/^\d{4}$/.test(clean)) {
+      return `${clean.slice(0, 2)}.${clean.slice(2)}`;
+    }
+    return clean;
+  };
+
   // PHASE 59: ATOMIC LOCKING ARCHITECTURE (STRICT ADHERENCE)
   // Ensures every form field is wrapped in a protected, atomic span.
   const hydrateHtmlTemplate = (text) => {
@@ -389,20 +400,29 @@ const App = () => {
       ];
 
       semanticRules.forEach(rule => {
-        const fullRegex = new RegExp(`(${rule.kw.source})(${rule.pat.source})`, 'g');
+        // PHASE 62: SEPARATE TIME UNITS FROM SEMANTIC MATCHES
+        const isTimeField = ['std', 'sta', 'atd', 'ata'].includes(rule.tag);
+        const fullRegex = isTimeField 
+          ? new RegExp(`(${rule.kw.source})(${rule.pat.source})(\\s?น\\.)?`, 'g')
+          : new RegExp(`(${rule.kw.source})(${rule.pat.source})`, 'g');
+          
         if (rule.tag === 'impact_list') {
            // Handle list specially - don't over-consume
            templateNarrative = templateNarrative.replace(rule.kw, `$1\n{${rule.tag}}`);
+        } else if (isTimeField) {
+           templateNarrative = templateNarrative.replace(fullRegex, (match, p1, p2, p3) => {
+             return `${p1}{${rule.tag}}${p3 || ''}`;
+           });
         } else {
            templateNarrative = templateNarrative.replace(fullRegex, `$1{${rule.tag}}`);
         }
       });
 
-      // 3. Sequence Timing (เมื่อเวลา, ต่อมาเวลา)
+      // 3. Sequence Timing (เมื่อเวลา, ต่อมาเวลา) - PHASE 62: UNIT SEPARATION
       let timeCount = 1;
-      const timeKeywords = /(เมื่อเวลา|ต่อมาเวลา|เวลา)\s?(\d{1,2}[:.]\d{2}\s?(น\.)?)/g;
-      templateNarrative = templateNarrative.replace(timeKeywords, (match, p1, p2) => {
-        return `${p1} {time_${timeCount++}}`;
+      const timeKeywords = /(เมื่อเวลา|ต่อมาเวลา|เวลา)\s?(\d{1,2}[:.]\d{2})(\s?น\.)?/g;
+      templateNarrative = templateNarrative.replace(timeKeywords, (match, p1, p2, p3) => {
+        return `${p1} {time_${timeCount++}}${p3 || ''}`;
       });
 
       // Save with blank formData to ensure it loads empty for the next use
@@ -751,7 +771,16 @@ const App = () => {
                         />
                       </div>
                     ) : (
-                      <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
+                      <input 
+                        type="text" 
+                        value={formData[field.id] || ''} 
+                        onChange={(e) => {
+                          // PHASE 62: INPUT MASKING FOR TIME FIELDS
+                          const isTimeField = field.id.includes('time') || ['std', 'sta', 'atd', 'ata'].includes(field.id);
+                          const val = isTimeField ? formatTimeInput(e.target.value) : e.target.value;
+                          handleInputChange(field.id, val);
+                        }} 
+                      />
                     )}
                   </div>
                 ))
