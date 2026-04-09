@@ -60,35 +60,27 @@ const App = () => {
   // PHASE 59/71: ATOMIC LOCKING ARCHITECTURE (ULITMATUM FIX)
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
-    let processed = text;
+    let processed = String(text); // เซฟตี้ป้องกันแครช
 
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
     processed = processed.replace(/วันที่\s?([^\n\r<]*)/g, `วันที่ ${dateStr}`);
 
-    // สำคัญมาก: Regex นี้บังคับไม่ให้ไปยุ่งกับตัวแปรที่มีปีกกาอยู่แล้ว (?!\{)
     let counter = 1;
-    processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => {
-      return `หมายเลข {item_no_${counter++}}`;
-    });
-    // เก็บตกอันเก่าที่เซฟพัง
+    processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => `หมายเลข {item_no_${counter++}}`);
     processed = processed.replace(/\{item_no\}/g, () => `{item_no_${counter++}}`);
 
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
     });
-
     return processed;
   };
 
   // PHASE 55/68/71: NUCLEAR RESET FUNCTION (HARDCODED)
   const handleFullReset = () => {
-    setSelectedTemplate(null); // ต้องเคลียร์ค่าให้เป็น null จริงๆ
+    setSelectedTemplate(null); 
     setFormData({});
-    
-    // ดึงข้อความจาก Constants ที่เราสร้างไว้ข้างบน จะได้เหมือนกันทุกจุด
     const defaultText = reportMode === 'incident' ? getIncidentDefault() : getViolatorDefault();
-    
     const hydratedText = hydrateHtmlTemplate(defaultText);
     setThaiPreview(hydratedText);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydratedText;
@@ -186,27 +178,27 @@ const App = () => {
   // --- Smart Form (Dynamic Mapping) Extraction & Substitution ---
   // Extra variables from the narrative to generate the form dynamically
   const dynamicFields = useMemo(() => {
-    // กรณีสร้างรายงานใหม่ (หน้าต้องว่าง หรือมี 12 ฟิลด์เป๊ะๆ)
     if (!selectedTemplate) {
       if (reportMode === 'incident') return [];
-      if (reportMode === 'violator') {
-        return [
-          { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
-          { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
-          { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
-          { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
-          { id: 'seizure_days', label: 'จำนวนวันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
-          { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรมทบทวน' }
-        ];
-      }
+      return [
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ', type: 'text' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด', type: 'text' },
+        { id: 'id_card', label: 'หมายเลขบัตร', type: 'text' }, { id: 'company', label: 'สังกัด', type: 'text' },
+        { id: 'position', label: 'ตำแหน่ง', type: 'text' }, { id: 'vehicle_type', label: 'ประเภทรถ', type: 'text' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ', type: 'text' }, { id: 'location', label: 'บริเวณ', type: 'text' },
+        { id: 'seizure_days', label: 'จำนวนวันยึดบัตร', type: 'text' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่', type: 'text' },
+        { id: 'seizure_end', label: 'ถึงวันที่', type: 'text' }, { id: 'retraining_date', label: 'วันอบรมทบทวน', type: 'text' }
+      ];
     }
 
-    // กรณีเปิดรายงานเก่า (สกัดตัวแปรทุกตัวใน {} ออกมาสร้างช่องกรอก)
-    const textToParse = selectedTemplate.preview || selectedTemplate.content || selectedTemplate.data?.narrative || "";
+    const textToParse = String(selectedTemplate?.preview || selectedTemplate?.content || selectedTemplate?.data?.narrative || ""); // เซฟตี้
     const matches = textToParse.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
 
-    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no'); // กรองขยะทิ้ง
+    let counter = 1;
+    const implicitMatches = textToParse.match(/หมายเลข\s+(?!\{)([^\s<]+)/g) || [];
+    implicitMatches.forEach(() => keys.push(`item_no_${counter++}`));
+
+    const uniqueKeys = [...new Set(keys)].filter(k => k !== 'item_no');
 
     return uniqueKeys.map(key => {
       let label = key;
@@ -214,7 +206,6 @@ const App = () => {
       else if (key === 'time_1') label = 'ลำดับเวลาที่ 1';
       else if (key === 'time_2') label = 'ลำดับเวลาที่ 2';
       else if (key.startsWith('item_no_')) label = `หมายเลข ${key.split('_')[2]}`;
-      // ฟอลแบ็คชื่อฟิลด์ของหน้าผู้กระทำผิด
       else if (key === 'incident_time') label = 'เวลาเกิดเหตุ';
       else if (key === 'violator_name') label = 'ชื่อผู้กระทำความผิด';
       else if (key === 'id_card') label = 'หมายเลขบัตร';
@@ -227,7 +218,7 @@ const App = () => {
       else if (key === 'seizure_start') label = 'เริ่มยึดวันที่';
       else if (key === 'seizure_end') label = 'ถึงวันที่';
       else if (key === 'retraining_date') label = 'วันอบรมทบทวน';
-      
+
       return { id: key, label: label, type: 'text' };
     });
   }, [selectedTemplate, reportMode]);
