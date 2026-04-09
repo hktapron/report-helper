@@ -67,10 +67,12 @@ const App = () => {
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${match}</span>`;
     });
 
-    // 3. PHASE 66: IMPLICIT "หมายเลข" PATTERN DETECTION
-    // If "หมายเลข XXX" is found as raw text, wrap the XXX part in an atomic span
+    // 3. PHASE 66/67: IMPLICIT "หมายเลข" PATTERN DETECTION with SEQUENCING
+    // If "หมายเลข XXX" is found as raw text, wrap the XXX part in an atomic span with a unique index
+    let itemNoIndex = 1;
     processed = processed.replace(/(หมายเลข)\s?([A-Z0-9-.]+)\b/g, (match, p1, p2) => {
-      return `${p1} <span class="sync-field" data-field="item_no" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p2}</span>`;
+      const fieldId = `item_no_${itemNoIndex++}`;
+      return `${p1} <span class="sync-field" data-field="${fieldId}" contenteditable="false" style="color: var(--accent-blue); background: rgba(59, 130, 246, 0.15); padding: 0 4px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 600; line-height: 1; cursor: default; user-select: all;">${p2}</span>`;
     });
     
     return processed;
@@ -187,10 +189,14 @@ const App = () => {
     const matches = combinedText.match(/\{([^{}]+)\}|\[([^\[\]]+)\]/g) || [];
     const keys = matches.map(m => m.replace(/[\{\}\[\]]/g, ''));
     
-    // PHASE 66: IMPLICIT "หมายเลข" DISCOVERY
-    if (combinedText.includes('หมายเลข') && !keys.includes('item_no')) {
-      keys.push('item_no');
-    }
+    // PHASE 66/67: IMPLICIT "หมายเลข" DISCOVERY with SEQUENCING
+    const implicitMatches = combinedText.match(/หมายเลข\s?[A-Z0-9-.]+\b/g) || [];
+    implicitMatches.forEach((match, idx) => {
+      const fieldId = `item_no_${idx + 1}`;
+      if (!keys.includes(fieldId)) {
+        keys.push(fieldId);
+      }
+    });
 
     const uniqueKeys = [...new Set(keys)];
     
@@ -209,7 +215,11 @@ const App = () => {
       else if (key === 'airline') label = 'สายการบิน (Airline)';
       else if (key === 'route') label = 'เส้นทางบิน (Route)';
       else if (key === 'stand_no') label = 'หลุมจอด (Stand)';
-      else if (key === 'item_no') label = 'หมายเลข';
+      else if (key.startsWith('item_no_')) {
+        const num = key.split('_')[2];
+        label = `หมายเลข ${num}`;
+      }
+      else if (key === 'item_no') label = 'หมายเลข'; // Fallback
       else if (key === 'impact_list') {
         label = 'ส่งผลกระทบต่อเที่ยวบิน ดังนี้ (Impact List)';
         type = 'list';
