@@ -298,7 +298,8 @@ const App = () => {
 
   const handleInputChange = (id, value) => {
     // PHASE 62: CENTRALIZED TIME MASKING (CALCULATE FIRST)
-    const isTimeField = /time|std|sta|atd|ata/i.test(id);
+    // 🔥 ULTIMATUM FIX: เช็คให้แม่นยำขึ้นเฉพาะช่องที่เป็น "เวลา" จริงๆ เพื่อไม่ให้ไปบล็อกช่องวันที่
+    const isTimeField = /^(incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
     const finalValue = isTimeField && typeof value === 'string' ? formatTimeInput(value) : value;
 
     // PHASE 60: THE SURGICAL SNAPSHOT
@@ -654,9 +655,7 @@ const App = () => {
               className="btn btn-primary btn-full" 
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
               onClick={() => {
-                const first = templatesData.find(t => t.mode === reportMode);
                 handleFullReset();
-                setSelectedTemplate(first);
               }}
             >
               <Plus size={16} /> สร้างรายงานใหม่
