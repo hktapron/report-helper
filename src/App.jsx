@@ -176,7 +176,7 @@ const App = () => {
             </button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
                 <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
-                <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt(\"ชื่อโฟลเดอร์ใหม่:\"); if(n) createFolder(n); }} />
+                <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อโฟลเดอร์ใหม่:"); if(n) createFolder(n); }} />
             </div>
 
             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
@@ -320,7 +320,7 @@ const App = () => {
         <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(e) => e.stopPropagation()}>
           <div className="context-item" onClick={() => {
             const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : contextMenu.data.name;
-            const newName = window.prompt(\"เปลี่ยนชื่อเป็น:\", currentTitle);
+            const newName = window.prompt("เปลี่ยนชื่อเป็น:", currentTitle);
             if (newName) {
               if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
               else if (contextMenu.type === 'history') renameReport(contextMenu.id, newName);
@@ -329,7 +329,7 @@ const App = () => {
             setContextMenu(null);
           }}><Edit2 size={14} /> เปลี่ยนชื่อ</div>
           <div className="context-item danger" onClick={() => {
-            if (window.confirm(\"ยืนยันการลบ?\")) {
+            if (window.confirm("ยืนยันการลบ?")) {
               if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
               else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
               else deleteTemplate(contextMenu.id);
