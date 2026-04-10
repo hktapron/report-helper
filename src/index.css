@@ -1063,7 +1063,8 @@ input:focus, textarea:focus {
     opacity: 1 !important;
   }
 
-  .form-section-container.mobile-active {
+  .form-section-container.mobile-active,
+  .preview-container-main.mobile-active {
     display: flex !important;
   }
 }

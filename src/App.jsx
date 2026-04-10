@@ -74,11 +74,14 @@ const App = () => {
   };
 
   const historyData = useHistory(user?.username);
-  const history = historyData?.history || [];
+  const { 
+    history, renameReport, deleteReport, togglePin, refreshHistory 
+  } = historyData;
+  
   const { 
     templates: customTemplates, folders, saveTemplate, deleteTemplate, 
     updateTemplateName, createFolder, renameFolder, deleteFolder,
-    toggleFolderExpansion, renameReport, deleteReport, togglePin
+    toggleFolderExpansion
   } = useUserTemplates(user?.username, reportMode);
 
   useEffect(() => { if (user) handleFullReset(); }, [reportMode]);
@@ -99,9 +102,9 @@ const App = () => {
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     
-    // NAVIGATION SYNC: Automatic Jump to Edit tab on Mobile as requested
+    // NAVIGATION SYNC: Jump to Preview as requested
     if (window.innerWidth <= 768) {
-      setActiveMobileTab('form');
+      setActiveMobileTab('preview');
     }
   };
 
@@ -180,7 +183,9 @@ const App = () => {
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-           <button className="header-action-btn" onClick={() => setReportMode(null)} title="สลับโหมด"><ArrowRight size={20} /></button>
+           <button className="header-action-btn" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
+              <Languages size={20} />
+           </button>
            <button className="header-action-btn" style={{ color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}} title="ออกจากระบบ"><User size={20} /></button>
         </div>
       </div>
@@ -264,7 +269,6 @@ const App = () => {
       </aside>
 
       <main className="main-content">
-        {(window.innerWidth > 768 || activeMobileTab === 'form') && (
         <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
           <div className="card">
             <div className="card-header">
@@ -290,9 +294,7 @@ const App = () => {
             </div>
           </div>
         </section>
-        )}
 
-        {(window.innerWidth > 768 || activeMobileTab === 'preview') && (
         <section className={`preview-container-main ${activeMobileTab === 'preview' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
           <div className="card">
             <div className="card-header">
@@ -315,7 +317,6 @@ const App = () => {
             </div>
           </div>
         </section>
-        )}
 
         {isSplitMode && activeMobileTab === 'form' && (
            <div className="split-preview-overlay">
