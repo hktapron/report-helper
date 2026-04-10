@@ -26,7 +26,6 @@ const App = () => {
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   
-  // MOBILE 2.0: NAVIGATION STATE
   const [activeMobileTab, setActiveMobileTab] = useState('form'); 
   const [isSplitMode, setIsSplitMode] = useState(false); 
   const [isTranslating, setIsTranslating] = useState(false);
@@ -81,39 +80,8 @@ const App = () => {
 
   useEffect(() => { if (user) handleFullReset(); }, [reportMode]);
 
-  const dynamicFields = useMemo(() => {
-    if (!selectedTemplate) {
-      if (reportMode === 'incident') return [];
-      return [
-        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
-        { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
-        { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
-        { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
-        { id: 'seizure_days', label: 'วันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
-        { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรม' }
-      ];
-    }
-    let textToParse = (selectedTemplate.preview || selectedTemplate.content || "").replace(/<[^>]*>?/gm, '');
-    const keys = [];
-    let match;
-    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
-    while ((match = regex.exec(textToParse)) !== null) keys.push(match[1] || match[2]);
-    return [...new Set(keys)].map(k => ({ id: k, label: k }));
-  }, [selectedTemplate, reportMode]);
-
-  const handleInputChange = (id, value) => {
-    const isTimeField = /^(incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
-    const finalValue = isTimeField ? formatTimeInput(value) : value;
-    if (thaiPreviewRef.current) {
-        thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(s => {
-            s.innerText = finalValue || `{${id}}`;
-        });
-        setThaiPreview(thaiPreviewRef.current.innerHTML);
-    }
-    setFormData(prev => ({ ...prev, [id]: finalValue }));
-  };
-
-  const internalLoadTemplate = (item, type = 'template') => {
+  // UNIFIED HANDLER FOR ALL PLATFORMS
+  const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
     setSelectedTemplate({
@@ -129,10 +97,47 @@ const App = () => {
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     
-    // NEW: Automatic tab switch on mobile for instant reaction
+    // NAVIGATION SYNC: Jump to Preview on Mobile for instant feedback
     if (window.innerWidth <= 768) {
       setActiveMobileTab('preview');
     }
+  };
+
+  const dynamicFields = useMemo(() => {
+    const incidentDefaults = [
+        { id: 'flight_no', label: 'เที่ยวบิน' }, { id: 'ac_reg', label: 'ทะเบียนเครื่อง' },
+        { id: 'stand', label: 'หลุมจอด' }, { id: 'atc_time', label: 'เวลา (ATC)' }
+    ];
+    if (!selectedTemplate) {
+      if (reportMode === 'incident') return incidentDefaults;
+      return [
+        { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
+        { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
+        { id: 'position', label: 'ตำแหน่ง' }, { id: 'vehicle_type', label: 'ประเภทรถ' },
+        { id: 'vehicle_no', label: 'หมายเลขรถ' }, { id: 'location', label: 'บริเวณ' },
+        { id: 'seizure_days', label: 'วันยึดบัตร' }, { id: 'seizure_start', label: 'เริ่มยึดวันที่' },
+        { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรม' }
+      ];
+    }
+    let textToParse = (selectedTemplate.preview || selectedTemplate.content || "").replace(/<[^>]*>?/gm, '');
+    const keys = [];
+    let match;
+    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
+    while ((match = regex.exec(textToParse)) !== null) keys.push(match[1] || match[2]);
+    const dynamic = [...new Set(keys)].map(k => ({ id: k, label: k }));
+    return reportMode === 'incident' ? [...incidentDefaults, ...dynamic] : dynamic;
+  }, [selectedTemplate, reportMode]);
+
+  const handleInputChange = (id, value) => {
+    const isTimeField = /^(incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
+    const finalValue = isTimeField ? formatTimeInput(value) : value;
+    if (thaiPreviewRef.current) {
+        thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(s => {
+            s.innerText = finalValue || `{${id}}`;
+        });
+        setThaiPreview(thaiPreviewRef.current.innerHTML);
+    }
+    setFormData(prev => ({ ...prev, [id]: finalValue }));
   };
 
   const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
@@ -185,12 +190,11 @@ const App = () => {
             </div>
 
             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
-               {/* FOLDERS & CUSTOM TEMPLATES */}
                {folders.map(folder => {
                  const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
                  return (
                    <div key={folder.id} className="folder-item">
-                     <div className="folder-header" onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}>
+                     <div className="folder-header" onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)} onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}>
                         <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
                         <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
                         <span className="folder-name">{folder.name}</span>
@@ -199,7 +203,7 @@ const App = () => {
                      {folder.is_expanded && (
                        <div className="folder-content">
                          {folderTemplates.map(ct => (
-                           <div key={ct.id} className="template-item" onClick={() => loadAnyTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
+                           <div key={ct.id} className="template-item" onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
                              <FileText size={12} style={{ opacity: 0.6 }} />
                              <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                            </div>
@@ -212,13 +216,13 @@ const App = () => {
                <div className="uncategorized-section">
                   <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
                   {filteredTemplates.map(t => (
-                    <div key={t.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => loadAnyTemplate(t)}>
+                    <div key={t.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(t)}>
                       <FileText size={12} style={{ opacity: 0.6 }} />
                       <span style={{ fontSize: '0.8rem' }}>{t.name}</span>
                     </div>
                   ))}
                   {customTemplates.filter(t => !t.folder_id).map(ct => (
-                    <div key={ct.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => loadAnyTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
+                    <div key={ct.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
                       <FileText size={12} style={{ opacity: 0.6 }} />
                       <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                     </div>
@@ -232,12 +236,12 @@ const App = () => {
              <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
                 <div className="history-title">ประวัติเหตุการณ์</div>
                 {pinnedHistory.map(h => (
-                  <div key={h.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => loadAnyTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
+                  <div key={h.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
                     <div className="history-info"><span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(h)}</span><Pin size={12} fill="var(--accent-indigo)" /></div>
                   </div>
                 ))}
                 {normalHistory.slice(0, 20).map(h => (
-                  <div key={h.id} className="history-item" onClick={() => loadAnyTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
+                  <div key={h.id} className="history-item" onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
                     <div className="history-info"><span style={{ flex: 1 }}>{getSmartTitle(h)}</span></div>
                   </div>
                 ))}
@@ -273,7 +277,6 @@ const App = () => {
                   <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
                 </div>
               ))}
-              {dynamicFields.length === 0 && <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>กรุณาเลือกแม่แบบเริ่มใช้งาน</div>}
             </div>
           </div>
         </section>
@@ -305,7 +308,6 @@ const App = () => {
            </div>
         )}
 
-        {/* BOTTOM NAV (MOBILE ONLY) */}
         <nav className="mobile-nav">
            <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}>
               <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
@@ -326,7 +328,7 @@ const App = () => {
       {contextMenu && (
         <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(e) => e.stopPropagation()}>
           <div className="context-item" onClick={() => {
-            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : contextMenu.data.name;
+            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : (contextMenu.type === 'folder' ? contextMenu.data.name : contextMenu.data.name);
             const newName = window.prompt("เปลี่ยนชื่อเป็น:", currentTitle);
             if (newName) {
               if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
