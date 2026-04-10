@@ -670,7 +670,7 @@ const App = () => {
 
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>VTSP</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>User: <strong>{user.username}</strong></div>
@@ -817,16 +817,16 @@ const App = () => {
                   </div>
                 ))}
 
-                {hasMore && (
-                  <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
-                    โหลดเพิ่ม...
-                  </button>
-                )}
+                  {hasMore && (
+                    <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
+                      โหลดเพิ่ม...
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </div>
 
         <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
            <button 
@@ -852,7 +852,7 @@ const App = () => {
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>
                 {selectedTemplate?.mode === 'incident' && selectedTemplate?.trigger === 'new' 
                   ? 'รายงานใหม่' 
-                  : (selectedTemplate?.name || 'เลือกแม่แบบ')}
+                  : (selectedTemplate?.name || 'แก้ไขข้อมูล')}
               </h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <button 
@@ -883,6 +883,9 @@ const App = () => {
                                 const newList = [...(formData[field.id] || [])];
                                 newList[idx] = e.target.value;
                                 handleInputChange(field.id, newList);
+                              }}
+                           />
+                        ))}
                         {/* The "Next" input for growing the list */}
                         <input 
                            type="text" 
@@ -1003,27 +1006,22 @@ const App = () => {
 
         {/* --- MOBILE 2.0: BOTTOM NAVIGATION --- */}
         <nav className="mobile-nav">
-          <button 
-            className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('history')}
-          >
-            <Folder size={20} />
-            <span>แบบร่าง</span>
-          </button>
-          <button 
-            className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('form')}
-          >
-            <FileText size={20} />
-            <span>กรอกข้อมูล</span>
-          </button>
-          <button 
-            className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('preview')}
-          >
-            <Sparkles size={20} />
-            <span>พรีวิว</span>
-          </button>
+           <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}>
+              <Folder size={20} />
+              <span>ฟอร์มเหตุการณ์</span>
+           </button>
+           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}>
+              <Edit2 size={20} />
+              <span>แก้ไขข้อมูล</span>
+           </button>
+           <button className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveMobileTab('preview')}>
+              <Sparkles size={20} />
+              <span>Preview</span>
+           </button>
+           <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}>
+              <History size={20} />
+              <span>ประวัติ</span>
+           </button>
         </nav>
 
         {/* --- MOBILE 2.0: FLOATING ACTION BUTTON --- */}
