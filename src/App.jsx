@@ -27,8 +27,6 @@ const App = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [showCAAT, setShowCAAT] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState('form'); // 'form', 'preview', 'history'
-  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
@@ -538,8 +536,6 @@ const App = () => {
     e.stopPropagation();
     setRenamingId(item.id);
     setRenameValue(item.customTitle || getSmartTitle(item));
-  };
-
   const submitRename = async (e) => {
     e.preventDefault();
     if (renameReport && renamingId) await renameReport(renamingId, renameValue);
@@ -547,10 +543,10 @@ const App = () => {
   };
 
   const handleDelete = async (e, id) => {
-    e.stopPropagation(); // prevent activating the item
+    e.stopPropagation();
     if (window.confirm("คุณต้องการลบประวัตินี้ใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
       if (deleteReport) await deleteReport(id);
-      if (formData.id === id) setFormData({}); // clear form if deleting active element
+      if (formData.id === id) setFormData({});
     }
   };
 
@@ -581,7 +577,6 @@ const App = () => {
     document.body.removeChild(link);
   };
 
-  // Drag and Drop Handlers
   const handleDragStart = (e, ct) => {
     e.dataTransfer.setData("vtsp/templateId", ct.id);
     e.dataTransfer.effectAllowed = "move";
@@ -624,7 +619,6 @@ const App = () => {
     }
   };
 
-  // Context Menu Handlers
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
     setContextMenu({
@@ -659,7 +653,7 @@ const App = () => {
              className="header-action-btn" 
              onClick={() => setReportMode(null)} 
              title="สลับโหมด"
-             style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}
+             style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
            >
               <ArrowRight size={20} />
            </button>
@@ -667,7 +661,7 @@ const App = () => {
              className="header-action-btn" 
              onClick={() => {setUser(null); setReportMode(null);}} 
              title="ออกจากระบบ"
-             style={{ background: 'transparent', border: 'none', color: 'var(--accent-red)' }}
+             style={{ background: 'transparent', border: 'none', color: 'var(--accent-red)', cursor: 'pointer' }}
            >
               <User size={20} />
            </button>
@@ -676,35 +670,20 @@ const App = () => {
 
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
-          <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>
-            VTSP
-          </div>
-          <div className="app-title" style={{ fontSize: '1.1rem', fontWeight: '600', opacity: 0.8 }}>
-            Report Helper
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-             User: <strong>{user.username}</strong> | <span style={{ cursor: 'pointer', color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}}>Logout</span>
-          </div>
+          <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>VTSP</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>User: <strong>{user.username}</strong></div>
         </div>
         
         <div className="search-box">
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="ค้นหา..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input type="text" className="search-input" placeholder="ค้นหา..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
 
         <div className="sidebar-scroll-area">
           {searchTerm ? (
             <div className="search-results-view" style={{ padding: '0 0.5rem' }}>
               <div className="history-title" style={{ color: 'var(--accent-indigo)', fontWeight: 'bold', marginBottom: '1rem' }}>ผลการค้นหา</div>
-              
-              {/* 1. ค้นหาเจอในแม่แบบพื้นฐาน */}
               {filteredTemplates.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                   <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ฟอร์มพื้นฐาน</div>
@@ -716,8 +695,6 @@ const App = () => {
                   ))}
                 </div>
               )}
-
-              {/* 2. ค้นหาเจอในฟอร์มที่จัดเก็บไว้ */}
               {filteredCustomTemplates.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                   <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ฟอร์มของฉัน</div>
@@ -729,8 +706,6 @@ const App = () => {
                   ))}
                 </div>
               )}
-
-              {/* 3. ค้นหาเจอในประวัติเหตุการณ์ */}
               {filteredHistory.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                   <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ประวัติที่เกี่ยวข้อง</div>
@@ -745,26 +720,23 @@ const App = () => {
                   ))}
                 </div>
               )}
-
               {filteredTemplates.length === 0 && filteredCustomTemplates.length === 0 && filteredHistory.length === 0 && (
                 <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem 1rem', fontSize: '0.85rem' }}>ไม่พบข้อมูลที่ตรงกับคำค้นหา</div>
               )}
             </div>
           ) : (
-            <>
-              {/* TOP SECTION: Actions & Custom Forms */}
+            <div className="sidebar-folders-container">
               <div style={{ padding: '0 0.5rem' }}>
                 <button 
                   className="btn btn-primary btn-full" 
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
                   onClick={() => {
                     handleFullReset();
+                    if (window.innerWidth <= 768) setActiveMobileTab('form');
                   }}
                 >
                   <Plus size={16} /> สร้างรายงานใหม่
                 </button>
-
-                {/* PHASE 39: FOLDER SYSTEM */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
                    <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
                    <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
@@ -772,40 +744,24 @@ const App = () => {
                       if (name) createFolder(name);
                    }} />
                 </div>
-
                 <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
                   {folders.map(folder => {
                     const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
                     return (
                       <div key={folder.id} className="folder-item">
-                        <div 
-                          className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
-                          onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
-                          onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                          onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
-                          onDragLeave={() => setDropTargetFolderId(null)}
-                          onDrop={(e) => handleFolderDrop(e, folder.id)}
-                        >
+                        <div className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`} onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}>
                           <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
                           <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
                           <span className="folder-name">{folder.name}</span>
                           <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
                         </div>
-                        
                         {folder.is_expanded && (
                           <div className="folder-content">
                             {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
                             {folderTemplates.map(ct => (
-                              <div 
-                                key={ct.id} 
-                                className="template-item" 
-                                draggable 
-                                onDragStart={(e) => handleDragStart(e, ct)}
-                                onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                                onClick={() => loadAnyTemplate(ct, 'custom')}
-                              >
+                              <div key={ct.id} className="template-item" onClick={() => loadAnyTemplate(ct, 'custom')}>
                                 <FileText size={12} style={{ opacity: 0.6 }} />
-                                <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
+                                <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                               </div>
                             ))}
                           </div>
@@ -813,20 +769,10 @@ const App = () => {
                       </div>
                     );
                   })}
-
-                  {/* General Templates (No folder) */}
                   <div className="uncategorized-section">
                     <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
                     {customTemplates.filter(t => !t.folder_id).map(ct => (
-                      <div 
-                        key={ct.id} 
-                        className="template-item" 
-                        style={{ marginLeft: '1.25rem' }}
-                        draggable 
-                        onDragStart={(e) => handleDragStart(e, ct)}
-                        onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                        onClick={() => loadAnyTemplate(ct, 'custom')}
-                      >
+                      <div key={ct.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => loadAnyTemplate(ct, 'custom')}>
                         <FileText size={12} style={{ opacity: 0.6 }} />
                         <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                       </div>
@@ -1132,5 +1078,4 @@ const App = () => {
     </div>
   );
 };
-
 export default App;
