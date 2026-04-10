@@ -29,6 +29,8 @@ const App = () => {
   const [activeMobileTab, setActiveMobileTab] = useState('form'); 
   const [isSplitMode, setIsSplitMode] = useState(false); 
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isLoadingCAAT, setIsLoadingCAAT] = useState(false);
+  const [translatedCAAT, setTranslatedCAAT] = useState('');
   const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
 
@@ -96,7 +98,11 @@ const App = () => {
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
-    if (window.innerWidth <= 768) { setActiveMobileTab('preview'); }
+    
+    // NAVIGATION SYNC: Automatic Jump to Edit tab on Mobile as requested
+    if (window.innerWidth <= 768) {
+      setActiveMobileTab('form');
+    }
   };
 
   const dynamicFields = useMemo(() => {
@@ -136,16 +142,34 @@ const App = () => {
     setFormData(prev => ({ ...prev, [id]: finalValue }));
   };
 
-  const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
+  const handleCAATTranslate = async () => {
+    if (!window.confirm("ยืนยันการทำรายงาน กพท.22?")) return;
+    setIsLoadingCAAT(true);
+    try {
+      const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
+      const result = await translateToCAAT22(text, formData);
+      setTranslatedCAAT(result);
+      setIsCAATModalOpen(true);
+    } catch (err) {
+      alert(err.message || "เกิดข้อผิดพลาดในการประมวลผล AI");
+    } finally {
+      setIsLoadingCAAT(false);
+    }
+  };
+
+  // SEARCH LOGIC: Real-time filtering for all sidebar items
+  const matchesSearch = (text) => !searchTerm || String(text).toLowerCase().includes(searchTerm.toLowerCase());
+
+  const filteredCustomTemplates = customTemplates.filter(t => matchesSearch(t.name));
+  const filteredTemplates = (templatesData || []).filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core')).filter(t => matchesSearch(t.name));
+  const filteredHistory = history.filter(h => (h.mode || 'incident') === reportMode).filter(h => matchesSearch(getSmartTitle(h)));
+
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
     setContextMenu({ x: e.pageX, y: e.pageY, type, id, data });
   };
 
-  const filteredTemplates = (templatesData || []).filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core'));
-  const filteredHistory = history.filter(h => (h.mode || 'incident') === reportMode);
-  const pinnedHistory = filteredHistory.filter(h => h.is_pinned);
-  const normalHistory = filteredHistory.filter(h => !h.is_pinned);
+  function getSmartTitle(h) { return h.customTitle || h.template_name || 'รายงานเหตุการณ์'; }
 
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
@@ -180,7 +204,8 @@ const App = () => {
             </div>
             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
                {folders.map(folder => {
-                 const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
+                 const folderTemplates = filteredCustomTemplates.filter(t => t.folder_id === folder.id);
+                 if (searchTerm && folderTemplates.length === 0 && !matchesSearch(folder.name)) return null;
                  return (
                    <div key={folder.id} className="folder-item">
                      <div className="folder-header" onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)} onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}>
@@ -189,7 +214,7 @@ const App = () => {
                         <span className="folder-name">{folder.name}</span>
                         <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
                      </div>
-                     {folder.is_expanded && (
+                     {(folder.is_expanded || searchTerm) && (
                        <div className="folder-content">
                          {folderTemplates.map(ct => (
                            <div key={ct.id} className="template-item" onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
@@ -210,7 +235,7 @@ const App = () => {
                       <span style={{ fontSize: '0.8rem' }}>{t.name}</span>
                     </div>
                   ))}
-                  {customTemplates.filter(t => !t.folder_id).map(ct => (
+                  {filteredCustomTemplates.filter(t => !t.folder_id).map(ct => (
                     <div key={ct.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
                       <FileText size={12} style={{ opacity: 0.6 }} />
                       <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
@@ -223,12 +248,12 @@ const App = () => {
              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
              <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
                 <div className="history-title">ประวัติเหตุการณ์</div>
-                {pinnedHistory.map(h => (
+                {filteredHistory.filter(h => h.is_pinned).map(h => (
                   <div key={h.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
                     <div className="history-info"><span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(h)}</span><Pin size={12} fill="var(--accent-indigo)" /></div>
                   </div>
                 ))}
-                {normalHistory.slice(0, 20).map(h => (
+                {filteredHistory.filter(h => !h.is_pinned).slice(0, 20).map(h => (
                   <div key={h.id} className="history-item" onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
                     <div className="history-info"><span style={{ flex: 1 }}>{getSmartTitle(h)}</span></div>
                   </div>
@@ -236,28 +261,22 @@ const App = () => {
              </div>
           </div>
         </div>
-        <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
-           <button className="btn btn-primary btn-full" style={{ height: '52px' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-              สลับเป็น: {reportMode === 'incident' ? 'รายงานผู้ปฏิบัติผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
-           </button>
-        </div>
       </aside>
 
       <main className="main-content">
+        {(window.innerWidth > 768 || activeMobileTab === 'form') && (
         <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
           <div className="card">
-            <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
+            <div className="card-header">
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <button className="btn btn-ghost" title="บันทึกฟอร์มใหม่" onClick={async () => { 
                   const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
                   if(n) {
                     await saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
-                    alert('บันทึกแม่แบบเรียบร้อย');
+                    alert('บันทึกฟอร์มเรียบร้อย');
                   }
-                }}>
-                  <Save size={18} />
-                </button>
+                }}><Save size={18} /></button>
                 {window.innerWidth <= 768 && (
                   <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem' }} onClick={() => setIsSplitMode(!isSplitMode)}><Pin size={16} /></button>
                 )}
@@ -271,13 +290,16 @@ const App = () => {
             </div>
           </div>
         </section>
+        )}
 
+        {(window.innerWidth > 768 || activeMobileTab === 'preview') && (
         <section className={`preview-container-main ${activeMobileTab === 'preview' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', borderColor: 'var(--accent-indigo)', color: 'white' }} onClick={() => setIsCAATModalOpen(true)}>
+                <button className="btn btn-primary" title="ทำรายงานด้วย AI" style={{ background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={handleCAATTranslate} disabled={isLoadingCAAT}>
+                   {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Languages size={16} />}
                    ทำรายงาน กพท.22
                 </button>
                 <button className="btn btn-primary" onClick={() => { 
@@ -293,6 +315,7 @@ const App = () => {
             </div>
           </div>
         </section>
+        )}
 
         {isSplitMode && activeMobileTab === 'form' && (
            <div className="split-preview-overlay">
@@ -319,21 +342,13 @@ const App = () => {
               <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body">
-              <pre className="caat-preview-text">
-                {translateToCAAT22(thaiPreview)}
-              </pre>
+              <pre className="caat-preview-text">{translatedCAAT}</pre>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>ยกเลิก</button>
               <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', color: 'white' }} onClick={() => {
-                const text = translateToCAAT22(thaiPreview);
-                navigator.clipboard.writeText(text);
-                historyData.saveReport({ 
-                  mode: reportMode, 
-                  templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)', 
-                  preview: text, 
-                  data: formData 
-                });
+                navigator.clipboard.writeText(translatedCAAT);
+                historyData.saveReport({ mode: reportMode, templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)', preview: translatedCAAT, data: formData });
                 alert('คัดลอกรายงาน กพท.22 เรียบร้อยแล้ว');
                 setIsCAATModalOpen(false);
               }}>ยืนยันการแปลและคัดลอก</button>
