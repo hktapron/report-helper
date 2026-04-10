@@ -60,12 +60,19 @@ const App = () => {
   // PHASE 59/71: ATOMIC LOCKING ARCHITECTURE (ULITMATUM FIX)
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
-    let processed = String(text); // เซฟตี้ป้องกันแครช
+    let processed = String(text);
 
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-    processed = processed.replace(/วันที่\s?([^\n\r<]*)/g, `วันที่ ${dateStr}`);
+    
+    // 🔥 ULTIMATUM FIX: เปลี่ยนวันที่เฉพาะ 2 บรรทัดแรก (Header) เพื่อไม่ให้ไปทำลายตัวแปร {seizure_start} ในเนื้อหา
+    const lines = processed.split('\n');
+    if (lines.length > 2 && lines[1].includes('วันที่')) {
+      lines[1] = lines[1].replace(/วันที่\s?([^\n\r<]*)/, `วันที่ ${dateStr}`);
+      processed = lines.join('\n');
+    }
 
     let counter = 1;
+    // ป้องกันไม่ให้ไปจับ "หมายเลข" ที่เป็นตัวแปรอยู่แล้ว
     processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => `หมายเลข {item_no_${counter++}}`);
     processed = processed.replace(/\{item_no\}/g, () => `{item_no_${counter++}}`);
 
@@ -87,7 +94,6 @@ const App = () => {
     if (reportMode === 'incident') {
       defaultText = `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`;
     } else {
-      // ห้ามตัดข้อความบรรทัดนี้ทิ้งเด็ดขาด เอาไปวางให้ครบประโยค
       defaultText = `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
     }
     
