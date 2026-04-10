@@ -261,16 +261,30 @@ const App = () => {
     }
   };
 
-  // Memoized lists
+  // Memoized lists (PHASE 82: DEEP UNIFIED SEARCH)
   const filteredTemplates = useMemo(() => {
     if (!Array.isArray(templatesData)) return [];
     const term = (searchTerm || '').toLowerCase();
     return templatesData.filter(t => 
       t.mode === reportMode && 
       (t.id === 'new_report' || t.id === 'violator_core') &&
-      (t.name.toLowerCase().includes(term) || (t.content || '').toLowerCase().includes(term))
+      (
+        t.name.toLowerCase().includes(term) || 
+        (t.content || '').toLowerCase().includes(term) ||
+        (t.preview || '').toLowerCase().includes(term)
+      )
     );
   }, [searchTerm, reportMode]);
+
+  const filteredCustomTemplates = useMemo(() => {
+    if (!Array.isArray(customTemplates)) return [];
+    const term = (searchTerm || '').toLowerCase();
+    return customTemplates.filter(t => 
+      t.name.toLowerCase().includes(term) || 
+      (t.preview || '').toLowerCase().includes(term) ||
+      (t.extra_preview || '').toLowerCase().includes(term)
+    );
+  }, [searchTerm, customTemplates]);
 
   const filteredHistory = useMemo(() => {
     const term = (searchTerm || '').toLowerCase();
@@ -649,130 +663,184 @@ const App = () => {
         </div>
 
         <div className="sidebar-scroll-area">
-          {/* TOP SECTION: Actions & Custom Forms */}
-          <div style={{ padding: '0 0.5rem' }}>
-            <button 
-              className="btn btn-primary btn-full" 
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
-              onClick={() => {
-                handleFullReset();
-              }}
-            >
-              <Plus size={16} /> สร้างรายงานใหม่
-            </button>
-
-            {/* PHASE 39: FOLDER SYSTEM */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
-               <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
-               <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
-                  const name = window.prompt("ชื่อโฟลเดอร์ใหม่:");
-                  if (name) createFolder(name);
-               }} />
-            </div>
-
-            <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
-              {folders.map(folder => {
-                const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
-                return (
-                  <div key={folder.id} className="folder-item">
-                    <div 
-                      className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
-                      onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
-                      onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                      onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
-                      onDragLeave={() => setDropTargetFolderId(null)}
-                      onDrop={(e) => handleFolderDrop(e, folder.id)}
-                    >
-                      <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
-                      <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
-                      <span className="folder-name">{folder.name}</span>
-                      <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
+          {searchTerm ? (
+            <div className="search-results-view" style={{ padding: '0 0.5rem' }}>
+              <div className="history-title" style={{ color: 'var(--accent-indigo)', fontWeight: 'bold', marginBottom: '1rem' }}>ผลการค้นหา</div>
+              
+              {/* 1. ค้นหาเจอในแม่แบบพื้นฐาน */}
+              {filteredTemplates.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ฟอร์มพื้นฐาน</div>
+                  {filteredTemplates.map(t => (
+                    <div key={t.id} className="template-item" onClick={() => loadAnyTemplate(t, 'template')}>
+                      <FileText size={12} style={{ opacity: 0.6 }} />
+                      <span style={{ fontSize: '0.8rem' }}>{t.name}</span>
                     </div>
-                    
-                    {folder.is_expanded && (
-                      <div className="folder-content">
-                        {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
-                        {folderTemplates.map(ct => (
-                          <div 
-                            key={ct.id} 
-                            className="template-item" 
-                            draggable 
-                            onDragStart={(e) => handleDragStart(e, ct)}
-                            onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                            onClick={() => loadAnyTemplate(ct, 'custom')}
-                          >
-                            <FileText size={12} style={{ opacity: 0.6 }} />
-                            <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
 
-              {/* General Templates (No folder) */}
-              <div className="uncategorized-section">
-                <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
-                {customTemplates.filter(t => !t.folder_id).map(ct => (
+              {/* 2. ค้นหาเจอในฟอร์มที่จัดเก็บไว้ */}
+              {filteredCustomTemplates.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ฟอร์มของฉัน</div>
+                  {filteredCustomTemplates.map(ct => (
+                    <div key={ct.id} className="template-item" onClick={() => loadAnyTemplate(ct, 'custom')}>
+                      <FileText size={12} style={{ opacity: 0.6 }} />
+                      <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 3. ค้นหาเจอในประวัติเหตุการณ์ */}
+              {filteredHistory.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div className="history-title" style={{ fontSize: '0.65rem', marginBottom: '0.25rem', opacity: 0.6 }}>ประวัติที่เกี่ยวข้อง</div>
+                  {filteredHistory.map(item => (
+                    <div key={item.id} className="history-item" onClick={() => loadAnyTemplate(item, 'history')}>
+                       <div className="history-info" style={{ gap: '0.3rem' }}>
+                          {item.is_pinned && <Pin size={10} fill="var(--accent-indigo)" />}
+                          <span style={{ fontSize: '0.8rem' }}>{getSmartTitle(item)}</span>
+                       </div>
+                       <div className="history-date" style={{ fontSize: '0.65rem' }}>{formatRelativeTime(item.saved_at || item.savedAt)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {filteredTemplates.length === 0 && filteredCustomTemplates.length === 0 && filteredHistory.length === 0 && (
+                <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem 1rem', fontSize: '0.85rem' }}>ไม่พบข้อมูลที่ตรงกับคำค้นหา</div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* TOP SECTION: Actions & Custom Forms */}
+              <div style={{ padding: '0 0.5rem' }}>
+                <button 
+                  className="btn btn-primary btn-full" 
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
+                  onClick={() => {
+                    handleFullReset();
+                  }}
+                >
+                  <Plus size={16} /> สร้างรายงานใหม่
+                </button>
+
+                {/* PHASE 39: FOLDER SYSTEM */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
+                   <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
+                   <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => {
+                      const name = window.prompt("ชื่อโฟลเดอร์ใหม่:");
+                      if (name) createFolder(name);
+                   }} />
+                </div>
+
+                <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
+                  {folders.map(folder => {
+                    const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
+                    return (
+                      <div key={folder.id} className="folder-item">
+                        <div 
+                          className={`folder-header ${dropTargetFolderId === folder.id ? 'drop-target' : ''}`}
+                          onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
+                          onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
+                          onDragOver={(e) => { e.preventDefault(); setDropTargetFolderId(folder.id); }}
+                          onDragLeave={() => setDropTargetFolderId(null)}
+                          onDrop={(e) => handleFolderDrop(e, folder.id)}
+                        >
+                          <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
+                          <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
+                          <span className="folder-name">{folder.name}</span>
+                          <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
+                        </div>
+                        
+                        {folder.is_expanded && (
+                          <div className="folder-content">
+                            {folderTemplates.length === 0 && <div className="folder-empty-text">ว่างเปล่า</div>}
+                            {folderTemplates.map(ct => (
+                              <div 
+                                key={ct.id} 
+                                className="template-item" 
+                                draggable 
+                                onDragStart={(e) => handleDragStart(e, ct)}
+                                onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                                onClick={() => loadAnyTemplate(ct, 'custom')}
+                              >
+                                <FileText size={12} style={{ opacity: 0.6 }} />
+                                <span style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* General Templates (No folder) */}
+                  <div className="uncategorized-section">
+                    <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
+                    {customTemplates.filter(t => !t.folder_id).map(ct => (
+                      <div 
+                        key={ct.id} 
+                        className="template-item" 
+                        style={{ marginLeft: '1.25rem' }}
+                        draggable 
+                        onDragStart={(e) => handleDragStart(e, ct)}
+                        onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                        onClick={() => loadAnyTemplate(ct, 'custom')}
+                      >
+                        <FileText size={12} style={{ opacity: 0.6 }} />
+                        <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
+
+              {/* BOTTOM SECTION: History with Strict Pinning */}
+              <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
+                <div className="history-title">ประวัติเหตุการณ์</div>
+                
+                {pinnedHistory.map(item => (
                   <div 
-                    key={ct.id} 
-                    className="template-item" 
-                    style={{ marginLeft: '1.25rem' }}
-                    draggable 
-                    onDragStart={(e) => handleDragStart(e, ct)}
-                    onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                    onClick={() => loadAnyTemplate(ct, 'custom')}
+                    key={item.id} 
+                    className="history-item" 
+                    style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
+                    onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+                    onClick={() => loadAnyTemplate(item, 'history')}
                   >
-                    <FileText size={12} style={{ opacity: 0.6 }} />
-                    <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                    <div className="history-info">
+                      <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
+                      <Pin size={12} fill="var(--accent-indigo)" style={{ opacity: 0.6 }} />
+                    </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
+                
+                {normalHistory.map(item => (
+                  <div 
+                    key={item.id} 
+                    className="history-item" 
+                    onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
+                    onClick={() => loadAnyTemplate(item, 'history')}
+                  >
+                    <div className="history-info">
+                      <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
+                    </div>
+                    <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
+                  </div>
+                ))}
 
-          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
-
-          {/* BOTTOM SECTION: History with Strict Pinning */}
-          <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
-            <div className="history-title">ประวัติเหตุการณ์</div>
-            
-            {pinnedHistory.map(item => (
-              <div 
-                key={item.id} 
-                className="history-item" 
-                style={{ borderLeft: '2px solid var(--accent-indigo)' }} 
-                onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-                onClick={() => loadAnyTemplate(item, 'history')}
-              >
-                <div className="history-info">
-                  <span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(item)}</span>
-                  <Pin size={12} fill="var(--accent-indigo)" style={{ opacity: 0.6 }} />
-                </div>
+                {hasMore && (
+                  <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
+                    โหลดเพิ่ม...
+                  </button>
+                )}
               </div>
-            ))}
-            
-            {normalHistory.map(item => (
-              <div 
-                key={item.id} 
-                className="history-item" 
-                onContextMenu={(e) => onContextMenu(e, 'history', item.id, item)}
-                onClick={() => loadAnyTemplate(item, 'history')}
-              >
-                <div className="history-info">
-                  <span style={{ flex: 1 }}>{getSmartTitle(item)}</span>
-                </div>
-                <div className="history-date">{formatRelativeTime(item.saved_at || item.savedAt)}</div>
-              </div>
-            ))}
-
-            {hasMore && (
-              <button className="btn btn-ghost btn-full" style={{ fontSize: '0.75rem' }} onClick={loadMore}>
-                โหลดเพิ่ม...
-              </button>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
