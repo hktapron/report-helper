@@ -8,9 +8,7 @@ import { supabase } from './supabaseClient';
 import { useUserTemplates } from './hooks/useUserTemplates';
 import { 
   Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
-  Search, Calendar, Clock, ChevronRight, User, Terminal, 
-  ArrowRight, History, FileText, Folder, FolderPlus, MoreVertical,
-  ChevronDown
+  Search, Calendar, Clock, ChevronRight, User, Terminal
 } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -27,15 +25,14 @@ const App = () => {
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   
-  // MOBILE 2.0: NAVIGATION STATE
-  const [activeMobileTab, setActiveMobileTab] = useState('form'); // 'templates', 'form', 'preview', 'history'
+  const [activeMobileTab, setActiveMobileTab] = useState('form'); 
   const [isSplitMode, setIsSplitMode] = useState(false); 
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const thaiPreviewRef = useRef(null);
   const isEditingPreview = useRef(false);
   const prevFormDataRef = useRef({});
 
-  // FOCUS TRAP FIX
   const focusPreview = () => {
     if (thaiPreviewRef.current) {
         thaiPreviewRef.current.focus();
@@ -58,14 +55,11 @@ const App = () => {
     if (!text) return '';
     let processed = String(text);
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-    
-    // Header date protection
     const lines = processed.split('\n');
     if (lines.length > 2 && lines[1].includes('วันที่')) {
       lines[1] = lines[1].replace(/วันที่\s?([^\n\r<]*)/, `วันที่ ${dateStr}`);
       processed = lines.join('\n');
     }
-
     let counter = 1;
     processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => `หมายเลข {item_no_${counter++}}`);
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
@@ -82,20 +76,14 @@ const App = () => {
     let defaultText = reportMode === 'incident' 
       ? `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`
       : `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
-    
     const hydrated = hydrateHtmlTemplate(defaultText);
     setThaiPreview(hydrated);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
   };
 
-  const [isTranslating, setIsTranslating] = useState(false);
   const historyData = useHistory(user?.username);
   const history = historyData?.history || [];
-  const { 
-    templates: customTemplates, folders, saveTemplate, deleteTemplate, 
-    updateTemplateName, createFolder, renameFolder, deleteFolder, 
-    moveTemplateToFolder, toggleFolderExpansion 
-  } = useUserTemplates(user?.username, reportMode);
+  const { templates: customTemplates, folders, saveTemplate, deleteTemplate, loadAnyTemplate } = useUserTemplates(user?.username, reportMode);
 
   useEffect(() => { if (reportMode) handleFullReset(); }, [reportMode]);
 
@@ -145,7 +133,7 @@ const App = () => {
     alert('คัดลอกและบันทึกแล้ว');
   };
 
-  const loadAnyTemplate = (item, type = 'template') => {
+  const internalLoadTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
     setSelectedTemplate({
@@ -163,8 +151,6 @@ const App = () => {
 
   const filteredTemplates = (templatesData || []).filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core'));
   const filteredHistory = history.filter(h => (h.mode || 'incident') === reportMode);
-  const pinnedHistory = filteredHistory.filter(h => h.is_pinned);
-  const normalHistory = filteredHistory.filter(h => !h.is_pinned);
 
   if (!user) return <Login onLogin={setUser} />;
   if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
@@ -175,7 +161,7 @@ const App = () => {
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'เหตุการณ์ไม่ปกติ' : 'ผู้กระทำความผิด'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-           <button className="header-action-btn" onClick={() => setReportMode(null)}><ArrowRight size={20} /></button>
+           <button className="header-action-btn" onClick={() => setReportMode(null)}><ChevronRight size={20} /></button>
            <button className="header-action-btn" style={{ color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}}><User size={20} /></button>
         </div>
       </div>
@@ -188,17 +174,17 @@ const App = () => {
           <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>User: {user.username}</div>
         </div>
         <div className="sidebar-scroll-area">
-          <div className="sidebar-folders-container" style={{ padding: '1rem' }}>
+          <div style={{ padding: '1rem' }}>
               <button className="btn btn-primary btn-full" onClick={() => {handleFullReset(); if(window.innerWidth <= 768) setActiveMobileTab('form');}}>สร้างใหม่</button>
               <div className="history-title" style={{ marginTop: '1rem' }}>ฟอร์มแนะนำ</div>
               {filteredTemplates.map(t => (
-                <div key={t.id} className="template-item" onClick={() => loadAnyTemplate(t)}>
-                  <FileText size={14} /> <span>{t.name}</span>
+                <div key={t.id} className="template-item" onClick={() => internalLoadTemplate(t)}>
+                  <Calendar size={14} /> <span>{t.name}</span>
                 </div>
               ))}
               <div className="history-title" style={{ marginTop: '1rem' }}>ประวัติล่าสุด</div>
-              {normalHistory.slice(0, 10).map(h => (
-                <div key={h.id} className="history-item" onClick={() => loadAnyTemplate(h, 'history')}>
+              {filteredHistory.slice(0, 10).map(h => (
+                <div key={h.id} className="history-item" onClick={() => internalLoadTemplate(h, 'history')}>
                   <span>{h.customTitle || 'รายงานเหตุการณ์'}</span>
                 </div>
               ))}
@@ -253,7 +239,7 @@ const App = () => {
 
         <nav className="mobile-nav">
            <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}>
-              <Folder size={20} /><span>ฟอร์มเหตุการณ์</span>
+              <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
            </button>
            <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}>
               <Edit2 size={20} /><span>แก้ไขข้อมูล</span>
@@ -262,7 +248,7 @@ const App = () => {
               <Sparkles size={20} /><span>Preview</span>
            </button>
            <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}>
-              <History size={20} /><span>ประวัติ</span>
+              <Clock size={20} /><span>ประวัติ</span>
            </button>
         </nav>
       </main>
