@@ -277,6 +277,7 @@ input:focus, textarea:focus {
   overflow-y: auto;
   display: flex;
   background: var(--bg-input);
+  min-height: 400px; /* Ensure it has body even when empty */
 }
 
 .preview-textarea {
@@ -543,34 +544,83 @@ input:focus, textarea:focus {
     min-height: 70vh; /* Force larger textarea on mobile */
   }
 
-  .mode-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-top: 2rem;
+  /* --- MOBILE 2.0 TABS SYSTEM --- */
+  .sidebar, .main-content > section:first-child, .preview-container {
+    display: none !important;
   }
 
-  .mode-card {
-    padding: 2rem 1.5rem;
-    margin-top: -10vh; /* Specific mobile lift */
-    transform: translateY(0);
+  .sidebar.mobile-visible, 
+  .main-content > section.mobile-visible, 
+  .preview-container.mobile-visible {
+    display: flex !important;
   }
 
-  .app-title {
-    font-size: 1.4rem;
+  .main-content {
+    padding: 0 !important;
+    height: calc(100vh - 60px); /* Account for bottom nav */
   }
 
-  .mobile-header {
+  .card {
+     border-radius: 0;
+     border: none;
+  }
+
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     position: fixed;
-    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
+    height: 65px;
     background: var(--bg-sidebar);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-glass);
-    padding: 1rem;
+    border-top: 1px solid var(--border-subtle);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .nav-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    z-index: 15;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    gap: 4px;
+    transition: all 0.2s;
+  }
+
+  .nav-item.active {
+    color: var(--accent-indigo);
+  }
+
+  .nav-item span {
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+
+  .mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: 85px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--accent-blue));
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    border: none;
+    z-index: 110;
+    animation: fabPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes fabPop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
   }
 }
 

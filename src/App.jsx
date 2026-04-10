@@ -27,6 +27,7 @@ const App = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [showCAAT, setShowCAAT] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState('form'); // 'form', 'preview', 'history'
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [thaiPreview, setThaiPreview] = useState('');
@@ -639,7 +640,7 @@ const App = () => {
 
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'history' ? 'mobile-visible' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>
             VTSP
@@ -856,6 +857,7 @@ const App = () => {
 
       <main className="main-content">
         <section 
+          className={`form-container ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}
           style={{ flex: '0 0 55%' }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -941,8 +943,8 @@ const App = () => {
           </div>
         </section>
 
-        <section className="preview-container" style={{ flex: '0 0 45%' }}>
-          <div className="card">
+        <section className={`preview-container ${activeMobileTab === 'preview' ? 'mobile-visible' : ''}`} style={{ flex: '0 0 45%' }}>
+          <div className="card" onClick={() => thaiPreviewRef.current?.focus()}>
             <div className="card-header">
               <div className="card-title">Preview</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -993,6 +995,38 @@ const App = () => {
             )}
           </div>
         </section>
+
+        {/* --- MOBILE 2.0: BOTTOM NAVIGATION --- */}
+        <nav className="mobile-nav">
+          <button 
+            className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('history')}
+          >
+            <Folder size={20} />
+            <span>แบบร่าง</span>
+          </button>
+          <button 
+            className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('form')}
+          >
+            <FileText size={20} />
+            <span>กรอกข้อมูล</span>
+          </button>
+          <button 
+            className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('preview')}
+          >
+            <Sparkles size={20} />
+            <span>พรีวิว</span>
+          </button>
+        </nav>
+
+        {/* --- MOBILE 2.0: FLOATING ACTION BUTTON --- */}
+        {activeMobileTab === 'preview' && (
+          <button className="mobile-fab" onClick={copyThai}>
+             <Check size={24} />
+          </button>
+        )}
       </main>
       {/* CUSTOM CONTEXT MENU */}
       {contextMenu && (
