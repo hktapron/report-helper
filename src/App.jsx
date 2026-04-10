@@ -9,7 +9,7 @@ import { useUserTemplates } from './hooks/useUserTemplates';
 import { 
   Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
   Search, Calendar, Clock, ChevronRight, User, Terminal,
-  Folder, FolderPlus, MoreVertical, ChevronDown, FileText, ArrowRight
+  Folder, FolderPlus, MoreVertical, ChevronDown, FileText, ArrowRight, Languages
 } from 'lucide-react';
 
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -80,7 +80,6 @@ const App = () => {
 
   useEffect(() => { if (user) handleFullReset(); }, [reportMode]);
 
-  // UNIFIED HANDLER FOR ALL PLATFORMS
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
@@ -96,20 +95,16 @@ const App = () => {
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
-    
-    // NAVIGATION SYNC: Jump to Preview on Mobile for instant feedback
-    if (window.innerWidth <= 768) {
-      setActiveMobileTab('preview');
-    }
+    if (window.innerWidth <= 768) { setActiveMobileTab('preview'); }
   };
 
   const dynamicFields = useMemo(() => {
-    const incidentDefaults = [
+    const commonFields = [
         { id: 'flight_no', label: 'เที่ยวบิน' }, { id: 'ac_reg', label: 'ทะเบียนเครื่อง' },
         { id: 'stand', label: 'หลุมจอด' }, { id: 'atc_time', label: 'เวลา (ATC)' }
     ];
     if (!selectedTemplate) {
-      if (reportMode === 'incident') return incidentDefaults;
+      if (reportMode === 'incident') return commonFields;
       return [
         { id: 'incident_time', label: 'เวลาเกิดเหตุ' }, { id: 'violator_name', label: 'ชื่อผู้กระทำความผิด' },
         { id: 'id_card', label: 'หมายเลขบัตร' }, { id: 'company', label: 'สังกัด' },
@@ -125,7 +120,7 @@ const App = () => {
     const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
     while ((match = regex.exec(textToParse)) !== null) keys.push(match[1] || match[2]);
     const dynamic = [...new Set(keys)].map(k => ({ id: k, label: k }));
-    return reportMode === 'incident' ? [...incidentDefaults, ...dynamic] : dynamic;
+    return [...commonFields, ...dynamic];
   }, [selectedTemplate, reportMode]);
 
   const handleInputChange = (id, value) => {
@@ -141,7 +136,6 @@ const App = () => {
   };
 
   const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
-  
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
     setContextMenu({ x: e.pageX, y: e.pageY, type, id, data });
@@ -157,7 +151,6 @@ const App = () => {
 
   return (
     <div className="app-container">
-      {/* MOBILE HEADER */}
       <div className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
@@ -174,11 +167,7 @@ const App = () => {
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>User: <strong>{user.username}</strong></div>
         </div>
-        
-        <div className="search-box">
-          <input type="text" className="search-input" placeholder="ค้นหาฟอร์มหรือประวัติ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        </div>
-
+        <div className="search-box"><input type="text" className="search-input" placeholder="ค้นหาฟอร์มหรือประวัติ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
         <div className="sidebar-scroll-area">
           <div style={{ padding: '0 0.5rem' }}>
             <button className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }} onClick={() => { handleFullReset(); if(window.innerWidth <= 768) setActiveMobileTab('form'); }}>
@@ -188,7 +177,6 @@ const App = () => {
                 <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
                 <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อโฟลเดอร์ใหม่:"); if(n) createFolder(n); }} />
             </div>
-
             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
                {folders.map(folder => {
                  const folderTemplates = customTemplates.filter(t => t.folder_id === folder.id);
@@ -230,7 +218,6 @@ const App = () => {
                </div>
             </div>
           </div>
-
           <div className={`history-section-wrapper ${activeMobileTab === 'templates' ? 'mobile-hidden' : ''}`}>
              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
              <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
@@ -248,7 +235,6 @@ const App = () => {
              </div>
           </div>
         </div>
-
         <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
            <button className="btn btn-primary btn-full" style={{ height: '52px' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
               สลับเป็น: {reportMode === 'incident' ? 'รายงานผู้ปฏิบัติผิด' : 'รายงานเหตุการณ์ไม่ปกติ'}
@@ -257,25 +243,23 @@ const App = () => {
       </aside>
 
       <main className="main-content">
-        <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={{ flex: '0 0 55%' }}>
+        <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
           <div className="card">
             <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
-              <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || 'แก้ไขข้อมูล'}</h2>
+              <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button className="btn btn-ghost" title="บันทึกเป็นแม่แบบ" onClick={() => { const n = window.prompt("ชื่อแม่แบบที่จะบันทึก:", selectedTemplate?.name || ""); if(n) saveTemplate({ ...selectedTemplate, name: n, preview: thaiPreview, data: formData }); }}>
+                  <Save size={18} />
+                </button>
                 {window.innerWidth <= 768 && (
-                  <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', border: '1px solid var(--border-subtle)' }} onClick={() => setIsSplitMode(!isSplitMode)}>
-                     {isSplitMode ? 'ปิดจอคู่' : 'จอคู่ (Split)'}
-                  </button>
+                  <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem' }} onClick={() => setIsSplitMode(!isSplitMode)}><Pin size={16} /></button>
                 )}
-                <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem' }} onClick={handleFullReset}>รีเซ็ต</button>
+                <button className="btn btn-ghost" onClick={handleFullReset}><Trash2 size={16} /></button>
               </div>
             </div>
             <div className="form-body">
               {dynamicFields.map(field => (
-                <div key={field.id} className="form-field">
-                  <label>{field.label}</label>
-                  <input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} />
-                </div>
+                <div key={field.id} className="form-field"><label>{field.label}</label><input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} /></div>
               ))}
             </div>
           </div>
@@ -285,15 +269,18 @@ const App = () => {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
-              <button className="btn btn-primary" onClick={() => { 
-                const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
-                navigator.clipboard.writeText(text);
-                historyData.saveReport({ mode: reportMode, templateName: selectedTemplate?.name || 'กำหนดเอง', preview: text, data: formData });
-                alert('คัดลอกและบันทึกแล้ว');
-              }}><Check size={16} /> คัดลอกและบันทึก</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className={`btn btn-ghost ${showCAAT ? 'btn-active' : ''}`} title="แปลภาษา" onClick={() => setShowCAAT(!showCAAT)}><Languages size={18} /></button>
+                <button className="btn btn-primary" onClick={() => { 
+                  const text = thaiPreviewRef.current ? (showCAAT ? translateToCAAT22(thaiPreviewRef.current.innerText) : thaiPreviewRef.current.innerText) : thaiPreview;
+                  navigator.clipboard.writeText(text);
+                  historyData.saveReport({ mode: reportMode, templateName: selectedTemplate?.name || 'กำหนดเอง', preview: text, data: formData });
+                  alert('คัดลอกและบันทึกแล้ว');
+                }}><Check size={16} /> คัดลอก</button>
+              </div>
             </div>
             <div className="preview-body-v2">
-              <div ref={thaiPreviewRef} className="preview-textarea" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} />
+              <div ref={thaiPreviewRef} className="preview-textarea" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: showCAAT ? translateToCAAT22(thaiPreview) : thaiPreview }} style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} />
             </div>
           </div>
         </section>
@@ -301,26 +288,16 @@ const App = () => {
         {isSplitMode && activeMobileTab === 'form' && (
            <div className="split-preview-overlay">
               <div className="card" style={{ height: '100%', borderRadius: 0, border: 'none' }}>
-                 <div className="preview-body-v2" style={{ padding: '0.5rem' }}>
-                    <div className="preview-textarea" dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ fontSize: '12px', background: 'transparent', padding: 0 }} />
-                 </div>
+                 <div className="preview-body-v2" style={{ padding: '0.5rem' }}><div className="preview-textarea" dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ fontSize: '12px', background: 'transparent', padding: 0 }} /></div>
               </div>
            </div>
         )}
 
         <nav className="mobile-nav">
-           <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}>
-              <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
-           </button>
-           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}>
-              <Edit2 size={20} /><span>แก้ไขข้อมูล</span>
-           </button>
-           <button className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveMobileTab('preview')}>
-              <Sparkles size={20} /><span>Preview</span>
-           </button>
-           <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}>
-              <Clock size={20} /><span>ประวัติ</span>
-           </button>
+           <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}><Calendar size={20} /><span>ฟอร์มเหตุการณ์</span></button>
+           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}><Edit2 size={20} /><span>แก้ไขข้อมูล</span></button>
+           <button className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveMobileTab('preview')}><Sparkles size={20} /><span>Preview</span></button>
+           <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}><Clock size={20} /><span>ประวัติ</span></button>
         </nav>
       </main>
 
@@ -328,7 +305,7 @@ const App = () => {
       {contextMenu && (
         <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(e) => e.stopPropagation()}>
           <div className="context-item" onClick={() => {
-            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : (contextMenu.type === 'folder' ? contextMenu.data.name : contextMenu.data.name);
+            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : contextMenu.data.name;
             const newName = window.prompt("เปลี่ยนชื่อเป็น:", currentTitle);
             if (newName) {
               if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
