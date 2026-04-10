@@ -113,7 +113,7 @@ const App = () => {
     setFormData(prev => ({ ...prev, [id]: finalValue }));
   };
 
-  const loadAnyTemplate = (item, type = 'template') => {
+  const internalLoadTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
     setSelectedTemplate({
@@ -128,6 +128,11 @@ const App = () => {
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
+    
+    // NEW: Automatic tab switch on mobile for instant reaction
+    if (window.innerWidth <= 768) {
+      setActiveMobileTab('preview');
+    }
   };
 
   const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
@@ -253,9 +258,11 @@ const App = () => {
             <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || 'แก้ไขข้อมูล'}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', border: '1px solid var(--border-subtle)' }} onClick={() => setIsSplitMode(!isSplitMode)}>
-                   {isSplitMode ? 'ปิดจอคู่' : 'จอคู่ (Split)'}
-                </button>
+                {window.innerWidth <= 768 && (
+                  <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', border: '1px solid var(--border-subtle)' }} onClick={() => setIsSplitMode(!isSplitMode)}>
+                     {isSplitMode ? 'ปิดจอคู่' : 'จอคู่ (Split)'}
+                  </button>
+                )}
                 <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem' }} onClick={handleFullReset}>รีเซ็ต</button>
               </div>
             </div>
