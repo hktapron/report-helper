@@ -35,6 +35,7 @@ const App = () => {
   
   // MOBILE 2.0: NAVIGATION STATE
   const [activeMobileTab, setActiveMobileTab] = useState('form'); // 'templates', 'form', 'preview', 'history'
+  const [isSplitMode, setIsSplitMode] = useState(false); // PHASE 85: Simultaneous Edit/Preview
 
   const thaiPreviewRef = useRef(null);
   const extraPreviewRef = useRef(null);
@@ -649,9 +650,27 @@ const App = () => {
   return (
     <div className="app-container">
       <div className="mobile-header">
-        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
-        <div className="app-title" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-          {reportMode === 'incident' ? 'Incident Report' : 'Violator Report'}
+        <button className="menu-toggle" style={{ border: 'none', background: 'transparent' }} onClick={() => setIsSidebarOpen(true)}>☰</button>
+        <div className="app-title" style={{ fontSize: '1.05rem', fontWeight: 'bold', flex: 1, textAlign: 'center' }}>
+          {reportMode === 'incident' ? 'เหตุการณ์ไม่ปกติ' : 'ผู้กระทำความผิด'}
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+           <button 
+             className="header-action-btn" 
+             onClick={() => setReportMode(null)} 
+             title="สลับโหมด"
+             style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}
+           >
+              <ArrowRight size={20} />
+           </button>
+           <button 
+             className="header-action-btn" 
+             onClick={() => {setUser(null); setReportMode(null);}} 
+             title="ออกจากระบบ"
+             style={{ background: 'transparent', border: 'none', color: 'var(--accent-red)' }}
+           >
+              <User size={20} />
+           </button>
         </div>
       </div>
 
@@ -876,20 +895,29 @@ const App = () => {
 
       <main className="main-content">
         <section 
-          className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'}`}
+          className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`}
           style={{ flex: '0 0 55%' }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           <div className={`card ${isDragOver ? 'drop-zone-active' : ''}`}>
-            <div className="card-header">
-              <h2 className="card-title">
+            <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
+              <h2 className="card-title" style={{ fontSize: '0.85rem' }}>
                 {selectedTemplate?.mode === 'incident' && selectedTemplate?.trigger === 'new' 
-                  ? 'รายงานเหตุการณ์ไม่ปกติ' 
-                  : (selectedTemplate?.name || 'กรุณาเลือกแม่แบบ')}
+                  ? 'รายงานใหม่' 
+                  : (selectedTemplate?.name || 'เลือกแม่แบบ')}
               </h2>
-              <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={handleFullReset}>รีเซ็ต</button>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button 
+                  className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} 
+                  style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', border: '1px solid var(--border-subtle)' }}
+                  onClick={() => setIsSplitMode(!isSplitMode)}
+                >
+                   {isSplitMode ? 'ปิดจอคู่' : 'จอคู่ (Split)'}
+                </button>
+                <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem' }} onClick={handleFullReset}>รีเซ็ต</button>
+              </div>
             </div>
             <div className="form-body">
               {dynamicFields.length > 0 ? (
@@ -909,9 +937,6 @@ const App = () => {
                                 const newList = [...(formData[field.id] || [])];
                                 newList[idx] = e.target.value;
                                 handleInputChange(field.id, newList);
-                              }} 
-                           />
-                        ))}
                         {/* The "Next" input for growing the list */}
                         <input 
                            type="text" 
