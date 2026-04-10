@@ -164,7 +164,7 @@ const App = () => {
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
-        <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
+        <div className="sidebar-header" style={{ padding: '1.25rem 1rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>User: <strong>{user.username}</strong></div>
         </div>
@@ -176,7 +176,7 @@ const App = () => {
             </button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
                 <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
-                <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อโฟลเดอร์ใหม่:"); if(n) createFolder(n); }} />
+                <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:"); if(n) createFolder(n); }} />
             </div>
             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
                {folders.map(folder => {
@@ -249,10 +249,10 @@ const App = () => {
             <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button className="btn btn-ghost" title="บันทึกฟอร์มใหม่" onClick={() => { 
+                <button className="btn btn-ghost" title="บันทึกฟอร์มใหม่" onClick={async () => { 
                   const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
                   if(n) {
-                    saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
+                    await saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
                     alert('บันทึกแม่แบบเรียบร้อย');
                   }
                 }}>
@@ -264,7 +264,7 @@ const App = () => {
                 <button className="btn btn-ghost" onClick={handleFullReset}><Trash2 size={16} /></button>
               </div>
             </div>
-            <div className="form-body">
+            <div className="form-body" key={activeMobileTab + (selectedTemplate?.id || 'none')}>
               {dynamicFields.map(field => (
                 <div key={field.id} className="form-field"><label>{field.label}</label><input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} /></div>
               ))}
@@ -278,7 +278,7 @@ const App = () => {
               <h2 className="card-title">Preview</h2>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', borderColor: 'var(--accent-indigo)', color: 'white' }} onClick={() => setIsCAATModalOpen(true)}>
-                   ส่งรายงาน กพท.22
+                   ทำรายงาน กพท.22
                 </button>
                 <button className="btn btn-primary" onClick={() => { 
                   const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
@@ -289,7 +289,7 @@ const App = () => {
               </div>
             </div>
             <div className="preview-body-v2">
-              <div ref={thaiPreviewRef} className="preview-textarea" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: showCAAT ? translateToCAAT22(thaiPreview) : thaiPreview }} style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} />
+              <div ref={thaiPreviewRef} className="preview-textarea" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} />
             </div>
           </div>
         </section>
