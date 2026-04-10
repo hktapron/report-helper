@@ -29,6 +29,7 @@ const App = () => {
   const [activeMobileTab, setActiveMobileTab] = useState('form'); 
   const [isSplitMode, setIsSplitMode] = useState(false); 
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
 
   const thaiPreviewRef = useRef(null);
@@ -248,7 +249,13 @@ const App = () => {
             <div className="card-header" style={{ padding: '0.5rem 1rem' }}>
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button className="btn btn-ghost" title="บันทึกเป็นแม่แบบ" onClick={() => { const n = window.prompt("ชื่อแม่แบบที่จะบันทึก:", selectedTemplate?.name || ""); if(n) saveTemplate({ ...selectedTemplate, name: n, preview: thaiPreview, data: formData }); }}>
+                <button className="btn btn-ghost" title="บันทึกฟอร์มใหม่" onClick={() => { 
+                  const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
+                  if(n) {
+                    saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
+                    alert('บันทึกแม่แบบเรียบร้อย');
+                  }
+                }}>
                   <Save size={18} />
                 </button>
                 {window.innerWidth <= 768 && (
@@ -270,13 +277,15 @@ const App = () => {
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className={`btn btn-ghost ${showCAAT ? 'btn-active' : ''}`} title="แปลภาษา" onClick={() => setShowCAAT(!showCAAT)}><Languages size={18} /></button>
+                <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', borderColor: 'var(--accent-indigo)', color: 'white' }} onClick={() => setIsCAATModalOpen(true)}>
+                   ส่งรายงาน กพท.22
+                </button>
                 <button className="btn btn-primary" onClick={() => { 
-                  const text = thaiPreviewRef.current ? (showCAAT ? translateToCAAT22(thaiPreviewRef.current.innerText) : thaiPreviewRef.current.innerText) : thaiPreview;
+                  const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
                   navigator.clipboard.writeText(text);
                   historyData.saveReport({ mode: reportMode, templateName: selectedTemplate?.name || 'กำหนดเอง', preview: text, data: formData });
                   alert('คัดลอกและบันทึกแล้ว');
-                }}><Check size={16} /> คัดลอก</button>
+                }}><Check size={16} /> คัดลอกปกติ</button>
               </div>
             </div>
             <div className="preview-body-v2">
@@ -300,6 +309,38 @@ const App = () => {
            <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}><Clock size={20} /><span>ประวัติ</span></button>
         </nav>
       </main>
+
+      {/* CAAT 22 CONFIRMATION MODAL */}
+      {isCAATModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsCAATModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="app-title" style={{ fontSize: '1.1rem' }}>พรีวิว: รูปแบบรายงาน กพท.22</div>
+              <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <pre className="caat-preview-text">
+                {translateToCAAT22(thaiPreview)}
+              </pre>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>ยกเลิก</button>
+              <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', color: 'white' }} onClick={() => {
+                const text = translateToCAAT22(thaiPreview);
+                navigator.clipboard.writeText(text);
+                historyData.saveReport({ 
+                  mode: reportMode, 
+                  templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)', 
+                  preview: text, 
+                  data: formData 
+                });
+                alert('คัดลอกรายงาน กพท.22 เรียบร้อยแล้ว');
+                setIsCAATModalOpen(false);
+              }}>ยืนยันการแปลและคัดลอก</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CONTEXT MENU */}
       {contextMenu && (
