@@ -816,7 +816,7 @@ const App = () => {
                 </div>
               </div>
 
-           <div className={`history-section-wrapper ${activeMobileTab === 'templates' && window.innerWidth <= 768 ? 'mobile-hidden' : ''}`}>
+            <div className={`history-section-wrapper ${activeMobileTab === 'templates' ? 'mobile-hidden' : ''}`}>
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
 
               {/* BOTTOM SECTION: History with Strict Pinning */}
@@ -858,9 +858,10 @@ const App = () => {
                   </button>
                 )}
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
+      </div>
 
         <div className="mode-switcher" style={{ marginTop: 'auto', padding: '0.75rem 1rem' }}>
            <button 
