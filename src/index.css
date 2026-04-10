@@ -278,6 +278,7 @@ input:focus, textarea:focus {
   display: flex;
   background: var(--bg-input);
   min-height: 400px; /* Ensure it has body even when empty */
+  cursor: text; /* Focus indicator */
 }
 
 .preview-textarea {
@@ -290,6 +291,120 @@ input:focus, textarea:focus {
   font-size: 21.33px; /* 16pt = 21.33px approx */
   font-weight: 400;
   color: var(--text-primary);
+  min-height: 100%; /* Force clickable area */
+  outline: none;
+}
+
+/* MOBILE 2.0: BOTTOM NAV */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  background: rgba(15, 15, 18, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+  z-index: 1000;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  padding: 0.5rem;
+}
+
+.nav-item.active {
+  color: var(--accent-indigo);
+  transform: translateY(-2px);
+}
+
+.nav-item.active svg {
+  filter: drop-shadow(0 0 8px var(--accent-indigo));
+}
+
+/* MOBILE 2.0: FLOATING ACTION BUTTON */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  bottom: 85px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--accent-indigo), var(--accent-blue));
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+  z-index: 999;
+  animation: fabPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fabPop {
+  from { transform: scale(0) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* RESPONSIVE OVERRIDES */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none !important; /* Managed by Active Tab 2.0 */
+  }
+
+  .sidebar.mobile-active-templates, .sidebar.mobile-active-history {
+    display: flex !important;
+    position: fixed;
+    left: 0;
+    width: 100%;
+    z-index: 50;
+    height: calc(100vh - 65px);
+  }
+
+  .mobile-nav {
+    display: flex;
+  }
+
+  .mobile-fab {
+    display: block;
+  }
+
+  .main-content {
+    flex-direction: column;
+    padding: 0;
+    height: calc(100vh - 65px);
+    overflow: hidden;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-active {
+    display: flex !important;
+    height: 100%;
+    width: 100%;
+  }
+
+  .card {
+     border: none;
+     border-radius: 0;
+  }
+
+  .form-body {
+    padding-bottom: 100px;
+  }
 }
 
 /* Buttons */

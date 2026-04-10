@@ -33,10 +33,27 @@ const App = () => {
   const [thaiPreview, setThaiPreview] = useState('');
   const [extraPreview, setExtraPreview] = useState('');
   
+  // MOBILE 2.0: NAVIGATION STATE
+  const [activeMobileTab, setActiveMobileTab] = useState('form'); // 'templates', 'form', 'preview', 'history'
+
   const thaiPreviewRef = useRef(null);
   const extraPreviewRef = useRef(null);
   const isEditingPreview = useRef(false);
   const prevFormDataRef = useRef({});
+
+  // FOCUS TRAP FIX: Manual Focus Trigger
+  const focusPreview = () => {
+    if (thaiPreviewRef.current) {
+        thaiPreviewRef.current.focus();
+        // Move cursor to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(thaiPreviewRef.current);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+  };
 
   // PHASE 62: SMART TIME FORMATTER
   const formatTimeInput = (val) => {
@@ -640,7 +657,7 @@ const App = () => {
 
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'history' ? 'mobile-visible' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)', letterSpacing: '-0.02em' }}>
             VTSP
@@ -799,6 +816,7 @@ const App = () => {
                 </div>
               </div>
 
+           <div className={`history-section-wrapper ${activeMobileTab === 'templates' && window.innerWidth <= 768 ? 'mobile-hidden' : ''}`}>
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
 
               {/* BOTTOM SECTION: History with Strict Pinning */}
@@ -857,7 +875,7 @@ const App = () => {
 
       <main className="main-content">
         <section 
-          className={`form-container ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}
+          className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'}`}
           style={{ flex: '0 0 55%' }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -941,10 +959,25 @@ const App = () => {
               )}
             </div>
           </div>
+
+          {/* MOBILE ONLY: FLOATING ACTION BUTTON */}
+          <button 
+            className="mobile-fab"
+            onClick={copyThai}
+            title="คัดลอกรายงาน"
+          >
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Check size={20} />
+                <span>คัดลอกและบันทึก</span>
+             </div>
+          </button>
         </section>
 
-        <section className={`preview-container ${activeMobileTab === 'preview' ? 'mobile-visible' : ''}`} style={{ flex: '0 0 45%' }}>
-          <div className="card" onClick={() => thaiPreviewRef.current?.focus()}>
+        <section className={`preview-container-main ${activeMobileTab === 'preview' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '0 0 45%' }}>
+          <div className="card" onClick={(e) => {
+             // Only focus if clicking outside spans
+             if (e.target.className !== 'sync-field') focusPreview();
+          }}>
             <div className="card-header">
               <div className="card-title">Preview</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
