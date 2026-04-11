@@ -155,53 +155,55 @@ const App = () => {
     const mode = item.mode || reportMode;
     const body = item.preview || item.content || "";
     
-    // Safety clear to prevent ghosting
+    // 1. CLEAR PHASE: Wipe state and remove all DOM content to kill ghosts
+    setThaiPreview("");
+    setSelectedTemplate(null);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = "";
     
-    setReportMode(mode);
-    setSelectedTemplate({
-      id: item.id || (type === 'history' ? `hist_${item.id}` : 'custom'),
-      name: item.name || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
-      mode: mode,
-      preview: body
-    });
-    
-    const initialData = item.data || {};
-    setFormData(initialData);
-    
-    // Initial Hydration
-    let hydrated = hydrateHtmlTemplate(body);
-    
-    // REVERSE MAPPING FIX: Sync state with HTML content
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = hydrated;
-    
-    // Recovery Phase: If state is empty but HTML has spans, extract values from HTML
-    const recoveredData = { ...initialData };
-    tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
-      const key = s.getAttribute('data-field');
-      const val = s.innerText.trim();
-      // If HTML has a real value (not just the variable name), and state is empty for this key
-      if (val && !val.startsWith('{') && !recoveredData[key]) {
-        recoveredData[key] = val;
-      }
+    // 2. LOAD PHASE: Set new data in next tick to ensure React re-mounts
+    setTimeout(() => {
+      setReportMode(mode);
+      setSelectedTemplate({
+        id: item.id ? `${type}_${item.id}` : `custom_${Date.now()}`,
+        name: item.name || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
+        mode: mode,
+        preview: body
+      });
       
-      // Also apply existing initialData to the HTML
-      if (initialData[key]) {
-        s.innerText = initialData[key];
+      const initialData = item.data || {};
+      setFormData(initialData);
+      
+      // Initial Hydration
+      let hydrated = hydrateHtmlTemplate(body);
+      
+      // REVERSE MAPPING FIX: Sync state with HTML content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = hydrated;
+      
+      const recoveredData = { ...initialData };
+      tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
+        const key = s.getAttribute('data-field');
+        const val = s.innerText.trim();
+        if (val && !val.startsWith('{') && !recoveredData[key]) {
+          recoveredData[key] = val;
+        }
+        if (initialData[key]) {
+          s.innerText = initialData[key];
+        }
+      });
+      
+      setFormData(recoveredData);
+      const finalHtml = tempDiv.innerHTML;
+      setThaiPreview(finalHtml);
+      // Removed direct Ref manipulation here - let React's dangerouslySetInnerHTML handle the fresh mount
+      
+      isEditingPreview.current = type === 'history';
+      setIsSidebarOpen(false);
+      
+      if (window.innerWidth <= 768) {
+        setActiveMobileTab('preview');
       }
-    });
-    
-    setFormData(recoveredData);
-    const finalHtml = tempDiv.innerHTML;
-    setThaiPreview(finalHtml);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = finalHtml;
-    isEditingPreview.current = type === 'history';
-    setIsSidebarOpen(false);
-    
-    if (window.innerWidth <= 768) {
-      setActiveMobileTab('preview');
-    }
+    }, 0);
   };
 
   const dynamicFields = useMemo(() => {
