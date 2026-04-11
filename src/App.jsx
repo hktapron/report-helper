@@ -80,19 +80,23 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // 1. PRECISE SMART LABEL DISCOVERY (Only at Start of Line)
-    const smartLabels = [
-      { regex: /(^|\n)[ ]*(เที่ยวบิน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
-      { regex: /(^|\n)[ ]*(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
-      { regex: /(^|\n)[ ]*(หลุมจอดฯ?)\s*(หมายเลข)?\s*[:：]?\s*([^{}\[\]\s<]+)/g, id: 'stand' },
-      { regex: /(^|\n)[ ]*(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
+    // 1. SMART LABEL & NARRATIVE LOGIC (Magic Mapping based on user rules)
+    const divertRules = [
+      { regex: /(ได้รับแจ้งจาก)\s*([^{}\[\]\s<]+)/g, id: 'informant' },
+      { regex: /(เที่ยวบิน|เที่ยวบินที่)\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
+      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*([^{}\[\]\s<]+)/g, id: 'atc_time' },
+      { regex: /(ตามแผนการบินจะต้องทำการบินลงที่สนามบิน)\s*([^{}\[\]\s<]+)/g, id: 'original_airport' },
+      { regex: /(หลุมจอดฯ?\s*หมายเลข\s*[:：]?)\s*([^{}\[\]\s<]+)/g, id: 'stand' },
+      { regex: /(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
+      { regex: /(แบบอากาศยาน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_type' },
+      { regex: /(เส้นทางการบินเดิม)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'route' }
     ];
     
-    smartLabels.forEach(sl => {
-      processed = processed.replace(sl.regex, (match, prefix, label, val1, val2) => {
-        const val = val2 || val1; 
-        const wrappedVal = `<span class="sync-field" data-field="${sl.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
-        return prefix + match.slice(prefix.length).replace(val, wrappedVal);
+    divertRules.forEach(rule => {
+      processed = processed.replace(rule.regex, (match, label, val) => {
+        // Wrap the dynamic value only, keep label as is
+        const wrappedVal = `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
+        return match.replace(val, wrappedVal);
       });
     });
 
