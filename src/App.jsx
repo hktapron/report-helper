@@ -79,8 +79,8 @@ const App = () => {
       lines[1] = lines[1].replace(/วันที่\s?([^\n\r<]*)/, `วันที่ ${dateStr}`);
       processed = lines.join('\n');
     }
-    let counter = 1;
-    processed = processed.replace(/หมายเลข\s+(?!\{)([^\s<]+)/g, () => `หมายเลข {item_no_${counter++}}`);
+
+    // STRICT HYDRATION: Only wrap what is explicitly defined as a variable
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
