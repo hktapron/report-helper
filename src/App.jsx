@@ -133,20 +133,30 @@ const App = () => {
     // Initial Hydration
     let hydrated = hydrateHtmlTemplate(body);
     
-    // REVERSE MAPPING FIX: Populate the hydrated HTML with saved values immediately
-    if (Object.keys(initialData).length > 0) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = hydrated;
-      Object.entries(initialData).forEach(([key, val]) => {
-        tempDiv.querySelectorAll(`.sync-field[data-field="${key}"]`).forEach(s => {
-          s.innerText = val || `{${key}}`;
-        });
-      });
-      hydrated = tempDiv.innerHTML;
-    }
-
-    setThaiPreview(hydrated);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
+    // REVERSE MAPPING FIX: Sync state with HTML content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = hydrated;
+    
+    // Recovery Phase: If state is empty but HTML has spans, extract values from HTML
+    const recoveredData = { ...initialData };
+    tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
+      const key = s.getAttribute('data-field');
+      const val = s.innerText.trim();
+      // If HTML has a real value (not just the variable name), and state is empty for this key
+      if (val && !val.startsWith('{') && !recoveredData[key]) {
+        recoveredData[key] = val;
+      }
+      
+      // Also apply existing initialData to the HTML
+      if (initialData[key]) {
+        s.innerText = initialData[key];
+      }
+    });
+    
+    setFormData(recoveredData);
+    const finalHtml = tempDiv.innerHTML;
+    setThaiPreview(finalHtml);
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = finalHtml;
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     
