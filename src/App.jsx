@@ -154,9 +154,13 @@ const App = () => {
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     const body = item.preview || item.content || "";
+    
+    // Safety clear to prevent ghosting
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = "";
+    
     setReportMode(mode);
     setSelectedTemplate({
-      id: item.id || 'custom',
+      id: item.id || (type === 'history' ? `hist_${item.id}` : 'custom'),
       name: item.name || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
       mode: mode,
       preview: body
@@ -454,7 +458,15 @@ const App = () => {
               </div>
             </div>
             <div className="preview-body-v2">
-              <div ref={thaiPreviewRef} className="preview-textarea" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} />
+              <div 
+                key={selectedTemplate?.id || 'new'}
+                ref={thaiPreviewRef} 
+                className="preview-textarea" 
+                contentEditable 
+                suppressContentEditableWarning 
+                dangerouslySetInnerHTML={{ __html: thaiPreview }} 
+                style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} 
+              />
             </div>
           </div>
         </section>
