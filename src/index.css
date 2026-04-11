@@ -1079,14 +1079,14 @@ input:focus, textarea:focus {
 }
 
 .btn-mode-switch {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: var(--accent-indigo);
   color: white;
   border: none;
   padding: 4px 8px;
   border-radius: 6px;
   font-weight: 600;
   font-size: 11px;
-  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -1095,8 +1095,9 @@ input:focus, textarea:focus {
 
 .btn-mode-switch:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(217, 119, 6, 0.3);
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
   filter: brightness(1.1);
+  background: #3730a3;
 }
 
 .btn-mode-switch:active {

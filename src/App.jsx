@@ -214,9 +214,16 @@ const App = () => {
       <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
-        <div className="sidebar-header" style={{ padding: '1.25rem 1rem' }}>
-          <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>User: <strong>{user.username}</strong></div>
+        <div className="sidebar-header" style={{ padding: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
+            {window.innerWidth > 768 && (
+               <button className="btn btn-mode-switch" style={{ fontSize: '10px', whiteSpace: 'nowrap' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+                 {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
+               </button>
+            )}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>User: <strong>{user.username}</strong></div>
         </div>
         <div className="search-box"><input type="text" className="search-input" placeholder="ค้นหาฟอร์มหรือประวัติ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
         <div className="sidebar-scroll-area">
@@ -306,19 +313,10 @@ const App = () => {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button className="btn btn-ghost" title="บันทึกฟอร์มใหม่" onClick={async () => { 
-                  const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
-                  if(n) {
-                    await saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
-                    alert('บันทึกฟอร์มเรียบร้อย');
-                  }
-                }}><Save size={18} /></button>
                 {window.innerWidth <= 768 && (
                   <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem' }} onClick={() => setIsSplitMode(!isSplitMode)}><Pin size={16} /></button>
                 )}
                 <button className="btn btn-ghost" onClick={handleFullReset}><Trash2 size={16} /></button>
-              </div>
             </div>
             <div className="form-body" key={activeMobileTab + (selectedTemplate?.id || 'none')}>
               {dynamicFields.map(field => (
@@ -334,10 +332,19 @@ const App = () => {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                <button className="btn btn-mode-switch" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-                  {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
-                </button>
+               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {window.innerWidth <= 768 && (
+                  <button className="btn btn-mode-switch" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+                    {reportMode === 'incident' ? 'สลับผู้กระทำความผิด' : 'สลับเหตุการณ์'}
+                  </button>
+                )}
+                <button className="btn btn-ghost" style={{ border: '1px solid var(--border-subtle)', fontSize: '11px' }} onClick={async () => { 
+                  const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
+                  if(n) {
+                    await saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
+                    alert('บันทึกฟอร์มเรียบร้อย');
+                  }
+                }}>บันทึกฟอร์มรายงาน</button>
                 <button className="btn btn-primary" title="ทำรายงานด้วย AI" style={{ background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={handleCAATTranslate} disabled={isLoadingCAAT}>
                    {isLoadingCAAT && <Loader2 size={16} className="animate-spin" />}
                    ทำรายงาน กพท.22
@@ -385,7 +392,7 @@ const App = () => {
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>ยกเลิก</button>
-              <button className="btn btn-primary" style={{ background: 'var(--accent-indigo)', color: 'white' }} onClick={() => {
+              <button className="btn btn-primary btn-mode-switch" onClick={() => {
                 navigator.clipboard.writeText(translatedCAAT);
                 historyData.saveReport({ mode: reportMode, templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)', preview: translatedCAAT, data: formData });
                 alert('คัดลอกรายงาน กพท.22 เรียบร้อยแล้ว');
