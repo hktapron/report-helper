@@ -31,6 +31,14 @@ const App = () => {
     if (reportMode) localStorage.setItem('vtsp_report_mode', reportMode);
     else localStorage.removeItem('vtsp_report_mode');
   }, [reportMode]);
+
+  const handleLogout = () => {
+    setUser(null);
+    setReportMode(null);
+    localStorage.removeItem('vtsp_user');
+    localStorage.removeItem('vtsp_report_mode');
+    window.location.reload();
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
@@ -199,7 +207,7 @@ const App = () => {
            <button className="header-action-btn" style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
               {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'เหตุการณ์ไม่ปกติ'}
            </button>
-           <button className="header-action-btn" style={{ color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}} title="ออกจากระบบ"><User size={20} /></button>
+            <button className="header-action-btn" style={{ color: 'var(--accent-red)', padding: '0 4px' }} onClick={handleLogout} title="ออกจากระบบ"><User size={18} /></button>
         </div>
       </div>
 
@@ -278,12 +286,23 @@ const App = () => {
                 ))}
              </div>
           </div>
+          <div className="sidebar-footer" style={{ borderTop: '1px solid var(--border-subtle)', padding: '1rem' }}>
+             <button className="btn btn-ghost btn-full" style={{ color: 'var(--accent-red)', justifyContent: 'center' }} onClick={handleLogout}>
+               <User size={16} style={{ marginRight: '8px' }} /> ออกจากระบบ
+             </button>
+          </div>
         </div>
       </aside>
 
       <main className="main-content">
-        {(window.innerWidth > 768 || activeMobileTab === 'form') && (selectedTemplate || reportMode === 'violator') && (
+        {(window.innerWidth > 768 || activeMobileTab === 'form') && (
         <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
+          {!selectedTemplate && reportMode !== 'violator' ? (
+            <div className="card empty-state-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', opacity: 0.6 }}>
+               <FileText size={48} style={{ marginBottom: '1rem' }} />
+               <p>กรุณาเลือกแม่แบบเพื่อเริ่มเขียนรายงาน</p>
+            </div>
+          ) : (
           <div className="card">
             <div className="card-header">
               <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
@@ -307,6 +326,7 @@ const App = () => {
               ))}
             </div>
           </div>
+          )}
         </section>
         )}
 
@@ -314,9 +334,9 @@ const App = () => {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 <button className="btn btn-mode-switch" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-                  {reportMode === 'incident' ? 'เปลี่ยนเป็นรายงานผู้กระทำความผิด' : 'เปลี่ยนเป็นรายงานเหตุการณ์ไม่ปกติ'}
+                  {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
                 </button>
                 <button className="btn btn-primary" title="ทำรายงานด้วย AI" style={{ background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={handleCAATTranslate} disabled={isLoadingCAAT}>
                    {isLoadingCAAT && <Loader2 size={16} className="animate-spin" />}
