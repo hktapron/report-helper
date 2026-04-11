@@ -169,13 +169,23 @@ const App = () => {
       ];
     }
     const body = selectedTemplate.preview || selectedTemplate.content || "";
-    let textToParse = body.replace(/<span[^>]*class="sync-field"[^>]*>(\{.*?\})<\/span>/g, '$1'); 
-    textToParse = textToParse.replace(/<[^>]*>?/gm, ''); 
-
     const keys = [];
-    let match;
-    const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
-    while ((match = regex.exec(textToParse)) !== null) keys.push(match[1] || match[2]);
+    
+    // 1. Scan for curly brace placeholders {}
+    const textToParse = body.replace(/<[^>]*>?/gm, ''); 
+    const braceRegex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
+    let braceMatch;
+    while ((braceMatch = braceRegex.exec(textToParse)) !== null) {
+      keys.push(braceMatch[1] || braceMatch[2]);
+    }
+
+    // 2. Scan for data-field attributes (Crucial for saved/hydrated reports)
+    const attrRegex = /data-field="([^"]+)"/g;
+    let attrMatch;
+    while ((attrMatch = attrRegex.exec(body)) !== null) {
+      keys.push(attrMatch[1]);
+    }
+
     const dynamic = [...new Set(keys)].map(k => ({ id: k, label: k }));
     return [...commonFields, ...dynamic];
   }, [selectedTemplate, reportMode]);
