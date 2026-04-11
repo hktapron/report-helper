@@ -184,7 +184,7 @@ const App = () => {
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
            <button className="header-action-btn" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
-              <Languages size={20} />
+              <Terminal size={20} />
            </button>
            <button className="header-action-btn" style={{ color: 'var(--accent-red)' }} onClick={() => {setUser(null); setReportMode(null);}} title="ออกจากระบบ"><User size={20} /></button>
         </div>
@@ -269,6 +269,7 @@ const App = () => {
       </aside>
 
       <main className="main-content">
+        {(window.innerWidth > 768 || activeMobileTab === 'form') && selectedTemplate && (
         <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
           <div className="card">
             <div className="card-header">
@@ -294,14 +295,18 @@ const App = () => {
             </div>
           </div>
         </section>
+        )}
 
         <section className={`preview-container-main ${activeMobileTab === 'preview' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid var(--border-subtle)' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+                  <Terminal size={14} /> สลับโหมด
+                </button>
                 <button className="btn btn-primary" title="ทำรายงานด้วย AI" style={{ background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={handleCAATTranslate} disabled={isLoadingCAAT}>
-                   {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Languages size={16} />}
+                   {isLoadingCAAT && <Loader2 size={16} className="animate-spin" />}
                    ทำรายงาน กพท.22
                 </button>
                 <button className="btn btn-primary" onClick={() => { 
