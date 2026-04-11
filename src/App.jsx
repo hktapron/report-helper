@@ -80,24 +80,7 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // 1. SMART LABEL DISCOVERY (Magic Mapping from Plain Text)
-    const smartLabels = [
-      { regex: /เที่ยวบิน\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
-      { regex: /ทะเบียน\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
-      { regex: /หลุมจอดฯ?\s*(หมายเลข)?\s*[:：]?\s*([^{}\[\]\s<]+)/g, id: 'stand' },
-      { regex: /เวลาที่คาดว่าถึง\s*ทภก\.\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
-    ];
-    
-    smartLabels.forEach(sl => {
-      processed = processed.replace(sl.regex, (match, val1, val2) => {
-        const val = val2 || val1; // Handle case with optional "หมายเลข"
-        // Wrap the value part only
-        const wrappedVal = `<span class="sync-field" data-field="${sl.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
-        return match.replace(val, wrappedVal);
-      });
-    });
-
-    // 2. EXPLICIT VARIABLE HYDRATION (Standard {} or [] variables)
+    // STRICT VARIABLE HYDRATION (Standard {} or [] variables only)
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
