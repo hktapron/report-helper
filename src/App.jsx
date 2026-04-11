@@ -111,7 +111,10 @@ const App = () => {
     toggleFolderExpansion
   } = useUserTemplates(user?.username, reportMode);
 
-  useEffect(() => { if (user) handleFullReset(); }, [reportMode]);
+  const handleSwitchMode = (newMode) => {
+    setReportMode(newMode);
+    handleFullReset();
+  };
 
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
@@ -243,7 +246,7 @@ const App = () => {
   function getSmartTitle(h) { return h.customTitle || h.template_name || 'รายงานเหตุการณ์'; }
 
   if (!user) return <Login onLogin={setUser} />;
-  if (!reportMode) return <ModeSelector onSelect={setReportMode} />;
+  if (!reportMode) return <ModeSelector onSelect={(m) => { setReportMode(m); handleFullReset(); }} />;
 
   return (
     <div className="app-container">
@@ -251,7 +254,7 @@ const App = () => {
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-           <button className="header-action-btn" style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
+           <button className="header-action-btn" style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }} onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
               {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'เหตุการณ์ไม่ปกติ'}
            </button>
             <button className="header-action-btn" style={{ color: 'var(--accent-red)', padding: '0 4px' }} onClick={handleLogout} title="ออกจากระบบ"><User size={18} /></button>
@@ -265,7 +268,7 @@ const App = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
             {window.innerWidth > 768 && (
-               <button className="btn btn-mode-switch" style={{ fontSize: '10px', whiteSpace: 'nowrap' }} onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
+               <button className="btn btn-mode-switch" style={{ fontSize: '10px', whiteSpace: 'nowrap' }} onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}>
                  {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
                </button>
             )}
@@ -388,7 +391,8 @@ const App = () => {
                 <button className="btn btn-ghost" style={{ border: '1px solid var(--border-subtle)', fontSize: '11px' }} onClick={async () => { 
                   const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
                   if(n) {
-                    await saveTemplate(n, formData, thaiPreview, extraPreview, selectedTemplate?.folder_id); 
+                    const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
+                    await saveTemplate(n, formData, currentHtml, extraPreview, selectedTemplate?.folder_id); 
                     alert('บันทึกฟอร์มเรียบร้อย');
                   }
                 }}>บันทึกฟอร์มรายงาน</button>
