@@ -171,19 +171,30 @@ const App = () => {
     const body = selectedTemplate.preview || selectedTemplate.content || "";
     const keys = [];
     
-    // 1. Scan for curly brace placeholders {}
-    const textToParse = body.replace(/<[^>]*>?/gm, ''); 
+    // 1. Text Scanning (for raw templates with {braces})
+    const textOnly = body.replace(/<[^>]*>?/gm, ' '); // Use space to prevent merging words
     const braceRegex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
     let braceMatch;
-    while ((braceMatch = braceRegex.exec(textToParse)) !== null) {
-      keys.push(braceMatch[1] || braceMatch[2]);
+    while ((braceMatch = braceRegex.exec(textOnly)) !== null) {
+      const k = braceMatch[1] || braceMatch[2];
+      if (k) keys.push(k.trim());
     }
 
-    // 2. Scan for data-field attributes (Crucial for saved/hydrated reports)
-    const attrRegex = /data-field="([^"]+)"/g;
-    let attrMatch;
-    while ((attrMatch = attrRegex.exec(body)) !== null) {
-      keys.push(attrMatch[1]);
+    // 2. DOM Scanning (for hydrated reports with data-field attributes)
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(body, 'text/html');
+      doc.querySelectorAll('[data-field]').forEach(el => {
+        const k = el.getAttribute('data-field');
+        if (k) keys.push(k.trim());
+      });
+    } catch (e) {
+      console.warn("DOMParser failed, falling back to regex", e);
+      const attrRegex = /data-field=["']([^"']+)["']/g;
+      let attrMatch;
+      while ((attrMatch = attrRegex.exec(body)) !== null) {
+        keys.push(attrMatch[1].trim());
+      }
     }
 
     const dynamic = [...new Set(keys)].map(k => ({ id: k, label: k }));
