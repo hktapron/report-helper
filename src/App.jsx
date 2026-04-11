@@ -67,6 +67,12 @@ const App = () => {
   const hydrateHtmlTemplate = (text) => {
     if (!text) return '';
     let processed = String(text);
+    
+    // IDEMPOTENCY CHECK: If already has our sync spans, don't double hydrate
+    if (processed.includes('sync-field')) {
+      return processed; 
+    }
+
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
     const lines = processed.split('\n');
     if (lines.length > 2 && lines[1].includes('วันที่')) {
@@ -109,21 +115,38 @@ const App = () => {
 
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
+    const body = item.preview || item.content || "";
     setReportMode(mode);
     setSelectedTemplate({
       id: item.id || 'custom',
       name: item.name || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
       mode: mode,
-      content: item.content || item.preview || ""
+      preview: body
     });
-    setFormData(item.data || {});
-    const hydrated = hydrateHtmlTemplate(item.preview || item.content || "");
+    
+    const initialData = item.data || {};
+    setFormData(initialData);
+    
+    // Initial Hydration
+    let hydrated = hydrateHtmlTemplate(body);
+    
+    // REVERSE MAPPING FIX: Populate the hydrated HTML with saved values immediately
+    if (Object.keys(initialData).length > 0) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = hydrated;
+      Object.entries(initialData).forEach(([key, val]) => {
+        tempDiv.querySelectorAll(`.sync-field[data-field="${key}"]`).forEach(s => {
+          s.innerText = val || `{${key}}`;
+        });
+      });
+      hydrated = tempDiv.innerHTML;
+    }
+
     setThaiPreview(hydrated);
     if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     
-    // NAVIGATION SYNC: Jump to Preview as requested
     if (window.innerWidth <= 768) {
       setActiveMobileTab('preview');
     }
@@ -145,7 +168,10 @@ const App = () => {
         { id: 'seizure_end', label: 'ถึงวันที่' }, { id: 'retraining_date', label: 'วันอบรม' }
       ];
     }
-    let textToParse = (selectedTemplate.preview || selectedTemplate.content || "").replace(/<[^>]*>?/gm, '');
+    const body = selectedTemplate.preview || selectedTemplate.content || "";
+    let textToParse = body.replace(/<span[^>]*class="sync-field"[^>]*>(\{.*?\})<\/span>/g, '$1'); 
+    textToParse = textToParse.replace(/<[^>]*>?/gm, ''); 
+
     const keys = [];
     let match;
     const regex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
