@@ -80,27 +80,42 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // 1. SMART LABEL & NARRATIVE LOGIC (Magic Mapping based on user rules)
+    // 1. PRECISE NARRATIVE LOGIC (Based on User's 5 Specific Rules)
     const divertRules = [
-      { regex: /(ได้รับแจ้งจาก)\s*([^{}\[\]\s<]+)/g, id: 'informant' },
-      { regex: /(เที่ยวบิน|เที่ยวบินที่)\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
-      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*([^{}\[\]\s<]+)/g, id: 'atc_time' },
-      { regex: /(ตามแผนการบินจะต้องทำการบินลงที่สนามบิน)\s*([^{}\[\]\s<]+)/g, id: 'original_airport' },
-      { regex: /(หลุมจอดฯ?\s*หมายเลข\s*[:：]?)\s*([^{}\[\]\s<]+)/g, id: 'stand' },
-      { regex: /(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
-      { regex: /(แบบอากาศยาน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_type' },
-      { regex: /(เส้นทางการบินเดิม)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'route' }
+      { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
+      { regex: /เที่ยวบิน(?:ที่)?\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
+      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{1,2}\.?\d{0,2})/g, id: 'atc_time' },
+      { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
+      { regex: /(หมายเลข|หมายเลข\s*[:：])\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
     ];
     
     divertRules.forEach(rule => {
       processed = processed.replace(rule.regex, (match, label, val) => {
-        // Wrap the dynamic value only, keep label as is
+        // Double check: don't wrap if it's already a span or variable
+        if (val.includes('<') || val.includes('{')) return match; 
         const wrappedVal = `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
         return match.replace(val, wrappedVal);
       });
     });
 
-    // 2. EXPLICIT VARIABLE HYDRATION (Standard {} or [] variables only)
+    // 2. SUMMARY TABLE LOGIC (Mapping labels with colons)
+    const tableLabels = [
+      { regex: /(เที่ยวบิน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
+      { regex: /(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
+      { regex: /(แบบอากาศยาน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_type' },
+      { regex: /(เส้นทางการบินเดิม)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'route' },
+      { regex: /(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
+    ];
+    
+    tableLabels.forEach(rule => {
+      processed = processed.replace(rule.regex, (match, label, val) => {
+        if (val.includes('<')) return match;
+        const wrappedVal = `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
+        return match.replace(val, wrappedVal);
+      });
+    });
+
+    // 3. EXPLICIT VARIABLE HYDRATION (Standard {} or [] variables only)
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
