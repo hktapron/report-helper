@@ -1077,3 +1077,28 @@ input:focus, textarea:focus {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.btn-mode-switch {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-mode-switch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(217, 119, 6, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-mode-switch:active {
+  transform: translateY(0);
+}
