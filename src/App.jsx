@@ -80,7 +80,23 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // STRICT VARIABLE HYDRATION (Standard {} or [] variables only)
+    // 1. PRECISE SMART LABEL DISCOVERY (Only at Start of Line)
+    const smartLabels = [
+      { regex: /(^|\n)[ ]*(เที่ยวบิน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
+      { regex: /(^|\n)[ ]*(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
+      { regex: /(^|\n)[ ]*(หลุมจอดฯ?)\s*(หมายเลข)?\s*[:：]?\s*([^{}\[\]\s<]+)/g, id: 'stand' },
+      { regex: /(^|\n)[ ]*(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
+    ];
+    
+    smartLabels.forEach(sl => {
+      processed = processed.replace(sl.regex, (match, prefix, label, val1, val2) => {
+        const val = val2 || val1; 
+        const wrappedVal = `<span class="sync-field" data-field="${sl.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
+        return prefix + match.slice(prefix.length).replace(val, wrappedVal);
+      });
+    });
+
+    // 2. EXPLICIT VARIABLE HYDRATION (Standard {} or [] variables only)
     processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
       const id = p1 || p2;
       return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
