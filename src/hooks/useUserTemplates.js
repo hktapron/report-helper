@@ -22,12 +22,11 @@ export const useUserTemplates = (currentUsername, reportMode) => {
       setFolders(folderData);
     }
 
-    // 2. Fetch Templates
+    // 2. Fetch Templates (all modes - filter done in component)
     const { data: templateData, error: templateError } = await supabase
       .from('user_templates')
       .select('*')
       .eq('user_id', currentUsername)
-      .eq('mode', reportMode)
       .order('created_at', { ascending: false });
 
     if (!templateError && templateData) {
@@ -38,16 +37,17 @@ export const useUserTemplates = (currentUsername, reportMode) => {
 
   useEffect(() => {
     fetchAll();
-  }, [currentUsername, reportMode]);
+  }, [currentUsername]); // Removed reportMode dep - we fetch all modes now
 
-  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null) => {
+  // Accept mode explicitly to avoid stale closure bug
+  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode) => {
     if (!supabase || !currentUsername) return;
     
     const { error } = await supabase
       .from('user_templates')
       .insert([{
         name,
-        mode: reportMode,
+        mode: mode,
         data: formData,
         preview,
         extra_preview: extraPreview,

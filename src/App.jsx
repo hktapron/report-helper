@@ -290,7 +290,7 @@ const App = () => {
   // SEARCH LOGIC: Real-time filtering for all sidebar items
   const matchesSearch = (text) => !searchTerm || String(text).toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filteredCustomTemplates = customTemplates.filter(t => matchesSearch(t.name));
+  const filteredCustomTemplates = customTemplates.filter(t => t.mode === reportMode && matchesSearch(t.name));
   const filteredTemplates = (templatesData || []).filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core')).filter(t => matchesSearch(t.name));
   const filteredHistory = history.filter(h => (h.mode || 'incident') === reportMode).filter(h => matchesSearch(getSmartTitle(h)));
 
