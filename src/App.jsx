@@ -199,6 +199,13 @@ const App = () => {
       preview: finalHtml,
     });
 
+    // GUARANTEED DOM write: useEffect only fires when thaiPreview STATE changes.
+    // If finalHtml === previous thaiPreview (e.g. re-opening same report), effect never runs.
+    // So we MUST write directly to the ref here as well.
+    if (thaiPreviewRef.current) {
+      thaiPreviewRef.current.innerHTML = finalHtml;
+    }
+
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     if (window.innerWidth <= 768) setActiveMobileTab('preview');
