@@ -126,18 +126,25 @@ const App = () => {
     ).join('\n');
 
     // 2. SUMMARY TABLE LOGIC (Mapping labels with colons)
+    const TABLE_TIME_IDS = ['atc_time', 'departure_time'];
     const tableLabels = [
       { regex: /(เที่ยวบิน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
       { regex: /(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
       { regex: /(แบบอากาศยาน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_type' },
-      { regex: /(เส้นทางการบินเดิม)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'route' },
-      { regex: /(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
+      { regex: /(เส้นทางการบินเดิม|เส้นทางบิน)\s*[:：]\s*([^<\n\r]+)/g, id: 'route' },
+      { regex: /(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'atc_time' },
+      { regex: /(เวลาออกจาก\s*ทภก\.)\s*[:：]\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'departure_time' }
     ];
 
     tableLabels.forEach(rule => {
       processed = processed.replace(rule.regex, (match, label, val) => {
-        if (val.includes('<')) return match;
-        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
+        if (!val || val.includes('<')) return match;
+        let displayVal = val.trim();
+        // Time fields: auto-format decimal (1340→13.40), น. stays outside span
+        if (TABLE_TIME_IDS.includes(rule.id)) {
+          if (/^\d{4}$/.test(displayVal)) displayVal = `${displayVal.slice(0, 2)}.${displayVal.slice(2)}`;
+        }
+        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${displayVal}</span>`);
       });
     });
 
@@ -234,7 +241,8 @@ const App = () => {
       stand: 'หลุมจอดฯ',
       ac_reg: 'ทะเบียนเครื่อง',
       ac_type: 'แบบอากาศยาน',
-      route: 'เส้นทางการบินเดิม',
+      route: 'เส้นทางบิน',
+      departure_time: 'เวลาออกจาก ทภก.',
       // violator fields
       incident_time: 'เวลาเกิดเหตุ',
       violator_name: 'ชื่อผู้กระทำความผิด',
@@ -300,7 +308,7 @@ const App = () => {
 
 
   const handleInputChange = (id, value) => {
-    const isTimeField = /^(report_time|atc_time|incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
+    const isTimeField = /^(report_time|atc_time|departure_time|incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
     const finalValue = isTimeField ? formatTimeInput(value) : value;
     if (thaiPreviewRef.current) {
         thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(s => {
