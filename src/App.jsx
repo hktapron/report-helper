@@ -80,7 +80,7 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // 1. PRECISE NARRATIVE LOGIC (Based on User's 5 Specific Rules)
+    // 1. SMART NARRATIVE LOGIC (Triggered by specific user keywords)
     const divertRules = [
       { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
       { regex: /เที่ยวบิน(?:ที่)?\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
@@ -88,13 +88,11 @@ const App = () => {
       { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
       { regex: /(หมายเลข|หมายเลข\s*[:：])\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
     ];
-    
+
     divertRules.forEach(rule => {
       processed = processed.replace(rule.regex, (match, label, val) => {
-        // Double check: don't wrap if it's already a span or variable
-        if (val.includes('<') || val.includes('{')) return match; 
-        const wrappedVal = `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
-        return match.replace(val, wrappedVal);
+        if (val.includes('<') || val.includes('{')) return match;
+        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
       });
     });
 
@@ -106,12 +104,11 @@ const App = () => {
       { regex: /(เส้นทางการบินเดิม)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'route' },
       { regex: /(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'atc_time' }
     ];
-    
+
     tableLabels.forEach(rule => {
       processed = processed.replace(rule.regex, (match, label, val) => {
         if (val.includes('<')) return match;
-        const wrappedVal = `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`;
-        return match.replace(val, wrappedVal);
+        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
       });
     });
 
@@ -154,56 +151,47 @@ const App = () => {
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     const body = item.preview || item.content || "";
+
+    // A unique digital fingerprint to force React to unmount the old preview and mount the new one
+    const uniqueSessionId = `${type}_${item.id || 'new'}_${Date.now()}`;
+
+    // Update essential states first
+    setReportMode(mode);
+    setFormData(item.data || {});
     
-    // 1. CLEAR PHASE: Wipe state and remove all DOM content to kill ghosts
-    setThaiPreview("");
-    setSelectedTemplate(null);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = "";
-    
-    // 2. LOAD PHASE: Set new data in next tick to ensure React re-mounts
-    setTimeout(() => {
-      setReportMode(mode);
-      setSelectedTemplate({
-        id: item.id ? `${type}_${item.id}` : `custom_${Date.now()}`,
-        name: item.name || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
-        mode: mode,
-        preview: body
-      });
-      
-      const initialData = item.data || {};
-      setFormData(initialData);
-      
-      // Initial Hydration
-      let hydrated = hydrateHtmlTemplate(body);
-      
-      // REVERSE MAPPING FIX: Sync state with HTML content
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = hydrated;
-      
-      const recoveredData = { ...initialData };
-      tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
-        const key = s.getAttribute('data-field');
-        const val = s.innerText.trim();
-        if (val && !val.startsWith('{') && !recoveredData[key]) {
-          recoveredData[key] = val;
-        }
-        if (initialData[key]) {
-          s.innerText = initialData[key];
-        }
-      });
-      
-      setFormData(recoveredData);
-      const finalHtml = tempDiv.innerHTML;
-      setThaiPreview(finalHtml);
-      // Removed direct Ref manipulation here - let React's dangerouslySetInnerHTML handle the fresh mount
-      
-      isEditingPreview.current = type === 'history';
-      setIsSidebarOpen(false);
-      
-      if (window.innerWidth <= 768) {
-        setActiveMobileTab('preview');
+    // Hydrate the content safely
+    let hydrated = hydrateHtmlTemplate(body);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = hydrated;
+
+    const recoveredData = { ...(item.data || {}) };
+    tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
+      const key = s.getAttribute('data-field');
+      const val = s.innerText.trim();
+      if (val && !val.startsWith('{') && !recoveredData[key]) {
+        recoveredData[key] = val;
       }
-    }, 0);
+      if (item.data?.[key]) {
+        s.innerText = item.data[key];
+      }
+    });
+
+    // Set all states in one synchronous block to avoid racing
+    setFormData(recoveredData);
+    setThaiPreview(tempDiv.innerHTML);
+    setSelectedTemplate({
+      id: uniqueSessionId,
+      name: item.name || (type === 'history' ? (item.customTitle || item.templateName) : 'กำหนดเอง'),
+      mode: mode,
+      preview: tempDiv.innerHTML
+    });
+
+    // Cleanup and visual updates
+    isEditingPreview.current = type === 'history';
+    setIsSidebarOpen(false);
+    if (window.innerWidth <= 768) {
+      setActiveMobileTab('preview');
+    }
   };
 
   const dynamicFields = useMemo(() => {
