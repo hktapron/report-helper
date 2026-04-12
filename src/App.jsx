@@ -172,8 +172,6 @@ const App = () => {
     toggleFolderExpansion, moveTemplateToFolder
   } = useUserTemplates(user?.username, reportMode);
 
-  const [draggedTemplateId, setDraggedTemplateId] = React.useState(null);
-
   const handleSwitchMode = (newMode) => {
     setReportMode(newMode);
     handleFullReset();
@@ -392,14 +390,13 @@ const App = () => {
                        className="folder-header"
                        onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
                        onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.background = 'var(--hover-bg)'; }}
-                       onDragLeave={(e) => { e.currentTarget.style.background = ''; }}
+                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.style.outline = '2px dashed var(--accent-indigo)'; }}
+                       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.style.outline = ''; }}
                        onDrop={(e) => {
-                         e.currentTarget.style.background = '';
-                         if (draggedTemplateId) {
-                           moveTemplateToFolder(draggedTemplateId, folder.id);
-                           setDraggedTemplateId(null);
-                         }
+                         e.preventDefault();
+                         e.currentTarget.style.outline = '';
+                         const tid = e.dataTransfer.getData('text/template-id');
+                         if (tid) moveTemplateToFolder(tid, folder.id);
                        }}
                      >
                         <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
@@ -414,8 +411,7 @@ const App = () => {
                              key={ct.id}
                              className="template-item"
                              draggable
-                             onDragStart={() => setDraggedTemplateId(ct.id)}
-                             onDragEnd={() => setDraggedTemplateId(null)}
+                             onDragStart={(e) => { e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
                              onClick={() => handleSelectTemplate(ct, 'custom')}
                              onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
                              style={{ cursor: 'grab' }}
@@ -429,7 +425,17 @@ const App = () => {
                    </div>
                  );
                })}
-               <div className="uncategorized-section">
+               <div
+                  className="uncategorized-section"
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.style.outline = '2px dashed var(--accent-indigo)'; }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.style.outline = ''; }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.outline = '';
+                    const tid = e.dataTransfer.getData('text/template-id');
+                    if (tid) moveTemplateToFolder(tid, null);
+                  }}
+               >
                   <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
                   {filteredTemplates.map(t => (
                     <div key={t.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(t)}>
@@ -438,7 +444,15 @@ const App = () => {
                     </div>
                   ))}
                   {filteredCustomTemplates.filter(t => !t.folder_id).map(ct => (
-                    <div key={ct.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
+                    <div
+                      key={ct.id}
+                      className="template-item"
+                      style={{ marginLeft: '1.25rem', cursor: 'grab' }}
+                      draggable
+                      onDragStart={(e) => { e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
+                      onClick={() => handleSelectTemplate(ct, 'custom')}
+                      onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                    >
                       <FileText size={12} style={{ opacity: 0.6 }} />
                       <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                     </div>
