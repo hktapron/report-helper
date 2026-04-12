@@ -77,9 +77,9 @@ const App = () => {
     if (!text) return '';
     let processed = String(text);
     
-    // IDEMPOTENCY CHECK: If already has our sync spans, don't double hydrate
+    // IDEMPOTENCY CHECK: If already hydrated, just apply existing data to spans and return
     if (processed.includes('sync-field')) {
-      return processed; 
+      return processed; // caller applies data via tempDiv separately
     }
 
     const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
@@ -159,48 +159,49 @@ const App = () => {
 
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
+    // Support both history format (preview/extraPreview) and template format (preview/content)
     const body = item.preview || item.content || "";
+    const savedData = item.data || {};
 
-    // A unique digital fingerprint to force React to unmount the old preview and mount the new one
-    const uniqueSessionId = `${type}_${item.id || 'new'}_${Date.now()}`;
-
-    // Update essential states first
     setReportMode(mode);
-    setFormData(item.data || {});
-    
-    // Hydrate the content safely
+
+    // Step 1: Hydrate the HTML (or pass through if already hydrated)
     let hydrated = hydrateHtmlTemplate(body);
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = hydrated;
 
-    const recoveredData = { ...(item.data || {}) };
+    // Step 2: Apply saved formData values into ALL sync-field spans
+    // This handles both: raw templates with {var} AND saved reports with existing spans
+    const recoveredData = { ...savedData };
     tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
       const key = s.getAttribute('data-field');
-      const val = s.innerText.trim();
-      if (val && !val.startsWith('{') && !recoveredData[key]) {
-        recoveredData[key] = val;
+      const currentText = s.innerText.trim();
+      
+      // If span has a real value (not a {placeholder}), recover it into formData
+      if (currentText && !currentText.startsWith('{') && !recoveredData[key]) {
+        recoveredData[key] = currentText;
       }
-      if (item.data?.[key]) {
-        s.innerText = item.data[key];
+      
+      // Apply saved value into the span (this fills in blanks)
+      if (savedData[key]) {
+        s.innerText = savedData[key];
       }
     });
 
-    // Set all states in one synchronous block to avoid racing
+    // Step 3: Set all state at once
+    const finalHtml = tempDiv.innerHTML;
     setFormData(recoveredData);
-    setThaiPreview(tempDiv.innerHTML);
+    setThaiPreview(finalHtml);
     setSelectedTemplate({
-      id: uniqueSessionId,
-      name: item.name || (type === 'history' ? (item.customTitle || item.templateName) : 'กำหนดเอง'),
+      id: `${type}_${item.id || 'new'}_${Date.now()}`,
+      name: item.name || item.customTitle || item.templateName || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
       mode: mode,
-      preview: tempDiv.innerHTML
+      preview: finalHtml,
     });
 
-    // Cleanup and visual updates
     isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
-    if (window.innerWidth <= 768) {
-      setActiveMobileTab('preview');
-    }
+    if (window.innerWidth <= 768) setActiveMobileTab('preview');
   };
 
   const dynamicFields = useMemo(() => {
