@@ -92,7 +92,7 @@ const App = () => {
     // 1. SMART NARRATIVE LOGIC (Triggered by specific user keywords)
     const divertRules = [
       { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
-      { regex: /เที่ยวบิน(?:ที่)?\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
+      { regex: /(เที่ยวบิน(?:ที่)?)\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
       { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{1,2}\.?\d{0,2})/g, id: 'atc_time' },
       { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
       { regex: /(หมายเลข|หมายเลข\s*[:：])\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
@@ -100,7 +100,7 @@ const App = () => {
 
     divertRules.forEach(rule => {
       processed = processed.replace(rule.regex, (match, label, val) => {
-        if (val.includes('<') || val.includes('{')) return match;
+        if (!val || val.includes('<') || val.includes('{')) return match;
         return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
       });
     });
