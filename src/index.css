@@ -705,6 +705,7 @@ input:focus, textarea:focus {
   .main-content {
     padding: 0 !important;
     height: calc(100vh - 60px); /* Account for bottom nav */
+    overflow-y: auto; /* Allow scrolling for stacked form + preview */
   }
 
   .card {

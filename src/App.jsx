@@ -456,6 +456,7 @@ const App = () => {
                          className="folder-header"
                          draggable
                          onDragStart={(e) => {
+                           if (window.innerWidth <= 768) { e.preventDefault(); return; }
                            e.dataTransfer.setData('drag-type', 'folder');
                            e.dataTransfer.setData('folder-id', folder.id);
                            e.dataTransfer.effectAllowed = 'move';
@@ -483,7 +484,7 @@ const App = () => {
                                key={ct.id}
                                className="template-item"
                                draggable
-                               onDragStart={(e) => { e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
+                               onDragStart={(e) => { if (window.innerWidth <= 768) { e.preventDefault(); return; } e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
                                onClick={() => handleSelectTemplate(ct, 'custom')}
                                onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
                                style={{ cursor: 'grab' }}
@@ -530,7 +531,7 @@ const App = () => {
                       className="template-item"
                       style={{ marginLeft: '1.25rem', cursor: 'grab' }}
                       draggable
-                      onDragStart={(e) => { e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
+                      onDragStart={(e) => { if (window.innerWidth <= 768) { e.preventDefault(); return; } e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
                       onClick={() => handleSelectTemplate(ct, 'custom')}
                       onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
                     >
@@ -592,7 +593,7 @@ const App = () => {
         </section>
         )}
 
-        <section className={`preview-container-main ${activeMobileTab === 'preview' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
+        <section className={`preview-container-main ${activeMobileTab === 'preview' || activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Preview</h2>
@@ -634,7 +635,7 @@ const App = () => {
           </div>
         </section>
 
-        {isSplitMode && activeMobileTab === 'form' && (
+        {isSplitMode && activeMobileTab === 'form' && window.innerWidth > 768 && (
            <div className="split-preview-overlay">
               <div className="card" style={{ height: '100%', borderRadius: 0, border: 'none' }}>
                  <div className="preview-body-v2" style={{ padding: '0.5rem' }}><div className="preview-textarea" dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ fontSize: '12px', background: 'transparent', padding: 0 }} /></div>
@@ -644,8 +645,7 @@ const App = () => {
 
         <nav className="mobile-nav">
            <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}><Calendar size={20} /><span>ฟอร์มเหตุการณ์</span></button>
-           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}><Edit2 size={20} /><span>แก้ไขข้อมูล</span></button>
-           <button className={`nav-item ${activeMobileTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveMobileTab('preview')}><Sparkles size={20} /><span>Preview</span></button>
+           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}><Edit2 size={20} /><span>กรอกข้อมูล</span></button>
            <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}><Clock size={20} /><span>ประวัติ</span></button>
         </nav>
       </main>
