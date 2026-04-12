@@ -89,21 +89,35 @@ const App = () => {
       processed = lines.join('\n');
     }
 
-    // 1. SMART NARRATIVE LOGIC (Triggered by specific user keywords)
+    // 1. SMART NARRATIVE LOGIC
+    // RULE: Skip lines starting with รายงาน or วันที่ (header/date lines - do NOT map these)
     const divertRules = [
+      { regex: /(เมื่อเวลา)\s*([\d.]+น?\.?)/g, id: 'report_time' },
       { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
       { regex: /(เที่ยวบิน(?:ที่)?)\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
-      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{1,2}\.?\d{0,2})/g, id: 'atc_time' },
+      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*([\d.]+น?\.?)/g, id: 'atc_time' },
       { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
-      { regex: /(หมายเลข|หมายเลข\s*[:：])\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
+      { regex: /(หลุมจอดฯ\s*หมายเลข|หมายเลข(?:\s*[:：])?)\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
     ];
 
-    divertRules.forEach(rule => {
-      processed = processed.replace(rule.regex, (match, label, val) => {
-        if (!val || val.includes('<') || val.includes('{')) return match;
-        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
+    const applyDivertRules = (line) => {
+      let l = line;
+      divertRules.forEach(rule => {
+        try {
+          l = l.replace(rule.regex, (match, label, val) => {
+            if (!val || val.includes('<') || val.includes('{')) return match;
+            return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
+          });
+        } catch(e) { console.warn(`Rule ${rule.id} error:`, e); }
       });
-    });
+      return l;
+    };
+
+    // Apply per-line — skip title/date header lines
+    const headerPattern = /^\s*(รายงาน|วันที่)/;
+    processed = processed.split('\n').map(line =>
+      headerPattern.test(line) ? line : applyDivertRules(line)
+    ).join('\n');
 
     // 2. SUMMARY TABLE LOGIC (Mapping labels with colons)
     const tableLabels = [
@@ -170,19 +184,11 @@ const App = () => {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = hydrated;
 
-    // Step 2: Apply saved formData values into ALL sync-field spans
-    // This handles both: raw templates with {var} AND saved reports with existing spans
-    const recoveredData = { ...savedData };
+    // Step 2: Apply saved formData values into spans
+    // NOTE: Do NOT auto-recover span text into formData — form fields should start blank.
+    // Only apply explicitly saved data (savedData) to spans.
     tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
       const key = s.getAttribute('data-field');
-      const currentText = s.innerText.trim();
-      
-      // If span has a real value (not a {placeholder}), recover it into formData
-      if (currentText && !currentText.startsWith('{') && !recoveredData[key]) {
-        recoveredData[key] = currentText;
-      }
-      
-      // Apply saved value into the span (this fills in blanks)
       if (savedData[key]) {
         s.innerText = savedData[key];
       }
@@ -190,7 +196,7 @@ const App = () => {
 
     // Step 3: Set all state at once
     const finalHtml = tempDiv.innerHTML;
-    setFormData(recoveredData);
+    setFormData(savedData);  // Only use explicitly saved form data — keep form blank if never filled
     setThaiPreview(finalHtml);
     setSelectedTemplate({
       id: `${type}_${item.id || 'new'}_${Date.now()}`,
