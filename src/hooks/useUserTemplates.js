@@ -15,7 +15,6 @@ export const useUserTemplates = (currentUsername, reportMode) => {
       .from('user_folders')
       .select('*')
       .eq('user_id', currentUsername)
-      .eq('mode', reportMode)
       .order('sort_order', { ascending: true });
 
     if (!folderError && folderData) {

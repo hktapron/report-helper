@@ -184,7 +184,8 @@ const App = () => {
 
   // Build hierarchical tree from flat folder list
   const buildFolderTree = (flatFolders) => {
-    const sorted = [...flatFolders].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const activeFolders = flatFolders.filter(f => f.mode === reportMode);
+    const sorted = [...activeFolders].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     const nodeMap = {};
     sorted.forEach(f => { nodeMap[f.id] = { ...f, children: [] }; });
     const roots = [];
