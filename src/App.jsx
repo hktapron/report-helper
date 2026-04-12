@@ -106,7 +106,14 @@ const App = () => {
         try {
           l = l.replace(rule.regex, (match, label, val) => {
             if (!val || val.includes('<') || val.includes('{')) return match;
-            return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${val}</span>`);
+            let displayVal = val;
+            // Time fields: auto-format decimal (1330→13.30) and always include น.
+            if (['report_time', 'atc_time'].includes(rule.id)) {
+              let raw = val.replace(/น\.?$/, '').trim(); // strip suffix
+              if (/^\d{4}$/.test(raw)) raw = `${raw.slice(0, 2)}.${raw.slice(2)}`; // 1330→13.30
+              displayVal = raw + 'น.'; // always add น.
+            }
+            return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${displayVal}</span>`);
           });
         } catch(e) { console.warn(`Rule ${rule.id} error:`, e); }
       });
