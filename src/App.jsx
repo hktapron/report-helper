@@ -92,10 +92,10 @@ const App = () => {
     // 1. SMART NARRATIVE LOGIC
     // RULE: Skip lines starting with รายงาน or วันที่ (header/date lines - do NOT map these)
     const divertRules = [
-      { regex: /(เมื่อเวลา)\s*(\d{1,2}(?:[.]\d{2})?|\d{4})/g, id: 'report_time' },
+      { regex: /(เมื่อเวลา)\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'report_time' },
       { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
       { regex: /(เที่ยวบิน(?:ที่)?)\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
-      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{1,2}(?:[.]\d{2})?|\d{4})/g, id: 'atc_time' },
+      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'atc_time' },
       { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
       { regex: /(หลุมจอดฯ\s*หมายเลข|หมายเลข(?:\s*[:：])?)\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
     ];
