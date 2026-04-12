@@ -169,8 +169,10 @@ const App = () => {
   const { 
     templates: customTemplates, folders, saveTemplate, deleteTemplate, 
     updateTemplateName, createFolder, renameFolder, deleteFolder,
-    toggleFolderExpansion
+    toggleFolderExpansion, moveTemplateToFolder
   } = useUserTemplates(user?.username, reportMode);
+
+  const [draggedTemplateId, setDraggedTemplateId] = React.useState(null);
 
   const handleSwitchMode = (newMode) => {
     setReportMode(newMode);
@@ -386,7 +388,20 @@ const App = () => {
                  if (searchTerm && folderTemplates.length === 0 && !matchesSearch(folder.name)) return null;
                  return (
                    <div key={folder.id} className="folder-item">
-                     <div className="folder-header" onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)} onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}>
+                     <div
+                       className="folder-header"
+                       onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
+                       onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
+                       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.background = 'var(--hover-bg)'; }}
+                       onDragLeave={(e) => { e.currentTarget.style.background = ''; }}
+                       onDrop={(e) => {
+                         e.currentTarget.style.background = '';
+                         if (draggedTemplateId) {
+                           moveTemplateToFolder(draggedTemplateId, folder.id);
+                           setDraggedTemplateId(null);
+                         }
+                       }}
+                     >
                         <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
                         <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
                         <span className="folder-name">{folder.name}</span>
@@ -395,7 +410,16 @@ const App = () => {
                      {(folder.is_expanded || searchTerm) && (
                        <div className="folder-content">
                          {folderTemplates.map(ct => (
-                           <div key={ct.id} className="template-item" onClick={() => handleSelectTemplate(ct, 'custom')} onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}>
+                           <div
+                             key={ct.id}
+                             className="template-item"
+                             draggable
+                             onDragStart={() => setDraggedTemplateId(ct.id)}
+                             onDragEnd={() => setDraggedTemplateId(null)}
+                             onClick={() => handleSelectTemplate(ct, 'custom')}
+                             onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                             style={{ cursor: 'grab' }}
+                           >
                              <FileText size={12} style={{ opacity: 0.6 }} />
                              <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
                            </div>
