@@ -57,6 +57,15 @@ const App = () => {
 
   const thaiPreviewRef = useRef(null);
   const isEditingPreview = useRef(false);
+  const currentPreviewId = useRef(null);
+
+  // THE REAL FIX: dangerouslySetInnerHTML does NOT update contentEditable divs after first render.
+  // We MUST write to the DOM directly via ref whenever the preview content changes.
+  useEffect(() => {
+    if (thaiPreviewRef.current) {
+      thaiPreviewRef.current.innerHTML = thaiPreview;
+    }
+  }, [thaiPreview]);
 
   const formatTimeInput = (val) => {
     const clean = val.replace(/[^0-9.]/g, "");
@@ -449,12 +458,10 @@ const App = () => {
             </div>
             <div className="preview-body-v2">
               <div 
-                key={selectedTemplate?.id || 'new'}
                 ref={thaiPreviewRef} 
                 className="preview-textarea" 
                 contentEditable 
                 suppressContentEditableWarning 
-                dangerouslySetInnerHTML={{ __html: thaiPreview }} 
                 style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} 
               />
             </div>
