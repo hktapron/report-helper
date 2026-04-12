@@ -176,8 +176,28 @@ const App = () => {
   const { 
     templates: customTemplates, folders, saveTemplate, deleteTemplate, 
     updateTemplateName, createFolder, renameFolder, deleteFolder,
-    toggleFolderExpansion, moveTemplateToFolder
+    toggleFolderExpansion, moveTemplateToFolder, moveFolder
   } = useUserTemplates(user?.username, reportMode);
+
+  // Drop indicator: which folder header is being hovered + position
+  const [dropIndicator, setDropIndicator] = React.useState(null); // { folderId, position: 'before'|'inside'|'after' }
+
+  // Build hierarchical tree from flat folder list
+  const buildFolderTree = (flatFolders) => {
+    const sorted = [...flatFolders].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const nodeMap = {};
+    sorted.forEach(f => { nodeMap[f.id] = { ...f, children: [] }; });
+    const roots = [];
+    sorted.forEach(f => {
+      if (f.parent_id && nodeMap[f.parent_id]) {
+        nodeMap[f.parent_id].children.push(nodeMap[f.id]);
+      } else {
+        roots.push(nodeMap[f.id]);
+      }
+    });
+    return roots;
+  };
+  const folderTree = buildFolderTree(folders);
 
   const handleSwitchMode = (newMode) => {
     setReportMode(newMode);
@@ -388,51 +408,98 @@ const App = () => {
                 <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
                 <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:"); if(n) createFolder(n); }} />
             </div>
-            <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
-               {folders.map(folder => {
-                 const folderTemplates = filteredCustomTemplates.filter(t => t.folder_id === folder.id);
-                 if (searchTerm && folderTemplates.length === 0 && !matchesSearch(folder.name)) return null;
-                 return (
-                   <div key={folder.id} className="folder-item">
-                     <div
-                       className="folder-header"
-                       onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
-                       onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.style.outline = '2px dashed var(--accent-indigo)'; }}
-                       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.style.outline = ''; }}
-                       onDrop={(e) => {
-                         e.preventDefault();
-                         e.currentTarget.style.outline = '';
-                         const tid = e.dataTransfer.getData('text/template-id');
-                         if (tid) moveTemplateToFolder(tid, folder.id);
-                       }}
-                     >
-                        <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
-                        <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
-                        <span className="folder-name">{folder.name}</span>
-                        <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
-                     </div>
-                     {(folder.is_expanded || searchTerm) && (
-                       <div className="folder-content">
-                         {folderTemplates.map(ct => (
-                           <div
-                             key={ct.id}
-                             className="template-item"
-                             draggable
-                             onDragStart={(e) => { e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
-                             onClick={() => handleSelectTemplate(ct, 'custom')}
-                             onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                             style={{ cursor: 'grab' }}
-                           >
-                             <FileText size={12} style={{ opacity: 0.6 }} />
-                             <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
-                           </div>
-                         ))}
+             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
+               {(() => {
+                 // Recursive folder renderer with drag-to-reorder + drag-to-subfolder
+                 const handleFolderDragOver = (e, folderId) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   const rect = e.currentTarget.getBoundingClientRect();
+                   const y = e.clientY - rect.top;
+                   let position;
+                   if (y < rect.height * 0.3) position = 'before';
+                   else if (y > rect.height * 0.7) position = 'after';
+                   else position = 'inside';
+                   setDropIndicator({ folderId, position });
+                 };
+
+                 const handleFolderDrop = (e, folder) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   setDropIndicator(null);
+                   const dragType = e.dataTransfer.getData('drag-type');
+                   if (dragType === 'template') {
+                     const tid = e.dataTransfer.getData('text/template-id');
+                     if (tid) moveTemplateToFolder(tid, folder.id);
+                   } else if (dragType === 'folder') {
+                     const fid = e.dataTransfer.getData('folder-id');
+                     if (!fid || fid === folder.id) return;
+                     const rect = e.currentTarget.getBoundingClientRect();
+                     const y = e.clientY - rect.top;
+                     let position;
+                     if (y < rect.height * 0.3) position = 'before';
+                     else if (y > rect.height * 0.7) position = 'after';
+                     else position = 'inside';
+                     moveFolder(fid, folder.id, position, folders);
+                   }
+                 };
+
+                 const renderFolderItem = (folder, depth = 0) => {
+                   const folderTemplates = filteredCustomTemplates.filter(t => t.folder_id === folder.id);
+                   const totalCount = folderTemplates.length + (folder.children?.length || 0);
+                   if (searchTerm && totalCount === 0 && !matchesSearch(folder.name)) return null;
+                   const indicator = dropIndicator?.folderId === folder.id ? dropIndicator.position : null;
+                   return (
+                     <div key={folder.id} className="folder-item" style={{ marginLeft: depth > 0 ? 10 : 0 }}>
+                       {indicator === 'before' && <div style={{ height: 2, background: 'var(--accent-indigo)', borderRadius: 1, margin: '1px 0' }} />}
+                       <div
+                         className="folder-header"
+                         draggable
+                         onDragStart={(e) => {
+                           e.dataTransfer.setData('drag-type', 'folder');
+                           e.dataTransfer.setData('folder-id', folder.id);
+                           e.dataTransfer.effectAllowed = 'move';
+                           e.stopPropagation();
+                         }}
+                         onDragEnd={() => setDropIndicator(null)}
+                         onDragOver={(e) => handleFolderDragOver(e, folder.id)}
+                         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropIndicator(null); }}
+                         onDrop={(e) => handleFolderDrop(e, folder)}
+                         onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
+                         onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
+                         style={{ outline: indicator === 'inside' ? '2px dashed var(--accent-indigo)' : 'none', cursor: 'grab' }}
+                       >
+                         <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
+                         <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
+                         <span className="folder-name">{folder.name}</span>
+                         <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
                        </div>
-                     )}
-                   </div>
-                 );
-               })}
+                       {indicator === 'after' && <div style={{ height: 2, background: 'var(--accent-indigo)', borderRadius: 1, margin: '1px 0' }} />}
+                       {(folder.is_expanded || searchTerm) && (
+                         <div className="folder-content">
+                           {folder.children?.map(child => renderFolderItem(child, depth + 1))}
+                           {folderTemplates.map(ct => (
+                             <div
+                               key={ct.id}
+                               className="template-item"
+                               draggable
+                               onDragStart={(e) => { e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
+                               onClick={() => handleSelectTemplate(ct, 'custom')}
+                               onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+                               style={{ cursor: 'grab' }}
+                             >
+                               <FileText size={12} style={{ opacity: 0.6 }} />
+                               <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
+                             </div>
+                           ))}
+                         </div>
+                       )}
+                     </div>
+                   );
+                 };
+
+                 return folderTree.map(f => renderFolderItem(f));
+               })()}
                <div
                   className="uncategorized-section"
                   onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.style.outline = '2px dashed var(--accent-indigo)'; }}
@@ -440,8 +507,14 @@ const App = () => {
                   onDrop={(e) => {
                     e.preventDefault();
                     e.currentTarget.style.outline = '';
-                    const tid = e.dataTransfer.getData('text/template-id');
-                    if (tid) moveTemplateToFolder(tid, null);
+                    const dragType = e.dataTransfer.getData('drag-type');
+                    if (dragType === 'template') {
+                      const tid = e.dataTransfer.getData('text/template-id');
+                      if (tid) moveTemplateToFolder(tid, null);
+                    } else if (dragType === 'folder') {
+                      const fid = e.dataTransfer.getData('folder-id');
+                      if (fid) moveFolder(fid, null, null, folders);
+                    }
                   }}
                >
                   <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
@@ -457,7 +530,7 @@ const App = () => {
                       className="template-item"
                       style={{ marginLeft: '1.25rem', cursor: 'grab' }}
                       draggable
-                      onDragStart={(e) => { e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
+                      onDragStart={(e) => { e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
                       onClick={() => handleSelectTemplate(ct, 'custom')}
                       onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
                     >
@@ -466,7 +539,7 @@ const App = () => {
                     </div>
                   ))}
                </div>
-            </div>
+             </div>
           </div>
           <div className={`history-section-wrapper ${activeMobileTab === 'templates' ? 'mobile-hidden' : ''}`}>
              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
