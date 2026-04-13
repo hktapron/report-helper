@@ -704,8 +704,8 @@ input:focus, textarea:focus {
     display: flex !important;
   }
   
-  .desktop-column-form:not(.mobile-visible),
-  .desktop-column-preview:not(.mobile-visible) {
+  .pc-form-section:not(.mobile-visible),
+  .pc-preview-section:not(.mobile-visible) {
      display: none !important;
   }
 
