@@ -17,11 +17,15 @@ import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
 
 // Normalise a Supabase auth user → app user object
-const formatAuthUser = (authUser) => ({
-  id: authUser.id,
-  username: authUser.user_metadata?.username || authUser.email.split('@')[0],
-  display_name: authUser.user_metadata?.display_name || authUser.email.split('@')[0],
-});
+const formatAuthUser = (authUser) => {
+  const email = authUser?.email || '';
+  const fallback = email.includes('@') ? email.split('@')[0] : 'User';
+  return {
+    id: authUser?.id,
+    username: authUser?.user_metadata?.username || fallback,
+    display_name: authUser?.user_metadata?.display_name || fallback,
+  };
+};
 
 const App = () => {
   // --- Auth & Persistence ---

@@ -25,10 +25,13 @@ const Login = ({ onLogin }) => {
           setError(authError?.message || 'Username หรือ รหัสผ่านไม่ถูกต้อง');
         } else {
           const u = data.user;
+          const email = u?.email || '';
+          const fallback = email.includes('@') ? email.split('@')[0] : 'User';
+          
           onLogin({
             id: u.id,
-            username: u.user_metadata?.username || u.email.split('@')[0],
-            display_name: u.user_metadata?.display_name || u.email.split('@')[0],
+            username: u.user_metadata?.username || fallback,
+            display_name: u.user_metadata?.display_name || fallback,
           });
         }
       } catch (err) {
