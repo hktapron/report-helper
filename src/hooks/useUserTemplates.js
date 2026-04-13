@@ -10,28 +10,28 @@ export const useUserTemplates = (userId, reportMode) => {
     if (!supabase || !userId) return;
     setLoading(true);
 
-    // RLS enforces user isolation — explicit filter is belt-and-suspenders
+    // Templates and folders are shared across all accounts (no user_id filter)
     // 1. Fetch Folders — ordered by sort_order
     const { data: folderData, error: folderError } = await supabase
       .from('user_folders')
       .select('*')
-      .eq('user_id', userId)
       .order('sort_order', { ascending: true });
 
     if (!folderError && folderData) {
+      console.log('DEBUG_FOLDERS:', folderData);
       setFolders(folderData);
-    }
+    } else { console.log('DEBUG_FOLDER_ERROR:', folderError); }
 
     // 2. Fetch Templates (all modes - filter done in component)
     const { data: templateData, error: templateError } = await supabase
       .from('user_templates')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (!templateError && templateData) {
+      console.log('DEBUG_TEMPLATES:', templateData);
       setTemplates(templateData);
-    }
+    } else { console.log('DEBUG_TEMPLATE_ERROR:', templateError); }
     setLoading(false);
   };
 
