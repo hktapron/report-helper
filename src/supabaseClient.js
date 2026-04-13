@@ -1,4 +1,4 @@
-import * as supabaseJs from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -9,17 +9,20 @@ const isReady =
   supabaseUrl.startsWith('http') && 
   !supabaseUrl.includes('YOUR_SUPABASE_URL');
 
-// Robust client initialization
-let supabaseClient = null;
+// Final Bulletproof Client Initialization
+let client = null;
 
-if (isReady && supabaseJs && typeof supabaseJs.createClient === 'function') {
+if (isReady) {
   try {
-    supabaseClient = supabaseJs.createClient(supabaseUrl, supabaseAnonKey);
+    // Explicitly check if createClient is available to prevent ReferenceError
+    if (typeof createClient === 'function') {
+      client = createClient(supabaseUrl, supabaseAnonKey);
+    } else {
+      console.error('Supabase: createClient function is missing from the bundle.');
+    }
   } catch (err) {
-    console.error('Supabase Initialization Error:', err);
+    console.error('Supabase: Initialization crash prevented:', err);
   }
-} else if (isReady) {
-  console.error('CRITICAL: Supabase library loaded but createClient is missing.');
 }
 
-export const supabase = supabaseClient;
+export const supabase = client;
