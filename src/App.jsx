@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Edit2, Clock, Calendar, User } from 'lucide-react';
 
 import { supabase } from './supabaseClient';
+import { formatAuthUser, getActiveSession, signOut } from './services/supabase';
 import { useHistory } from './hooks/useHistory';
 import { useUserTemplates } from './hooks/useUserTemplates';
 import { useHtmlPreview } from './hooks/useHtmlPreview';
 import { useDynamicFields } from './hooks/useDynamicFields';
 import { translateToCAAT22 } from './utils/translator';
+import { APP_VERSION } from './constants/templates';
 
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
@@ -15,17 +17,6 @@ import DynamicForm from './components/DynamicForm';
 import ReportPreview from './components/ReportPreview';
 import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
-
-// Normalise a Supabase auth user → app user object
-const formatAuthUser = (authUser) => {
-  const email = authUser?.email || '';
-  const fallback = email.includes('@') ? email.split('@')[0] : 'User';
-  return {
-    id: authUser?.id,
-    username: authUser?.user_metadata?.username || fallback,
-    display_name: authUser?.user_metadata?.display_name || fallback,
-  };
-};
 
 const App = () => {
   // --- Auth & Persistence ---
@@ -37,26 +28,23 @@ const App = () => {
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
-    try {
-      if (!supabase) {
-        // demo mode: restore from localstorage
-        const saved = localStorage.getItem('vtsp_user');
-        if (saved) setUser(JSON.parse(saved));
-        return;
-      }
-
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) setUser(formatAuthUser(session.user));
-      }).catch(e => console.warn("Auth Session Fetch Failed", e));
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ? formatAuthUser(session.user) : null);
-      });
-
-      return () => subscription?.unsubscribe();
-    } catch (e) {
-      console.error("VTSP: Root Auth Effect Failed Safely", e);
+    if (!supabase) {
+      // demo mode: restore from localstorage
+      const saved = localStorage.getItem('vtsp_user');
+      if (saved) setUser(JSON.parse(saved));
+      return;
     }
+
+    // Use service to fetch session
+    getActiveSession().then(userData => {
+      if (userData) setUser(userData);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? formatAuthUser(session.user) : null);
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   // Demo mode only: persist user to localStorage
@@ -72,7 +60,7 @@ const App = () => {
   }, [reportMode]);
 
   const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    await signOut();
     setUser(null);
     setReportMode(null);
     localStorage.removeItem('vtsp_report_mode');
@@ -232,7 +220,7 @@ const App = () => {
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">
            {reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}
-           <span style={{ fontSize: '9px', opacity: 0.5, marginLeft: '6px' }}>v18.1</span>
+           <span style={{ fontSize: '9px', opacity: 0.5, marginLeft: '6px' }}>{APP_VERSION}</span>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button

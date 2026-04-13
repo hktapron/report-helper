@@ -74,33 +74,33 @@ const DynamicForm = ({
             }}>
               <div style={{ position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: 'var(--accent-indigo)' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
-                 <Plane size={20} color="var(--accent-indigo)" />
-                 <h4 className="group-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '0.05em' }}>ข้อมูลเที่ยวบิน (Flight)</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                 <Plane size={18} color="var(--accent-indigo)" />
+                 <h4 className="group-title">ข้อมูลเที่ยวบิน (Flight)</h4>
               </div>
               
               <div className="fields-grid">
                 {dynamicFields.map(field => (
                   <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
-                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '800' }}>
+                    <label className="input-label">
                       {/* Using generic icon for simplicity in unified view */}
-                      <FileCheck size={16} />
+                      <FileCheck size={14} />
                       <span>{field.label}</span>
                     </label>
                     {field.type === 'textarea' ? (
                       <textarea
+                        className="form-input"
                         placeholder={`ระบุ${field.label.toLowerCase()}...`}
                         value={formData[field.id] || ''}
                         onChange={(e) => onInputChange(field.id, e.target.value)}
-                        style={{ width: '100%', borderRadius: '16px', padding: '16px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', minHeight: '160px', fontSize: '1.05rem', color: 'var(--text-primary)' }}
                       />
                     ) : (
                       <input
+                        className="form-input"
                         type={field.type === 'time' ? 'text' : (field.type || 'text')}
                         placeholder={field.type === 'time' ? 'เช่น 1430' : ''}
                         value={formData[field.id] || ''}
                         onChange={(e) => onInputChange(field.id, e.target.value)}
-                        style={{ width: '100%', borderRadius: '16px', padding: '0 16px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', height: '56px', fontSize: '1.1rem', color: 'var(--text-primary)' }}
                       />
                     )}
                   </div>
