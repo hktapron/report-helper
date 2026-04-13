@@ -79,7 +79,7 @@ const DynamicForm = ({
                  <h4 className="group-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '0.05em' }}>ข้อมูลเที่ยวบิน (Flight)</h4>
               </div>
               
-              <div className="fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              <div className="fields-grid">
                 {dynamicFields.map(field => (
                   <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
                     <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '800' }}>
