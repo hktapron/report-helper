@@ -29,38 +29,19 @@ const formatAuthUser = (authUser) => {
 
 const App = () => {
   // --- Auth & Persistence ---
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('vtsp_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      console.warn("VTSP: Failed to parse vtsp_user from storage", e);
-      return null;
-    }
-  });
-
+  const [user, setUser] = useState(null);
   const [reportMode, setReportMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem('vtsp_report_mode');
-      return (saved === 'incident' || saved === 'violator') ? saved : null;
-    } catch (e) {
-      return null;
-    }
+    const saved = localStorage.getItem('vtsp_report_mode');
+    return (saved === 'incident' || saved === 'violator') ? saved : null;
   });
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
     try {
       if (!supabase) {
-        // Fallback handled in useState init, but as secondary guard:
+        // demo mode: restore from localstorage
         const saved = localStorage.getItem('vtsp_user');
-        if (saved && !user) {
-          try {
-            setUser(JSON.parse(saved));
-          } catch (e) {
-            localStorage.removeItem('vtsp_user');
-          }
-        }
+        if (saved) setUser(JSON.parse(saved));
         return;
       }
 
@@ -80,35 +61,22 @@ const App = () => {
 
   // Demo mode only: persist user to localStorage
   useEffect(() => {
-    try {
-      if (supabase) return;
-      if (user) localStorage.setItem('vtsp_user', JSON.stringify(user));
-      else localStorage.removeItem('vtsp_user');
-    } catch (e) {
-      console.error("VTSP: User persistence failed", e);
-    }
+    if (supabase) return;
+    if (user) localStorage.setItem('vtsp_user', JSON.stringify(user));
+    else localStorage.removeItem('vtsp_user');
   }, [user]);
 
   useEffect(() => {
-    try {
-      if (reportMode) localStorage.setItem('vtsp_report_mode', reportMode);
-      else localStorage.removeItem('vtsp_report_mode');
-    } catch (e) {
-      console.error("VTSP: Mode persistence failed", e);
-    }
+    if (reportMode) localStorage.setItem('vtsp_report_mode', reportMode);
+    else localStorage.removeItem('vtsp_report_mode');
   }, [reportMode]);
 
   const handleLogout = async () => {
-    try {
-      if (supabase) await supabase.auth.signOut();
-    } catch (e) {}
-    
+    if (supabase) await supabase.auth.signOut();
     setUser(null);
     setReportMode(null);
-    try {
-      localStorage.removeItem('vtsp_report_mode');
-      localStorage.removeItem('vtsp_user');
-    } catch (e) {}
+    localStorage.removeItem('vtsp_report_mode');
+    localStorage.removeItem('vtsp_user');
     window.location.reload();
   };
 
@@ -386,40 +354,6 @@ const App = () => {
         deleteReport={deleteReport}
         deleteTemplate={deleteTemplate}
       />
-
-      {/* v19.1 Global Emergency Reset (Discreet) */}
-      <button 
-        onClick={() => {
-          if (confirm("ต้องการล้างข้อมูลเพื่อกู้คืนระบบ (Hard Reset)?")) {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.reload();
-          }
-        }}
-        style={{
-          position: 'fixed',
-          bottom: '10px',
-          right: '10px',
-          width: '24px',
-          height: '24px',
-          borderRadius: '50%',
-          background: 'rgba(239, 68, 68, 0.2)',
-          border: 'none',
-          color: 'rgba(255,255,255,0.3)',
-          fontSize: '10px',
-          cursor: 'pointer',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.3s'
-        }}
-        onMouseOver={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.8)'; e.target.style.color = 'white'; }}
-        onMouseOut={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.2)'; e.target.style.color = 'rgba(255,255,255,0.3)'; }}
-        title="Emergency Reset"
-      >
-        R
-      </button>
     </div>
   );
 };

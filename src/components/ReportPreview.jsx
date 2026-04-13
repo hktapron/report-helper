@@ -14,6 +14,7 @@ const ReportPreview = ({
   selectedTemplate,
   formData,
   extraPreview,
+  isSplitMode,
 }) => {
   const handleSaveTemplate = async () => {
     const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
