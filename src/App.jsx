@@ -28,7 +28,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [reportMode, setReportMode] = useState(() => {
     const saved = localStorage.getItem('vtsp_report_mode');
-    return (saved === 'incident' || saved === 'violator') ? saved : 'incident';
+    return (saved === 'incident' || saved === 'violator') ? saved : null;
   });
 
   // Restore Supabase session on mount; listen for auth changes
@@ -185,7 +185,15 @@ const App = () => {
 
   // --- Route Guards ---
   if (!user) return <Login onLogin={setUser} />;
-  if (!reportMode) return <ModeSelector onSelect={(m) => { setReportMode(m); resetPreview(m); }} />;
+  if (!reportMode) return (
+    <ModeSelector 
+      onSelect={(m) => { 
+        setReportMode(m); 
+        resetPreview(m); 
+        if (window.innerWidth <= 768) setActiveMobileTab('templates');
+      }} 
+    />
+  );
 
   return (
     <div className="app-container">
