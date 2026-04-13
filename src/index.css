@@ -175,28 +175,28 @@ body {
   flex-direction: column;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 769px) {
   .main-content {
     flex-direction: row;
     align-items: stretch;
+    height: 100vh;
   }
 
-  .main-content > section:first-child {
+  .desktop-column-form {
     flex: 0 0 55%;
-    min-width: 0;
+    display: flex !important;
     height: 100%;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
   }
 
-  .main-content > section.preview-container {
+  .desktop-column-preview {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    padding: 0.5rem 0.5rem 0.5rem 0;
+    display: flex !important;
     height: 100%;
+  }
+
+  .sidebar {
+    display: flex !important;
   }
 }
 
@@ -393,16 +393,20 @@ input:focus, textarea:focus {
   }
 
   .sidebar {
-    display: none !important; /* Managed by Active Tab 2.0 */
+    display: none;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    height: 100vh;
+    width: 280px;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
   }
 
-  .sidebar.mobile-active-templates, .sidebar.mobile-active-history {
-    display: flex !important;
-    position: fixed;
+  .sidebar.open {
+    display: flex;
     left: 0;
-    width: 100%;
-    z-index: 50;
-    height: calc(100vh - 65px);
   }
 
   .mobile-nav {
@@ -693,14 +697,15 @@ input:focus, textarea:focus {
   }
 
   /* --- MOBILE 2.0 TABS SYSTEM --- */
-  .sidebar, .main-content > section:first-child, .preview-container {
-    display: none !important;
-  }
-
+  /* These only apply on Mobile (< 768px) */
   .sidebar.mobile-visible, 
-  .main-content > section.mobile-visible, 
-  .preview-container.mobile-visible {
+  .main-content > section.mobile-visible {
     display: flex !important;
+  }
+  
+  .desktop-column-form:not(.mobile-visible),
+  .desktop-column-preview:not(.mobile-visible) {
+     display: none !important;
   }
 
   .main-content {

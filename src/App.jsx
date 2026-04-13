@@ -248,7 +248,7 @@ const App = () => {
       />
 
       <main className={`main-content ${isSplitMode && activeMobileTab === 'form' ? 'split-active' : ''}`}>
-        <section className={`${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
+        <section className={`desktop-column-form ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
           <DynamicForm
             selectedTemplate={selectedTemplate}
             reportMode={reportMode}
@@ -264,7 +264,7 @@ const App = () => {
           />
         </section>
 
-        <section className={`${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
+        <section className={`desktop-column-preview ${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
           <ReportPreview
             thaiPreviewRef={thaiPreviewRef}
             thaiPreview={thaiPreview}
