@@ -15,8 +15,6 @@ import DynamicForm from './components/DynamicForm';
 import ReportPreview from './components/ReportPreview';
 import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
-import QuickTools from './components/QuickTools';
-import { Sparkles } from 'lucide-react';
 
 // Normalise a Supabase auth user → app user object
 const formatAuthUser = (authUser) => ({
@@ -158,7 +156,9 @@ const App = () => {
       preview: finalHtml,
     });
     setIsSidebarOpen(false);
-    if (window.innerWidth <= 768) setActiveMobileTab('preview');
+    if (window.innerWidth <= 768) {
+      setActiveMobileTab('form');
+    }
   };
 
   const handleInputChange = (id, value) => {
@@ -254,6 +254,7 @@ const App = () => {
             onInputChange={handleInputChange}
             onReset={handleFullReset}
             activeMobileTab={activeMobileTab}
+            setActiveMobileTab={setActiveMobileTab}
             isSplitMode={isSplitMode}
             setIsSplitMode={setIsSplitMode}
             thaiPreview={thaiPreview}
@@ -278,19 +279,7 @@ const App = () => {
           />
         </section>
 
-        <div className={`quick-tools-view ${activeMobileTab === 'tools' ? 'mobile-visible' : ''}`}>
-          <QuickTools
-            activeMobileTab={activeMobileTab}
-            onCAATTranslate={handleCAATTranslate}
-            isLoadingCAAT={isLoadingCAAT}
-            thaiPreview={thaiPreview}
-            onReset={handleFullReset}
-            isSplitMode={isSplitMode}
-            setIsSplitMode={setIsSplitMode}
-          />
-        </div>
-
-        <nav className="mobile-nav">
+        <nav className="mobile-nav" style={{ gridTemplateColumns: '1fr 1fr' }}>
           <button
             className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
             onClick={() => setActiveMobileTab('templates')}
@@ -302,12 +291,6 @@ const App = () => {
             onClick={() => setActiveMobileTab('form')}
           >
             <Edit2 size={20} /><span>กรอกข้อมูล</span>
-          </button>
-          <button
-            className={`nav-item ${activeMobileTab === 'tools' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('tools')}
-          >
-            <Sparkles size={20} /><span>ตัวช่วย AI</span>
           </button>
         </nav>
       </main>
