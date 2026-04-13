@@ -14,7 +14,7 @@ const DynamicForm = ({
   onReset,
   activeMobileTab,
   setActiveMobileTab,
-  isSplitMode,
+  isSplitMode = false,
   setIsSplitMode,
   thaiPreview,
 }) => {

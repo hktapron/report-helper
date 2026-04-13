@@ -311,20 +311,22 @@ const App = () => {
           />
         </section>
 
-        <nav className="mobile-nav">
-          <button
-            className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('templates')}
-          >
-            <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
-          </button>
-          <button
-            className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('form')}
-          >
-            <Edit2 size={20} /><span>กรอกข้อมูล</span>
-          </button>
-        </nav>
+        {window.innerWidth <= 768 && (
+          <nav className="mobile-nav">
+            <button
+              className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
+              onClick={() => setActiveMobileTab('templates')}
+            >
+              <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
+            </button>
+            <button
+              className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
+              onClick={() => setActiveMobileTab('form')}
+            >
+              <Edit2 size={20} /><span>กรอกข้อมูล</span>
+            </button>
+          </nav>
+        )}
       </main>
 
       <CAATModal

@@ -1634,13 +1634,18 @@ input:focus, textarea:focus {
   .form-scroll-body, 
   .preview-body-v2 {
     overflow-y: auto !important;
-    max-height: calc(100vh - 80px) !important;
-    padding-bottom: 100px !important; /* Extra breathing room */
+    height: 100% !important;
+    max-height: calc(100vh - 100px) !important;
+    padding-bottom: 80px !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-indigo) transparent;
   }
   
   .pc-form-section, .pc-preview-section {
     overflow: hidden !important;
-    height: 100vh !important;
+    height: calc(100vh - 60px) !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }
 
