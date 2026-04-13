@@ -1560,6 +1560,24 @@ input:focus, textarea:focus {
   .main-content.split-active > section:last-child {
     height: 45% !important;
   }
+
+  .sidebar {
+    display: none; /* Hide by default on mobile */
+  }
+
+  .sidebar.mobile-active-templates,
+  .sidebar.mobile-active-history,
+  .sidebar.open {
+    display: flex !important;
+    position: fixed;
+    top: 60px;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    z-index: 50;
+    background: var(--bg-app);
+  }
 }
 
 /* --- v19 THEME & PC FIXES --- */
