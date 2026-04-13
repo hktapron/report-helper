@@ -7,8 +7,10 @@ export const useUserTemplates = (userId, reportMode) => {
   const [loading, setLoading] = useState(false);
 
   const fetchAll = async () => {
-    if (!supabase || !userId) return;
+    if (!supabase) return;
     setLoading(true);
+
+    console.log('Fetching shared templates/folders...');
 
     // Templates and folders are shared across all accounts (no user_id filter)
     // 1. Fetch Folders — ordered by sort_order
@@ -37,7 +39,7 @@ export const useUserTemplates = (userId, reportMode) => {
 
   useEffect(() => {
     fetchAll();
-  }, [userId]);
+  }, [userId]); // Still refresh if user changes, but fetchAll no longer blocks if userId is missing initially
 
   // Accept mode explicitly to avoid stale closure bug
   const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode) => {
