@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Sparkles } from 'lucide-react';
 
 const ReportPreview = ({
   thaiPreviewRef,
