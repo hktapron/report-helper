@@ -10,8 +10,6 @@ export const useUserTemplates = (userId, reportMode) => {
     if (!supabase) return;
     setLoading(true);
 
-    console.log('Fetching shared templates/folders...');
-
     // Templates and folders are shared across all accounts (no user_id filter)
     // 1. Fetch Folders — ordered by sort_order
     const { data: folderData, error: folderError } = await supabase
@@ -20,9 +18,8 @@ export const useUserTemplates = (userId, reportMode) => {
       .order('sort_order', { ascending: true });
 
     if (!folderError && folderData) {
-      console.log('DEBUG_FOLDERS:', folderData);
       setFolders(folderData);
-    } else { console.log('DEBUG_FOLDER_ERROR:', folderError); }
+    }
 
     // 2. Fetch Templates (all modes - filter done in component)
     const { data: templateData, error: templateError } = await supabase
@@ -31,9 +28,8 @@ export const useUserTemplates = (userId, reportMode) => {
       .order('created_at', { ascending: false });
 
     if (!templateError && templateData) {
-      console.log('DEBUG_TEMPLATES:', templateData);
       setTemplates(templateData);
-    } else { console.log('DEBUG_TEMPLATE_ERROR:', templateError); }
+    }
     setLoading(false);
   };
 
