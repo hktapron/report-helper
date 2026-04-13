@@ -180,6 +180,16 @@ body {
     flex-direction: row !important;
     align-items: stretch !important;
     height: 100vh !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .pc-sidebar {
+    display: flex !important;
+    width: 280px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .pc-form-section {
@@ -187,17 +197,16 @@ body {
     display: flex !important;
     height: 100% !important;
     border-right: 1px solid var(--border-subtle) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .pc-preview-section {
     flex: 1 !important;
     display: flex !important;
     height: 100% !important;
-  }
-
-  .pc-sidebar {
-    display: flex !important;
-    width: 280px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }
 

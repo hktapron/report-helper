@@ -202,8 +202,29 @@ const App = () => {
 
   return (
     <div className="app-container">
+      {/* Database Connection Warning */}
+      {!supabase && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'rgba(239, 68, 68, 0.9)',
+          color: 'white',
+          padding: '8px 16px',
+          textAlign: 'center',
+          fontSize: '12px',
+          fontWeight: 600,
+          zIndex: 9999,
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          ⚠️ ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Supabase Config) | โหมดสาธิต (Admin/Admin) ทำงานอยู่
+        </div>
+      )}
+
       {/* Mobile Header */}
-      <div className="mobile-header">
+      <div className="mobile-header" style={{ marginTop: !supabase ? '36px' : '0' }}>
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
