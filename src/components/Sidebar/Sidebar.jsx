@@ -26,6 +26,7 @@ const Sidebar = ({
   moveTemplateToFolder,
   moveFolder,
   createFolder,
+  className = '',
 }) => {
   const matchesSearch = (text) =>
     !searchTerm || String(text).toLowerCase().includes(searchTerm.toLowerCase());
@@ -34,7 +35,7 @@ const Sidebar = ({
     t => t.mode === reportMode && matchesSearch(t.name)
   );
   const filteredTemplates = (templatesData || [])
-    .filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core'))
+    .filter(t => t.mode === reportMode)
     .filter(t => matchesSearch(t.name));
   const filteredHistory = history
     .filter(h => (h.mode || 'incident') === reportMode)
@@ -42,7 +43,7 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}
+      className={`sidebar ${className} ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}
     >
       <div className="sidebar-header" style={{ padding: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>

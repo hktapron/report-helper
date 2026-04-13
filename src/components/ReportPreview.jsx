@@ -67,7 +67,7 @@ const ReportPreview = ({
             <button 
               className="btn btn-primary btn-copy-save" 
               onClick={handleCopyAndSave}
-              style={{ background: 'var(--accent-indigo)', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ background: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Check size={16} /> <span>คัดลอกและบันทึก</span>
             </button>

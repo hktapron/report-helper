@@ -1561,3 +1561,27 @@ input:focus, textarea:focus {
     height: 45% !important;
   }
 }
+
+/* --- v19 THEME & PC FIXES --- */
+.btn-copy-save {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+.btn-copy-save:hover {
+  background: #059669 !important;
+  transform: translateY(-1px);
+}
+
+@media (min-width: 769px) {
+  .sidebar.pc-sidebar {
+    display: flex !important;
+    width: 280px !important;
+    flex: 0 0 280px !important;
+  }
+  
+  .main-content {
+    flex-direction: row !important;
+  }
+}
+
