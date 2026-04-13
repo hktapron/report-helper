@@ -37,22 +37,26 @@ const App = () => {
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
-    if (!supabase) {
-      // Demo mode: restore from localStorage
-      const saved = localStorage.getItem('vtsp_user');
-      if (saved) setUser(JSON.parse(saved));
-      return;
+    try {
+      if (!supabase) {
+        // demo mode: restore from localstorage
+        const saved = localStorage.getItem('vtsp_user');
+        if (saved) setUser(JSON.parse(saved));
+        return;
+      }
+
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) setUser(formatAuthUser(session.user));
+      }).catch(e => console.warn("Auth Session Fetch Failed", e));
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ? formatAuthUser(session.user) : null);
+      });
+
+      return () => subscription?.unsubscribe();
+    } catch (e) {
+      console.error("VTSP: Root Auth Effect Failed Safely", e);
     }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setUser(formatAuthUser(session.user));
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? formatAuthUser(session.user) : null);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   // Demo mode only: persist user to localStorage

@@ -3,16 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Strict verification to prevent "Black Screen" crash on production
-const isValidConfig = 
-  supabaseUrl.startsWith('http') && 
-  supabaseAnonKey.length > 30 && 
-  !supabaseUrl.includes('YOUR_SUPABASE_URL');
+// v17: Zero-Crash Initialization Strategy
+const validateConfig = () => {
+  try {
+    if (!supabaseUrl || !supabaseAnonKey) return false;
+    if (!supabaseUrl.startsWith('http')) return false;
+    if (supabaseAnonKey.length < 30) return false;
+    if (supabaseUrl.includes('YOUR_SUPABASE_URL')) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
-if (!isValidConfig && import.meta.env.PROD) {
-  console.warn("VTSP PRODUCTION WARN: Supabase connection is NOT configured!");
+const isValid = validateConfig();
+
+let supabaseInstance = null;
+if (isValid) {
+  try {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (e) {
+    console.error("VTSP FAILSAFE: Failed to initialize Supabase client.", e);
+    supabaseInstance = null;
+  }
 }
 
-export const supabase = isValidConfig 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
+if (!supabaseInstance && import.meta.env.PROD) {
+  console.warn("VTSP PRODUCTION WARN: Database connection is inactive. Falling back to Demo Mode.");
+}
+
+export const supabase = supabaseInstance;

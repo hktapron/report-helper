@@ -176,7 +176,15 @@ body {
 }
 
 @media (min-width: 769px) {
+  .app-container {
+    display: flex !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+  }
+
   .main-content {
+    flex: 1 !important;
     flex-direction: row !important;
     align-items: stretch !important;
     height: 100vh !important;
@@ -185,16 +193,20 @@ body {
     opacity: 1 !important;
   }
 
+  /* Desktop Sidebar Enforcement */
   .pc-sidebar {
     display: flex !important;
     width: 280px !important;
+    flex: 0 0 280px !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
 
+  /* Desktop Column Enforcement */
   .pc-form-section {
     flex: 0 0 55% !important;
     display: flex !important;
+    flex-direction: column !important;
     height: 100% !important;
     border-right: 1px solid var(--border-subtle) !important;
     visibility: visible !important;
@@ -204,6 +216,7 @@ body {
   .pc-preview-section {
     flex: 1 !important;
     display: flex !important;
+    flex-direction: column !important;
     height: 100% !important;
     visibility: visible !important;
     opacity: 1 !important;
