@@ -26,7 +26,7 @@ const formatAuthUser = (authUser) => ({
 const App = () => {
   // --- Auth & Persistence ---
   const [user, setUser] = useState(null);
-  const [reportMode, setReportMode] = useState(() => localStorage.getItem('vtsp_report_mode'));
+  const [reportMode, setReportMode] = useState(() => localStorage.getItem('vtsp_report_mode') || 'incident');
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
