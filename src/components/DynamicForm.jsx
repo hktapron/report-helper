@@ -88,14 +88,26 @@ const DynamicForm = ({
             </div>
           </div>
 
-          <div className="form-scroll-body" key={selectedTemplate?.id || 'none'}>
+          <div className="form-scroll-body" key={selectedTemplate?.id || 'none'} style={{ paddingBottom: '40px' }}>
             {Object.entries(groupedFields).map(([groupName, fields]) => (
-              <div key={groupName} className="form-group-section">
-                <h4 className="group-title">{groupName}</h4>
-                <div className="fields-grid">
+              <div key={groupName} className="form-category-card" style={{ 
+                background: 'var(--bg-card)', 
+                border: '1px solid var(--border-subtle)', 
+                borderRadius: '16px', 
+                padding: '1.5rem', 
+                marginBottom: '1.5rem',
+                boxShadow: 'var(--shadow-md)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.2rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.8rem' }}>
+                   <div style={{ width: '4px', height: '18px', background: 'var(--accent-indigo)', borderRadius: '2px' }} />
+                   <h4 className="group-title" style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>{groupName}</h4>
+                </div>
+                
+                <div className="fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.2rem' }}>
                   {fields.map(field => (
-                    <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`}>
-                      <label className="input-label">
+                    <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
+                      <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.6rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>
                         {getFieldIcon(field.id)}
                         <span>{field.label}</span>
                       </label>
@@ -104,6 +116,7 @@ const DynamicForm = ({
                           placeholder={`โปรดระบุ${field.label.toLowerCase()}...`}
                           value={formData[field.id] || ''}
                           onChange={(e) => onInputChange(field.id, e.target.value)}
+                          style={{ width: '100%', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', minHeight: '120px', fontSize: '1rem' }}
                         />
                       ) : (
                         <input
@@ -111,6 +124,7 @@ const DynamicForm = ({
                           placeholder={field.type === 'time' ? 'เช่น 1430' : ''}
                           value={formData[field.id] || ''}
                           onChange={(e) => onInputChange(field.id, e.target.value)}
+                          style={{ width: '100%', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', height: '48px', fontSize: '1rem' }}
                         />
                       )}
                     </div>

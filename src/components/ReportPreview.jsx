@@ -43,25 +43,31 @@ const ReportPreview = ({
   return (
     <section className={`preview-container-main ${isSplitMode ? 'split-mode-active' : ''}`} style={{ flex: '1' }}>
       <div className="card">
-        <div className="card-header action-bar-header">
+        <div className="card-header action-bar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 className="card-title">Preview</h2>
-          <div className="action-buttons-group report-action-bar">
+          <div className="action-buttons-group report-action-bar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               className="btn btn-ghost btn-save-template"
               onClick={handleSaveTemplate}
               title="บันทึกต้นแบบ"
+              style={{ fontWeight: '600' }}
             >
               บันทึก
             </button>
             <button
-              className="btn btn-primary btn-ai-translate"
+              className="btn btn-outline btn-ai-translate"
               onClick={onCAATTranslate}
               disabled={isLoadingCAAT}
+              style={{ border: '1px solid var(--accent-indigo)', color: 'var(--accent-indigo)', fontWeight: '600' }}
             >
               {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               <span>กพท.22</span>
             </button>
-            <button className="btn btn-primary btn-copy-save" onClick={handleCopyAndSave}>
+            <button 
+              className="btn btn-primary btn-copy-save" 
+              onClick={handleCopyAndSave}
+              style={{ background: 'var(--accent-indigo)', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
               <Check size={16} /> <span>คัดลอกและบันทึก</span>
             </button>
           </div>

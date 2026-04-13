@@ -1500,13 +1500,6 @@ input:focus, textarea:focus {
   width: 100%;
 }
 
-.input-wrapper input:focus, .input-wrapper textarea:focus {
-  outline: none;
-  background: rgba(255,255,255,0.05);
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
 .input-wrapper textarea {
   min-height: 120px;
   line-height: 1.5;
