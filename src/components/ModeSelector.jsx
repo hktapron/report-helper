@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Scale } from 'lucide-react';
+import { FileText, Gavel } from 'lucide-react';
 
 const ModeSelector = ({ onSelect }) => {
   return (
@@ -25,7 +25,7 @@ const ModeSelector = ({ onSelect }) => {
           
           <div className="mode-item" onClick={() => onSelect('violator')}>
             <span className="mode-icon">
-              <Scale size={42} strokeWidth={1.5} />
+              <Gavel size={42} strokeWidth={1.5} />
             </span>
             <h2 style={{ fontSize: '1rem', marginBottom: '0.4rem', fontWeight: 'bold' }}>ผู้กระทำความผิด</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', lineHeight: '1.4', textAlign: 'center', maxWidth: '140px' }}>
