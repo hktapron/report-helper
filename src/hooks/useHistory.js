@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const useHistory = (currentUsername) => {
+export const useHistory = (userId) => {
   const [history, setHistory] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const fetchHistory = async (append = false) => {
-    if (!supabase || !currentUsername) return;
+    if (!supabase || !userId) return;
     setLoading(true);
 
     const limit = 50;
     const offset = append ? history.length : 0;
 
+    // RLS enforces user isolation — explicit filter is belt-and-suspenders
     const { data, error } = await supabase
       .from('incident_history')
       .select('*')
-      .eq('user_id', currentUsername)
+      .eq('user_id', userId)
       .order('saved_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -45,13 +46,13 @@ export const useHistory = (currentUsername) => {
   };
 
   useEffect(() => {
-    if (currentUsername) {
+    if (userId) {
       fetchHistory();
     }
-  }, [currentUsername]);
+  }, [userId]);
 
   const saveReport = async (report) => {
-    if (!supabase) return;
+    if (!supabase || !userId) return;
 
     const { error } = await supabase
       .from('incident_history')
@@ -61,7 +62,7 @@ export const useHistory = (currentUsername) => {
         preview: report.preview,
         extra_preview: report.extraPreview,
         data: report.data,
-        user_id: currentUsername || 'unknown'
+        user_id: userId,
       }]);
 
     if (!error) fetchHistory();

@@ -1,28 +1,56 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import templatesData from './templates.json';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Edit2, Clock, Calendar, User } from 'lucide-react';
+
+import { supabase } from './supabaseClient';
 import { useHistory } from './hooks/useHistory';
+import { useUserTemplates } from './hooks/useUserTemplates';
+import { useHtmlPreview } from './hooks/useHtmlPreview';
+import { useDynamicFields } from './hooks/useDynamicFields';
 import { translateToCAAT22 } from './utils/translator';
+
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
-import { supabase } from './supabaseClient';
-import { useUserTemplates } from './hooks/useUserTemplates';
-import { 
-  Trash2, Pin, Save, Plus, Edit2, Check, Sparkles, Loader2, 
-  Search, Calendar, Clock, ChevronRight, User, Terminal,
-  Folder, FolderPlus, MoreVertical, ChevronDown, FileText, ArrowRight, Languages
-} from 'lucide-react';
+import Sidebar from './components/Sidebar/Sidebar';
+import DynamicForm from './components/DynamicForm';
+import ReportPreview from './components/ReportPreview';
+import CAATModal from './components/CAATModal';
+import ContextMenu from './components/ContextMenu';
 
-const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+// Normalise a Supabase auth user → app user object
+const formatAuthUser = (authUser) => ({
+  id: authUser.id,
+  username: authUser.user_metadata?.username || authUser.email.split('@')[0],
+  display_name: authUser.user_metadata?.display_name || authUser.email.split('@')[0],
+});
 
 const App = () => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('vtsp_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [reportMode, setReportMode] = useState(() => localStorage.getItem('vtsp_report_mode')); 
+  // --- Auth & Persistence ---
+  const [user, setUser] = useState(null);
+  const [reportMode, setReportMode] = useState(() => localStorage.getItem('vtsp_report_mode'));
 
+  // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
+    if (!supabase) {
+      // Demo mode: restore from localStorage
+      const saved = localStorage.getItem('vtsp_user');
+      if (saved) setUser(JSON.parse(saved));
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser(formatAuthUser(session.user));
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? formatAuthUser(session.user) : null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Demo mode only: persist user to localStorage
+  useEffect(() => {
+    if (supabase) return;
     if (user) localStorage.setItem('vtsp_user', JSON.stringify(user));
     else localStorage.removeItem('vtsp_user');
   }, [user]);
@@ -32,159 +60,59 @@ const App = () => {
     else localStorage.removeItem('vtsp_report_mode');
   }, [reportMode]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
     setUser(null);
     setReportMode(null);
-    localStorage.removeItem('vtsp_user');
     localStorage.removeItem('vtsp_report_mode');
+    localStorage.removeItem('vtsp_user');
     window.location.reload();
   };
+
+  // --- UI State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
-  const [showCAAT, setShowCAAT] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [thaiPreview, setThaiPreview] = useState('');
-  const [extraPreview, setExtraPreview] = useState('');
-  
-  const [activeMobileTab, setActiveMobileTab] = useState('form'); 
-  const [isSplitMode, setIsSplitMode] = useState(false); 
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState('form');
+  const [isSplitMode, setIsSplitMode] = useState(false);
   const [isLoadingCAAT, setIsLoadingCAAT] = useState(false);
   const [translatedCAAT, setTranslatedCAAT] = useState('');
   const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
 
-  const thaiPreviewRef = useRef(null);
-  const isEditingPreview = useRef(false);
-  const currentPreviewId = useRef(null);
+  // --- Hooks ---
+  const {
+    thaiPreview,
+    extraPreview,
+    thaiPreviewRef,
+    processAndLoadItem,
+    handleInputChange: previewHandleInputChange,
+    resetPreview,
+  } = useHtmlPreview();
 
-  // THE REAL FIX: dangerouslySetInnerHTML does NOT update contentEditable divs after first render.
-  // We MUST write to the DOM directly via ref whenever the preview content changes.
-  useEffect(() => {
-    if (thaiPreviewRef.current) {
-      thaiPreviewRef.current.innerHTML = thaiPreview;
-    }
-  }, [thaiPreview]);
+  const historyData = useHistory(user?.id);
+  const { history, renameReport, deleteReport } = historyData;
 
-  const formatTimeInput = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "");
-    if (/^\d{4}$/.test(clean)) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
-    return clean;
-  };
+  const {
+    templates: customTemplates,
+    folders,
+    saveTemplate,
+    deleteTemplate,
+    updateTemplateName,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    toggleFolderExpansion,
+    moveTemplateToFolder,
+    moveFolder,
+  } = useUserTemplates(user?.id, reportMode);
 
-  const hydrateHtmlTemplate = (text) => {
-    if (!text) return '';
-    let processed = String(text);
-    
-    // IDEMPOTENCY CHECK: If already hydrated, just apply existing data to spans and return
-    if (processed.includes('sync-field')) {
-      return processed; // caller applies data via tempDiv separately
-    }
+  const dynamicFields = useDynamicFields(selectedTemplate, reportMode);
 
-    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-    const lines = processed.split('\n');
-    if (lines.length > 2 && lines[1].includes('วันที่')) {
-      lines[1] = lines[1].replace(/วันที่\s?([^\n\r<]*)/, `วันที่ ${dateStr}`);
-      processed = lines.join('\n');
-    }
-
-    // 1. SMART NARRATIVE LOGIC
-    // RULE: Skip lines starting with รายงาน or วันที่ (header/date lines - do NOT map these)
-    const divertRules = [
-      { regex: /(เมื่อเวลา)\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'report_time' },
-      { regex: /(ได้รับแจ้งจาก)\s+([^\sว่า]+)/g, id: 'informant' },
-      { regex: /(เที่ยวบิน(?:ที่)?)\s+([A-Z0-9]{3,})/gi, id: 'flight_no' },
-      { regex: /(คาดว่าจะถึง\s*ทภก\.\s*เวล?า?)\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'atc_time' },
-      { regex: /(บินลงที่สนามบิน)\s+([^\s(<]+)/g, id: 'original_airport' },
-      { regex: /(หลุมจอดฯ\s*หมายเลข|หมายเลข(?:\s*[:：])?)\s*(\d{1,2}[A-Z]?)/g, id: 'stand' }
-    ];
-
-    const applyDivertRules = (line) => {
-      let l = line;
-      divertRules.forEach(rule => {
-        try {
-          l = l.replace(rule.regex, (match, label, val) => {
-            if (!val || val.includes('<') || val.includes('{')) return match;
-            let displayVal = val;
-            // Time fields: auto-format decimal only (1440→14.40), น. stays in text outside span
-            if (['report_time', 'atc_time'].includes(rule.id)) {
-              const t = val.trim();
-              displayVal = /^\d{4}$/.test(t) ? `${t.slice(0, 2)}.${t.slice(2)}` : t;
-            }
-            return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${displayVal}</span>`);
-          });
-        } catch(e) { console.warn(`Rule ${rule.id} error:`, e); }
-      });
-      return l;
-    };
-
-    // Apply per-line — skip title/date header lines
-    const headerPattern = /^\s*(รายงาน|วันที่)/;
-    processed = processed.split('\n').map(line =>
-      headerPattern.test(line) ? line : applyDivertRules(line)
-    ).join('\n');
-
-    // 2. SUMMARY TABLE LOGIC (Mapping labels with colons)
-    const TABLE_TIME_IDS = ['atc_time', 'departure_time'];
-    const tableLabels = [
-      { regex: /(เที่ยวบิน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'flight_no' },
-      { regex: /(ทะเบียน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_reg' },
-      { regex: /(แบบอากาศยาน)\s*[:：]\s*([^{}\[\]\s<]+)/g, id: 'ac_type' },
-      { regex: /(เส้นทางการบินเดิม|เส้นทางบิน)\s*[:：]\s*([^<\n\r]+)/g, id: 'route' },
-      { regex: /(เวลาที่คาดว่าถึง\s*ทภก\.)\s*[:：]\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'atc_time' },
-      { regex: /(เวลาออกจาก\s*ทภก\.)\s*[:：]\s*(\d{4}|\d{1,2}(?:[.]\d{2})?)/g, id: 'departure_time' }
-    ];
-
-    tableLabels.forEach(rule => {
-      processed = processed.replace(rule.regex, (match, label, val) => {
-        if (!val || val.includes('<')) return match;
-        let displayVal = val.trim();
-        // Time fields: auto-format decimal (1340→13.40), น. stays outside span
-        if (TABLE_TIME_IDS.includes(rule.id)) {
-          if (/^\d{4}$/.test(displayVal)) displayVal = `${displayVal.slice(0, 2)}.${displayVal.slice(2)}`;
-        }
-        return match.replace(val, `<span class="sync-field" data-field="${rule.id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${displayVal}</span>`);
-      });
-    });
-
-    // 3. EXPLICIT VARIABLE HYDRATION (Standard {} or [] variables only)
-    processed = processed.replace(/\{(\w+)\}|\[(\w+)\]/g, (match, p1, p2) => {
-      const id = p1 || p2;
-      return `<span class="sync-field" data-field="${id}" contenteditable="false" style="color: #3b82f6; font-weight: bold;">${match}</span>`;
-    });
-    return processed;
-  };
-
-  const handleFullReset = () => {
-    setSelectedTemplate(null);
-    setFormData({});
-    const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-    let defaultText = reportMode === 'incident' 
-      ? `รายงานเหตุการณ์ไม่ปกติ\nวันที่ ${dateStr}\n\n\n\n\n\n=============\nงานบริหารหลุมจอด (Apron Control)\nสบข.ฝปข.ทภก.\nTel. 076-351-581\n=============`
-      : `รายงานผู้กระทำความผิด\nวันที่ ${dateStr}\n\nเมื่อเวลา {incident_time} น. เจ้าหน้าที่งานกะควบคุมจราจรภาคพื้น ได้ตรวจพบ {violator_name} หมายเลขบัตร {id_card} สังกัด {company} ตำแหน่ง {position}\n\nได้ ขับรถ {vehicle_type} หมายเลข {vehicle_no} ภายในเขตลานจอดอากาศยานบริเวณ {location} โดย ขับรถ \n\nสบข.ฝปข.ทภก. พิจารณาแล้ว การกระทำดังกล่าวไม่ปฏิบัติตามหลักเกณฑ์ของ ทภก. ทั้งนี้ สบข.ฝปข.ทภก. ได้ทำการยึดบัตร {violator_name} เป็นเวลา {seizure_days} วัน ตั้งแต่วันที่ {seizure_start} - {seizure_end} และแจ้งให้เข้ารับการทบทวนการอบรมการขับขี่ยานพาหนะในเขตลานจอดฯ ในวันพุธที่ {retraining_date}\n\n=============\nงานควบคุมจราจรภาคพื้น (Follow Me)\nสบข.ฝปข.ทภก.\nTel. 076-351-085\n=============`;
-    const hydrated = hydrateHtmlTemplate(defaultText);
-    setThaiPreview(hydrated);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = hydrated;
-  };
-
-  const historyData = useHistory(user?.username);
-  const { 
-    history, renameReport, deleteReport, togglePin, refreshHistory 
-  } = historyData;
-  
-  const { 
-    templates: customTemplates, folders, saveTemplate, deleteTemplate, 
-    updateTemplateName, createFolder, renameFolder, deleteFolder,
-    toggleFolderExpansion, moveTemplateToFolder, moveFolder
-  } = useUserTemplates(user?.username, reportMode);
-
-  // Drop indicator: which folder header is being hovered + position
-  const [dropIndicator, setDropIndicator] = React.useState(null); // { folderId, position: 'before'|'inside'|'after' }
-
-  // Build hierarchical tree from flat folder list
-  const buildFolderTree = (flatFolders) => {
-    const activeFolders = flatFolders.filter(f => f.mode === reportMode);
+  // Build hierarchical folder tree from flat list (memoized)
+  const folderTree = useMemo(() => {
+    const activeFolders = folders.filter(f => f.mode === reportMode);
     const sorted = [...activeFolders].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     const nodeMap = {};
     sorted.forEach(f => { nodeMap[f.id] = { ...f, children: [] }; });
@@ -197,147 +125,39 @@ const App = () => {
       }
     });
     return roots;
+  }, [folders, reportMode]);
+
+  // --- Actions ---
+  const handleFullReset = () => {
+    setSelectedTemplate(null);
+    setFormData({});
+    resetPreview(reportMode);
   };
-  const folderTree = buildFolderTree(folders);
 
   const handleSwitchMode = (newMode) => {
     setReportMode(newMode);
-    handleFullReset();
+    setSelectedTemplate(null);
+    setFormData({});
+    resetPreview(newMode);
   };
 
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
-    // Support both history format (preview/extraPreview) and template format (preview/content)
-    const body = item.preview || item.content || "";
-    const savedData = item.data || {};
-
     setReportMode(mode);
-
-    // Step 1: Hydrate the HTML (or pass through if already hydrated)
-    let hydrated = hydrateHtmlTemplate(body);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = hydrated;
-
-    // Step 2: Apply saved formData values into spans
-    // NOTE: Do NOT auto-recover span text into formData — form fields should start blank.
-    // Only apply explicitly saved data (savedData) to spans.
-    tempDiv.querySelectorAll('.sync-field[data-field]').forEach(s => {
-      const key = s.getAttribute('data-field');
-      if (savedData[key]) {
-        s.innerText = savedData[key];
-      }
-    });
-
-    // Step 3: Set all state at once
-    const finalHtml = tempDiv.innerHTML;
-    setFormData(savedData);  // Only use explicitly saved form data — keep form blank if never filled
-    setThaiPreview(finalHtml);
+    const { finalHtml, savedData } = processAndLoadItem(item, type);
+    setFormData(savedData);
     setSelectedTemplate({
       id: `${type}_${item.id || 'new'}_${Date.now()}`,
       name: item.name || item.customTitle || item.templateName || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),
-      mode: mode,
+      mode,
       preview: finalHtml,
     });
-
-    // GUARANTEED DOM write: useEffect only fires when thaiPreview STATE changes.
-    // If finalHtml === previous thaiPreview (e.g. re-opening same report), effect never runs.
-    // So we MUST write directly to the ref here as well.
-    if (thaiPreviewRef.current) {
-      thaiPreviewRef.current.innerHTML = finalHtml;
-    }
-
-    isEditingPreview.current = type === 'history';
     setIsSidebarOpen(false);
     if (window.innerWidth <= 768) setActiveMobileTab('preview');
   };
 
-  const dynamicFields = useMemo(() => {
-    // Thai label map for all known field IDs
-    const FIELD_LABELS = {
-      report_time: 'เวลาเกิดเหตุ',
-      informant: 'ผู้แจ้ง',
-      flight_no: 'เที่ยวบิน',
-      atc_time: 'เวลาที่คาดว่าถึง ทภก.',
-      original_airport: 'สนามบินต้นทาง',
-      stand: 'หลุมจอดฯ',
-      ac_reg: 'ทะเบียนเครื่อง',
-      ac_type: 'แบบอากาศยาน',
-      route: 'เส้นทางบิน',
-      departure_time: 'เวลาออกจาก ทภก.',
-      // violator fields
-      incident_time: 'เวลาเกิดเหตุ',
-      violator_name: 'ชื่อผู้กระทำความผิด',
-      id_card: 'หมายเลขบัตร',
-      company: 'สังกัด',
-      position: 'ตำแหน่ง',
-      vehicle_type: 'ประเภทรถ',
-      vehicle_no: 'หมายเลขรถ',
-      location: 'บริเวณ',
-      seizure_days: 'วันยึดบัตร',
-      seizure_start: 'เริ่มยึดวันที่',
-      seizure_end: 'ถึงวันที่',
-      retraining_date: 'วันอบรม',
-    };
-    const toField = (id) => ({ id, label: FIELD_LABELS[id] || id });
-
-    if (!selectedTemplate) {
-      if (reportMode === 'incident') return [
-        toField('report_time'), toField('informant'), toField('flight_no'),
-        toField('atc_time'), toField('original_airport'), toField('stand'),
-        toField('ac_reg'), toField('ac_type'), toField('route'),
-      ];
-      return [
-        toField('incident_time'), toField('violator_name'), toField('id_card'),
-        toField('company'), toField('position'), toField('vehicle_type'),
-        toField('vehicle_no'), toField('location'), toField('seizure_days'),
-        toField('seizure_start'), toField('seizure_end'), toField('retraining_date'),
-      ];
-    }
-
-    const body = selectedTemplate.preview || selectedTemplate.content || "";
-    const keys = [];
-
-    // PRIMARY: DOM scan in document order (respects position in preview)
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(body, 'text/html');
-      doc.querySelectorAll('[data-field]').forEach(el => {
-        const k = el.getAttribute('data-field');
-        if (k && !keys.includes(k.trim())) keys.push(k.trim());
-      });
-    } catch (e) {
-      const attrRegex = /data-field=["']([^"']+)["']/g;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(body)) !== null) {
-        const k = attrMatch[1].trim();
-        if (!keys.includes(k)) keys.push(k);
-      }
-    }
-
-    // SECONDARY: {braces} scan for raw templates (also in doc order)
-    const textOnly = body.replace(/<[^>]*>?/gm, ' ');
-    const braceRegex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
-    let braceMatch;
-    while ((braceMatch = braceRegex.exec(textOnly)) !== null) {
-      const k = (braceMatch[1] || braceMatch[2])?.trim();
-      if (k && !keys.includes(k)) keys.push(k);
-    }
-
-    // Return in document order with proper labels (no fixed commonFields prepended)
-    return keys.map(toField);
-  }, [selectedTemplate, reportMode]);
-
-
   const handleInputChange = (id, value) => {
-    const isTimeField = /^(report_time|atc_time|departure_time|incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
-    const finalValue = isTimeField ? formatTimeInput(value) : value;
-    if (thaiPreviewRef.current) {
-        thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(s => {
-            s.innerText = finalValue || `{${id}}`;
-        });
-        setThaiPreview(thaiPreviewRef.current.innerHTML);
-    }
-    setFormData(prev => ({ ...prev, [id]: finalValue }));
+    previewHandleInputChange(id, value, setFormData);
   };
 
   const handleCAATTranslate = async () => {
@@ -355,350 +175,150 @@ const App = () => {
     }
   };
 
-  // SEARCH LOGIC: Real-time filtering for all sidebar items
-  const matchesSearch = (text) => !searchTerm || String(text).toLowerCase().includes(searchTerm.toLowerCase());
-
-  const filteredCustomTemplates = customTemplates.filter(t => t.mode === reportMode && matchesSearch(t.name));
-  const filteredTemplates = (templatesData || []).filter(t => t.mode === reportMode && (t.id === 'new_report' || t.id === 'violator_core')).filter(t => matchesSearch(t.name));
-  const filteredHistory = history.filter(h => (h.mode || 'incident') === reportMode).filter(h => matchesSearch(getSmartTitle(h)));
-
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
     setContextMenu({ x: e.pageX, y: e.pageY, type, id, data });
   };
 
-  function getSmartTitle(h) { return h.customTitle || h.template_name || 'รายงานเหตุการณ์'; }
-
+  // --- Route Guards ---
   if (!user) return <Login onLogin={setUser} />;
-  if (!reportMode) return <ModeSelector onSelect={(m) => { setReportMode(m); handleFullReset(); }} />;
+  if (!reportMode) return <ModeSelector onSelect={(m) => { setReportMode(m); resetPreview(m); }} />;
 
   return (
     <div className="app-container">
+      {/* Mobile Header */}
       <div className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
         <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-           <button className="header-action-btn" style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }} onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')} title="สลับโหมด">
-              {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'เหตุการณ์ไม่ปกติ'}
-           </button>
-            <button className="header-action-btn" style={{ color: 'var(--accent-red)', padding: '0 4px' }} onClick={handleLogout} title="ออกจากระบบ"><User size={18} /></button>
+          <button
+            className="header-action-btn"
+            style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }}
+            onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
+            title="สลับโหมด"
+          >
+            {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'เหตุการณ์ไม่ปกติ'}
+          </button>
+          <button
+            className="header-action-btn"
+            style={{ color: 'var(--accent-red)', padding: '0 4px' }}
+            onClick={handleLogout}
+            title="ออกจากระบบ"
+          >
+            <User size={18} />
+          </button>
         </div>
       </div>
 
-      <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
 
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}>
-        <div className="sidebar-header" style={{ padding: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
-            {window.innerWidth > 768 && (
-               <button className="btn btn-mode-switch" style={{ fontSize: '10px', whiteSpace: 'nowrap' }} onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-                 {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
-               </button>
-            )}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>User: <strong>{user.username}</strong></div>
-        </div>
-        <div className="search-box"><input type="text" className="search-input" placeholder="ค้นหาฟอร์มหรือประวัติ..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-        <div className="sidebar-scroll-area">
-          <div style={{ padding: '0 0.5rem' }}>
-            <button className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }} onClick={() => { handleFullReset(); if(window.innerWidth <= 768) setActiveMobileTab('form'); }}>
-              <Plus size={16} /> สร้างรายงานใหม่
-            </button>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
-                <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
-                <FolderPlus size={16} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => { const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:"); if(n) createFolder(n); }} />
-            </div>
-             <div className="sidebar-folders" style={{ padding: '0.5rem 0' }}>
-               {(() => {
-                 // Recursive folder renderer with drag-to-reorder + drag-to-subfolder
-                 const handleFolderDragOver = (e, folderId) => {
-                   e.preventDefault();
-                   e.stopPropagation();
-                   const rect = e.currentTarget.getBoundingClientRect();
-                   const y = e.clientY - rect.top;
-                   let position;
-                   if (y < rect.height * 0.3) position = 'before';
-                   else if (y > rect.height * 0.7) position = 'after';
-                   else position = 'inside';
-                   setDropIndicator({ folderId, position });
-                 };
-
-                 const handleFolderDrop = (e, folder) => {
-                   e.preventDefault();
-                   e.stopPropagation();
-                   setDropIndicator(null);
-                   const dragType = e.dataTransfer.getData('drag-type');
-                   if (dragType === 'template') {
-                     const tid = e.dataTransfer.getData('text/template-id');
-                     if (tid) moveTemplateToFolder(tid, folder.id);
-                   } else if (dragType === 'folder') {
-                     const fid = e.dataTransfer.getData('folder-id');
-                     if (!fid || fid === folder.id) return;
-                     const rect = e.currentTarget.getBoundingClientRect();
-                     const y = e.clientY - rect.top;
-                     let position;
-                     if (y < rect.height * 0.3) position = 'before';
-                     else if (y > rect.height * 0.7) position = 'after';
-                     else position = 'inside';
-                     moveFolder(fid, folder.id, position, folders);
-                   }
-                 };
-
-                 const renderFolderItem = (folder, depth = 0) => {
-                   const folderTemplates = filteredCustomTemplates.filter(t => t.folder_id === folder.id);
-                   const totalCount = folderTemplates.length + (folder.children?.length || 0);
-                   if (searchTerm && totalCount === 0 && !matchesSearch(folder.name)) return null;
-                   const indicator = dropIndicator?.folderId === folder.id ? dropIndicator.position : null;
-                   return (
-                     <div key={folder.id} className="folder-item" style={{ marginLeft: depth > 0 ? 10 : 0 }}>
-                       {indicator === 'before' && <div style={{ height: 2, background: 'var(--accent-indigo)', borderRadius: 1, margin: '1px 0' }} />}
-                       <div
-                         className="folder-header"
-                         draggable
-                         onDragStart={(e) => {
-                           if (window.innerWidth <= 768) { e.preventDefault(); return; }
-                           e.dataTransfer.setData('drag-type', 'folder');
-                           e.dataTransfer.setData('folder-id', folder.id);
-                           e.dataTransfer.effectAllowed = 'move';
-                           e.stopPropagation();
-                         }}
-                         onDragEnd={() => setDropIndicator(null)}
-                         onDragOver={(e) => handleFolderDragOver(e, folder.id)}
-                         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropIndicator(null); }}
-                         onDrop={(e) => handleFolderDrop(e, folder)}
-                         onClick={() => toggleFolderExpansion(folder.id, folder.is_expanded)}
-                         onContextMenu={(e) => onContextMenu(e, 'folder', folder.id, folder)}
-                         style={{ outline: indicator === 'inside' ? '2px dashed var(--accent-indigo)' : 'none', cursor: 'grab' }}
-                       >
-                         <ChevronDown size={14} className={`folder-icon ${!folder.is_expanded ? 'collapsed' : ''}`} />
-                         <Folder size={14} fill={folder.is_expanded ? 'var(--accent-indigo)' : 'none'} />
-                         <span className="folder-name">{folder.name}</span>
-                         <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{folderTemplates.length}</span>
-                       </div>
-                       {indicator === 'after' && <div style={{ height: 2, background: 'var(--accent-indigo)', borderRadius: 1, margin: '1px 0' }} />}
-                       {(folder.is_expanded || searchTerm) && (
-                         <div className="folder-content">
-                           {folder.children?.map(child => renderFolderItem(child, depth + 1))}
-                           {folderTemplates.map(ct => (
-                             <div
-                               key={ct.id}
-                               className="template-item"
-                               draggable
-                               onDragStart={(e) => { if (window.innerWidth <= 768) { e.preventDefault(); return; } e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
-                               onClick={() => handleSelectTemplate(ct, 'custom')}
-                               onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                               style={{ cursor: 'grab' }}
-                             >
-                               <FileText size={12} style={{ opacity: 0.6 }} />
-                               <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
-                             </div>
-                           ))}
-                         </div>
-                       )}
-                     </div>
-                   );
-                 };
-
-                 return folderTree.map(f => renderFolderItem(f));
-               })()}
-               <div
-                  className="uncategorized-section"
-                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.style.outline = '2px dashed var(--accent-indigo)'; }}
-                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.style.outline = ''; }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.style.outline = '';
-                    const dragType = e.dataTransfer.getData('drag-type');
-                    if (dragType === 'template') {
-                      const tid = e.dataTransfer.getData('text/template-id');
-                      if (tid) moveTemplateToFolder(tid, null);
-                    } else if (dragType === 'folder') {
-                      const fid = e.dataTransfer.getData('folder-id');
-                      if (fid) moveFolder(fid, null, null, folders);
-                    }
-                  }}
-               >
-                  <div className="history-title" style={{ paddingLeft: '1.25rem', fontSize: '0.65rem' }}>ฟอร์มทั่วไป</div>
-                  {filteredTemplates.map(t => (
-                    <div key={t.id} className="template-item" style={{ marginLeft: '1.25rem' }} onClick={() => handleSelectTemplate(t)}>
-                      <FileText size={12} style={{ opacity: 0.6 }} />
-                      <span style={{ fontSize: '0.8rem' }}>{t.name}</span>
-                    </div>
-                  ))}
-                  {filteredCustomTemplates.filter(t => !t.folder_id).map(ct => (
-                    <div
-                      key={ct.id}
-                      className="template-item"
-                      style={{ marginLeft: '1.25rem', cursor: 'grab' }}
-                      draggable
-                      onDragStart={(e) => { if (window.innerWidth <= 768) { e.preventDefault(); return; } e.dataTransfer.setData('drag-type', 'template'); e.dataTransfer.setData('text/template-id', ct.id); e.dataTransfer.effectAllowed = 'move'; }}
-                      onClick={() => handleSelectTemplate(ct, 'custom')}
-                      onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
-                    >
-                      <FileText size={12} style={{ opacity: 0.6 }} />
-                      <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>
-                    </div>
-                  ))}
-               </div>
-             </div>
-          </div>
-          <div className={`history-section-wrapper ${activeMobileTab === 'templates' ? 'mobile-hidden' : ''}`}>
-             <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0.5rem' }} />
-             <div className="history-section" style={{ border: 'none', paddingTop: 0, paddingBottom: '2rem' }}>
-                <div className="history-title">ประวัติเหตุการณ์</div>
-                {filteredHistory.filter(h => h.is_pinned).map(h => (
-                  <div key={h.id} className="history-item" style={{ borderLeft: '2px solid var(--accent-indigo)' }} onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
-                    <div className="history-info"><span style={{ flex: 1, fontWeight: 'bold' }}>{getSmartTitle(h)}</span><Pin size={12} fill="var(--accent-indigo)" /></div>
-                  </div>
-                ))}
-                {filteredHistory.filter(h => !h.is_pinned).slice(0, 20).map(h => (
-                  <div key={h.id} className="history-item" onClick={() => handleSelectTemplate(h, 'history')} onContextMenu={(e) => onContextMenu(e, 'history', h.id, h)}>
-                    <div className="history-info"><span style={{ flex: 1 }}>{getSmartTitle(h)}</span></div>
-                  </div>
-                ))}
-             </div>
-          </div>
-          <div className="sidebar-footer" style={{ borderTop: '1px solid var(--border-subtle)', padding: '1rem' }}>
-             <button className="btn btn-ghost btn-full" style={{ color: 'var(--accent-red)', justifyContent: 'center' }} onClick={handleLogout}>
-               <User size={16} style={{ marginRight: '8px' }} /> ออกจากระบบ
-             </button>
-          </div>
-        </div>
-      </aside>
+      <Sidebar
+        user={user}
+        reportMode={reportMode}
+        handleSwitchMode={handleSwitchMode}
+        handleLogout={handleLogout}
+        handleFullReset={handleFullReset}
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        activeMobileTab={activeMobileTab}
+        setActiveMobileTab={setActiveMobileTab}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        folderTree={folderTree}
+        folders={folders}
+        customTemplates={customTemplates}
+        history={history}
+        onSelectTemplate={handleSelectTemplate}
+        onContextMenu={onContextMenu}
+        toggleFolderExpansion={toggleFolderExpansion}
+        moveTemplateToFolder={moveTemplateToFolder}
+        moveFolder={moveFolder}
+        createFolder={createFolder}
+      />
 
       <main className="main-content">
-        {(window.innerWidth > 768 || activeMobileTab === 'form') && (
-        <section className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-active' : ''}`} style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}>
-          {!selectedTemplate && reportMode !== 'violator' ? (
-            <div className="card empty-state-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', opacity: 0.6 }}>
-               <FileText size={48} style={{ marginBottom: '1rem' }} />
-               <p>กรุณาเลือกแม่แบบเพื่อเริ่มเขียนรายงาน</p>
-            </div>
-          ) : (
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title" style={{ fontSize: '0.85rem' }}>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์' : 'รายงานผู้กระทำผิด')}</h2>
-                {window.innerWidth <= 768 && (
-                  <button className={`btn btn-ghost ${isSplitMode ? 'btn-active' : ''}`} style={{ fontSize: '0.65rem' }} onClick={() => setIsSplitMode(!isSplitMode)}><Pin size={16} /></button>
-                )}
-                <button className="btn btn-ghost" onClick={handleFullReset}><Trash2 size={16} /></button>
-            </div>
-            <div className="form-body" key={activeMobileTab + (selectedTemplate?.id || 'none')}>
-              {dynamicFields.map(field => (
-                <div key={field.id} className="form-field"><label>{field.label}</label><input type="text" value={formData[field.id] || ''} onChange={(e) => handleInputChange(field.id, e.target.value)} /></div>
-              ))}
-            </div>
-          </div>
-          )}
-        </section>
-        )}
+        <DynamicForm
+          selectedTemplate={selectedTemplate}
+          reportMode={reportMode}
+          dynamicFields={dynamicFields}
+          formData={formData}
+          onInputChange={handleInputChange}
+          onReset={handleFullReset}
+          activeMobileTab={activeMobileTab}
+          isSplitMode={isSplitMode}
+          setIsSplitMode={setIsSplitMode}
+          thaiPreview={thaiPreview}
+        />
 
-        <section className={`preview-container-main ${activeMobileTab === 'preview' || activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: '1' }}>
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">Preview</h2>
-               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {window.innerWidth <= 768 && (
-                  <button className="btn btn-mode-switch" onClick={() => setReportMode(reportMode === 'incident' ? 'violator' : 'incident')}>
-                    {reportMode === 'incident' ? 'สลับผู้กระทำความผิด' : 'สลับเหตุการณ์'}
-                  </button>
-                )}
-                <button className="btn btn-ghost" style={{ border: '1px solid var(--border-subtle)', fontSize: '11px' }} onClick={async () => { 
-                  const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || ""); 
-                  if(n) {
-                    const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
-                    await saveTemplate(n, formData, currentHtml, extraPreview, selectedTemplate?.folder_id); 
-                    alert('บันทึกฟอร์มเรียบร้อย');
-                  }
-                }}>บันทึกฟอร์มรายงาน</button>
-                <button className="btn btn-primary" title="ทำรายงานด้วย AI" style={{ background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }} onClick={handleCAATTranslate} disabled={isLoadingCAAT}>
-                   {isLoadingCAAT && <Loader2 size={16} className="animate-spin" />}
-                   ทำรายงาน กพท.22
-                </button>
-                <button className="btn btn-primary" onClick={() => { 
-                  const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
-                  navigator.clipboard.writeText(text);
-                  historyData.saveReport({ mode: reportMode, templateName: selectedTemplate?.name || 'กำหนดเอง', preview: text, data: formData });
-                  alert('คัดลอกและบันทึกแล้ว');
-                }}><Check size={16} /> คัดลอกและบันทึก</button>
-              </div>
-            </div>
-            <div className="preview-body-v2">
-              <div 
-                ref={thaiPreviewRef} 
-                className="preview-textarea" 
-                contentEditable 
-                suppressContentEditableWarning 
-                style={{ whiteSpace: 'pre-wrap', minHeight: '400px' }} 
-              />
-            </div>
-          </div>
-        </section>
-
-        {isSplitMode && activeMobileTab === 'form' && window.innerWidth > 768 && (
-           <div className="split-preview-overlay">
-              <div className="card" style={{ height: '100%', borderRadius: 0, border: 'none' }}>
-                 <div className="preview-body-v2" style={{ padding: '0.5rem' }}><div className="preview-textarea" dangerouslySetInnerHTML={{ __html: thaiPreview }} style={{ fontSize: '12px', background: 'transparent', padding: 0 }} /></div>
-              </div>
-           </div>
-        )}
+        <ReportPreview
+          thaiPreviewRef={thaiPreviewRef}
+          thaiPreview={thaiPreview}
+          activeMobileTab={activeMobileTab}
+          reportMode={reportMode}
+          handleSwitchMode={handleSwitchMode}
+          isLoadingCAAT={isLoadingCAAT}
+          onCAATTranslate={handleCAATTranslate}
+          saveTemplate={saveTemplate}
+          saveReport={historyData.saveReport}
+          selectedTemplate={selectedTemplate}
+          formData={formData}
+          extraPreview={extraPreview}
+        />
 
         <nav className="mobile-nav">
-           <button className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab('templates')}><Calendar size={20} /><span>ฟอร์มเหตุการณ์</span></button>
-           <button className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`} onClick={() => setActiveMobileTab('form')}><Edit2 size={20} /><span>กรอกข้อมูล</span></button>
-           <button className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`} onClick={() => setActiveMobileTab('history')}><Clock size={20} /><span>ประวัติ</span></button>
+          <button
+            className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('templates')}
+          >
+            <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
+          </button>
+          <button
+            className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('form')}
+          >
+            <Edit2 size={20} /><span>กรอกข้อมูล</span>
+          </button>
+          <button
+            className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('history')}
+          >
+            <Clock size={20} /><span>ประวัติ</span>
+          </button>
         </nav>
       </main>
 
-      {/* CAAT 22 CONFIRMATION MODAL */}
-      {isCAATModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsCAATModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="app-title" style={{ fontSize: '1.1rem' }}>พรีวิว: รูปแบบรายงาน กพท.22</div>
-              <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <pre className="caat-preview-text">{translatedCAAT}</pre>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setIsCAATModalOpen(false)}>ยกเลิก</button>
-              <button className="btn btn-primary btn-mode-switch" onClick={() => {
-                navigator.clipboard.writeText(translatedCAAT);
-                historyData.saveReport({ mode: reportMode, templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)', preview: translatedCAAT, data: formData });
-                alert('คัดลอกรายงาน กพท.22 เรียบร้อยแล้ว');
-                setIsCAATModalOpen(false);
-              }}>ยืนยันการแปลและคัดลอก</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CAATModal
+        isOpen={isCAATModalOpen}
+        onClose={() => setIsCAATModalOpen(false)}
+        translatedCAAT={translatedCAAT}
+        onConfirm={() => {
+          navigator.clipboard.writeText(translatedCAAT);
+          historyData.saveReport({
+            mode: reportMode,
+            templateName: (selectedTemplate?.name || 'กำหนดเอง') + ' (CAAT)',
+            preview: translatedCAAT,
+            data: formData,
+          });
+          alert('คัดลอกรายงาน กพท.22 เรียบร้อยแล้ว');
+          setIsCAATModalOpen(false);
+        }}
+      />
 
-      {/* CONTEXT MENU */}
-      {contextMenu && (
-        <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(e) => e.stopPropagation()}>
-          <div className="context-item" onClick={() => {
-            const currentTitle = contextMenu.type === 'history' ? getSmartTitle(contextMenu.data) : contextMenu.data.name;
-            const newName = window.prompt("เปลี่ยนชื่อเป็น:", currentTitle);
-            if (newName) {
-              if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
-              else if (contextMenu.type === 'history') renameReport(contextMenu.id, newName);
-              else updateTemplateName(contextMenu.id, newName);
-            }
-            setContextMenu(null);
-          }}><Edit2 size={14} /> เปลี่ยนชื่อ</div>
-          <div className="context-item danger" onClick={() => {
-            if (window.confirm("ยืนยันการลบ?")) {
-              if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
-              else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
-              else deleteTemplate(contextMenu.id);
-            }
-            setContextMenu(null);
-          }}><Trash2 size={14} /> ลบทิ้ง</div>
-        </div>
-      )}
+      <ContextMenu
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        renameFolder={renameFolder}
+        renameReport={renameReport}
+        updateTemplateName={updateTemplateName}
+        deleteFolder={deleteFolder}
+        deleteReport={deleteReport}
+        deleteTemplate={deleteTemplate}
+      />
     </div>
   );
 };
+
 export default App;

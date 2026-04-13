@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const useUserTemplates = (currentUsername, reportMode) => {
+export const useUserTemplates = (userId, reportMode) => {
   const [templates, setTemplates] = useState([]);
   const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = async () => {
-    if (!supabase || !currentUsername) return;
+    if (!supabase || !userId) return;
     setLoading(true);
 
+    // RLS enforces user isolation — explicit filter is belt-and-suspenders
     // 1. Fetch Folders — ordered by sort_order
     const { data: folderData, error: folderError } = await supabase
       .from('user_folders')
       .select('*')
-      .eq('user_id', currentUsername)
+      .eq('user_id', userId)
       .order('sort_order', { ascending: true });
 
     if (!folderError && folderData) {
@@ -25,7 +26,7 @@ export const useUserTemplates = (currentUsername, reportMode) => {
     const { data: templateData, error: templateError } = await supabase
       .from('user_templates')
       .select('*')
-      .eq('user_id', currentUsername)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (!templateError && templateData) {
@@ -36,22 +37,22 @@ export const useUserTemplates = (currentUsername, reportMode) => {
 
   useEffect(() => {
     fetchAll();
-  }, [currentUsername]);
+  }, [userId]);
 
   // Accept mode explicitly to avoid stale closure bug
   const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode) => {
-    if (!supabase || !currentUsername) return;
-    
+    if (!supabase || !userId) return;
+
     const { error } = await supabase
       .from('user_templates')
       .insert([{
         name,
-        mode: mode,
+        mode,
         data: formData,
         preview,
         extra_preview: extraPreview,
-        user_id: currentUsername,
-        folder_id: folderId
+        user_id: userId,
+        folder_id: folderId,
       }]);
 
     if (!error) fetchAll();
@@ -93,14 +94,14 @@ export const useUserTemplates = (currentUsername, reportMode) => {
 
   // --- Folder Methods ---
   const createFolder = async (name) => {
-    if (!supabase || !currentUsername) return;
+    if (!supabase || !userId) return;
     // New folder goes at the end: max sort_order + 10
     const maxOrder = folders.length > 0
       ? Math.max(...folders.map(f => f.sort_order || 0)) + 10
       : 0;
     const { error } = await supabase
       .from('user_folders')
-      .insert([{ name, mode: reportMode, user_id: currentUsername, sort_order: maxOrder }]);
+      .insert([{ name, mode: reportMode, user_id: userId, sort_order: maxOrder }]);
     if (!error) fetchAll();
     return { error };
   };

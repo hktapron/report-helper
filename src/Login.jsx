@@ -14,24 +14,30 @@ const Login = ({ onLogin }) => {
 
     if (supabase) {
       try {
-        // 100% Custom Auth: Call RPC function verify_user directly
-        const { data, error: rpcError } = await supabase.rpc('verify_user', { 
-           p_username: username, 
-           p_password: password 
+        const email = `${username.trim()}@vtsp.internal`;
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
 
-        if (rpcError || !data || data.length === 0 || !data[0].success) {
-          setError('Username หรือ รหัสผ่านไม่ถูกต้อง');
+        if (authError || !data?.user) {
+          console.error('[Auth Error]', authError);
+          setError(authError?.message || 'Username หรือ รหัสผ่านไม่ถูกต้อง');
         } else {
-          onLogin(data[0]); 
+          const u = data.user;
+          onLogin({
+            id: u.id,
+            username: u.user_metadata?.username || u.email.split('@')[0],
+            display_name: u.user_metadata?.display_name || u.email.split('@')[0],
+          });
         }
       } catch (err) {
         console.error('Login error:', err);
-        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้ (โปรดตรวจสอบการรัน SQL Schema)');
+        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
       }
     } else {
       if (username === 'admin' && password === 'admin') {
-        onLogin({ username: 'admin', display_name: 'หัวหน้างานกะ', id: 'demo' });
+        onLogin({ id: 'demo', username: 'admin', display_name: 'หัวหน้างานกะ (Demo)' });
       } else {
         setError('โหมดทดลอง: ใช้ admin / admin');
       }
