@@ -29,58 +29,102 @@ const formatAuthUser = (authUser) => {
 
 const App = () => {
   // --- Auth & Persistence ---
-  const [user, setUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('vtsp_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.warn("VTSP: Failed to parse vtsp_user from storage", e);
+      return null;
+    }
+  });
+
   const [reportMode, setReportMode] = useState(() => {
     try {
       const saved = localStorage.getItem('vtsp_report_mode');
       return (saved === 'incident' || saved === 'violator') ? saved : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   });
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
-    let subscription = null;
     try {
       if (!supabase) {
+        // Fallback handled in useState init, but as secondary guard:
         const saved = localStorage.getItem('vtsp_user');
-        if (saved) setUser(JSON.parse(saved));
-        setAuthChecked(true);
-      } else {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) setUser(formatAuthUser(session.user));
-          setAuthChecked(true);
-        }).catch(() => setAuthChecked(true));
-
-        const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user ? formatAuthUser(session.user) : null);
-        });
-        subscription = data.subscription;
+        if (saved && !user) {
+          try {
+            setUser(JSON.parse(saved));
+          } catch (e) {
+            localStorage.removeItem('vtsp_user');
+          }
+        }
+        return;
       }
+
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) setUser(formatAuthUser(session.user));
+      }).catch(e => console.warn("Auth Session Fetch Failed", e));
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ? formatAuthUser(session.user) : null);
+      });
+
+      return () => subscription?.unsubscribe();
     } catch (e) {
-      console.warn("VTSP: Auth Init Failed Safely", e);
-      setAuthChecked(true);
+      console.error("VTSP: Root Auth Effect Failed Safely", e);
     }
-    return () => subscription?.unsubscribe();
   }, []);
 
-  // Safe Mode: Ensure we have a valid state before rendering complex hooks
-  const safeUserId = user?.id || 'demo';
+  // Demo mode only: persist user to localStorage
+  useEffect(() => {
+    try {
+      if (supabase) return;
+      if (user) localStorage.setItem('vtsp_user', JSON.stringify(user));
+      else localStorage.removeItem('vtsp_user');
+    } catch (e) {
+      console.error("VTSP: User persistence failed", e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    try {
+      if (reportMode) localStorage.setItem('vtsp_report_mode', reportMode);
+      else localStorage.removeItem('vtsp_report_mode');
+    } catch (e) {
+      console.error("VTSP: Mode persistence failed", e);
+    }
+  }, [reportMode]);
+
+  const handleLogout = async () => {
+    try {
+      if (supabase) await supabase.auth.signOut();
+    } catch (e) {}
+    
+    setUser(null);
+    setReportMode(null);
+    try {
+      localStorage.removeItem('vtsp_report_mode');
+      localStorage.removeItem('vtsp_user');
+    } catch (e) {}
+    window.location.reload();
+  };
 
   // --- UI State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState('templates'); // Start at templates for better UX
+  const [activeMobileTab, setActiveMobileTab] = useState('form');
   const [isSplitMode, setIsSplitMode] = useState(false);
   const [isLoadingCAAT, setIsLoadingCAAT] = useState(false);
   const [translatedCAAT, setTranslatedCAAT] = useState('');
   const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
 
-  // --- Hooks (Guarded) ---
-  const htmlPreviewHook = useHtmlPreview();
+  // --- Hooks ---
   const {
     thaiPreview,
     extraPreview,
@@ -88,15 +132,14 @@ const App = () => {
     processAndLoadItem,
     handleInputChange: previewHandleInputChange,
     resetPreview,
-  } = htmlPreviewHook || {};
+  } = useHtmlPreview();
 
-  const historyData = useHistory(safeUserId);
-  const { history = [], renameReport, deleteReport } = historyData || {};
+  const historyData = useHistory(user?.id);
+  const { history, renameReport, deleteReport } = historyData;
 
-  const templatesHook = useUserTemplates(safeUserId, reportMode);
   const {
-    templates: customTemplates = [],
-    folders = [],
+    templates: customTemplates,
+    folders,
     saveTemplate,
     deleteTemplate,
     updateTemplateName,
@@ -106,9 +149,9 @@ const App = () => {
     toggleFolderExpansion,
     moveTemplateToFolder,
     moveFolder,
-  } = templatesHook || {};
+  } = useUserTemplates(user?.id, reportMode);
 
-  const dynamicFields = useDynamicFields(selectedTemplate, reportMode) || [];
+  const dynamicFields = useDynamicFields(selectedTemplate, reportMode);
 
   // Build hierarchical folder tree from flat list (memoized)
   const folderTree = useMemo(() => {
@@ -343,6 +386,40 @@ const App = () => {
         deleteReport={deleteReport}
         deleteTemplate={deleteTemplate}
       />
+
+      {/* v19.1 Global Emergency Reset (Discreet) */}
+      <button 
+        onClick={() => {
+          if (confirm("ต้องการล้างข้อมูลเพื่อกู้คืนระบบ (Hard Reset)?")) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+          }
+        }}
+        style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: 'rgba(239, 68, 68, 0.2)',
+          border: 'none',
+          color: 'rgba(255,255,255,0.3)',
+          fontSize: '10px',
+          cursor: 'pointer',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s'
+        }}
+        onMouseOver={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.8)'; e.target.style.color = 'white'; }}
+        onMouseOut={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.2)'; e.target.style.color = 'rgba(255,255,255,0.3)'; }}
+        title="Emergency Reset"
+      >
+        R
+      </button>
     </div>
   );
 };
