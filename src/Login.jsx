@@ -12,8 +12,15 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     setError(null);
 
-    if (supabase) {
-      try {
+    try {
+      if (!supabase) {
+        // Fallback to Demo mode if Supabase is missing
+        if (username === 'admin' && password === 'admin') {
+          onLogin({ id: 'demo', username: 'admin', display_name: 'Administrator (Demo)' });
+        } else {
+          setError('ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Config). กรุณาใช้ admin / admin สำหรับโหมดทดลอง');
+        }
+      } else {
         const email = `${username.trim()}@vtsp.internal`;
         const { data, error: authError } = await supabase.auth.signInWithPassword({
           email,
@@ -21,12 +28,11 @@ const Login = ({ onLogin }) => {
         });
 
         if (authError || !data?.user) {
-          console.error('[Auth Error]', authError);
-          setError(authError?.message || 'Username หรือ รหัสผ่านไม่ถูกต้อง');
+          setError('Username หรือ รหัสผ่านไม่ถูกต้อง');
         } else {
           const u = data.user;
-          const email = u?.email || '';
-          const fallback = email.includes('@') ? email.split('@')[0] : 'User';
+          const userEmail = u?.email || '';
+          const fallback = userEmail.includes('@') ? userEmail.split('@')[0] : 'User';
           
           onLogin({
             id: u.id,
@@ -34,18 +40,13 @@ const Login = ({ onLogin }) => {
             display_name: u.user_metadata?.display_name || fallback,
           });
         }
-      } catch (err) {
-        console.error('Login error:', err);
-        setError('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
       }
-    } else {
-      if (username === 'admin' && password === 'admin') {
-        onLogin({ id: 'demo', username: 'admin', display_name: 'หัวหน้างานกะ (Demo)' });
-      } else {
-        setError('โหมดทดลอง: ใช้ admin / admin');
-      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
