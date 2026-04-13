@@ -48,10 +48,10 @@ const ReportPreview = ({
           <h2 className="card-title">Preview</h2>
           <div className="action-buttons-group report-action-bar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
-              className="btn btn-ghost btn-save-template"
+              className="btn btn-dark btn-save-template"
               onClick={handleSaveTemplate}
               title="บันทึกต้นแบบ"
-              style={{ fontWeight: '600' }}
+              style={{ fontWeight: '600', padding: '10px 20px' }}
             >
               บันทึก
             </button>
@@ -59,7 +59,7 @@ const ReportPreview = ({
               className="btn btn-outline btn-ai-translate"
               onClick={onCAATTranslate}
               disabled={isLoadingCAAT}
-              style={{ border: '1px solid var(--accent-indigo)', color: 'var(--accent-indigo)', fontWeight: '600' }}
+              style={{ border: '1px solid var(--accent-indigo)', color: 'var(--accent-indigo)', fontWeight: '600', padding: '10px 20px' }}
             >
               {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               <span>กพท.22</span>
@@ -67,7 +67,7 @@ const ReportPreview = ({
             <button 
               className="btn btn-primary btn-copy-save" 
               onClick={handleCopyAndSave}
-              style={{ background: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ background: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px' }}
             >
               <Check size={16} /> <span>คัดลอกและบันทึก</span>
             </button>

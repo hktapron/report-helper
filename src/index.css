@@ -1580,10 +1580,11 @@ input:focus, textarea:focus {
   }
 }
 
-/* --- v19 THEME & PC FIXES --- */
+/* --- v20 THEME & PC STABILIZATION --- */
 .btn-copy-save {
   background: #10b981 !important;
   color: white !important;
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
 }
 
 .btn-copy-save:hover {
@@ -1591,7 +1592,22 @@ input:focus, textarea:focus {
   transform: translateY(-1px);
 }
 
+.btn-dark {
+  background: #27272a !important;
+  color: #f4f4f5 !important;
+  border: 1px solid #3f3f46 !important;
+}
+
+.btn-dark:hover {
+  background: #18181b !important;
+  border-color: #52525b !important;
+}
+
 @media (min-width: 769px) {
+  .mobile-nav {
+    display: none !important;
+  }
+
   .sidebar.pc-sidebar {
     display: flex !important;
     width: 280px !important;
@@ -1600,6 +1616,14 @@ input:focus, textarea:focus {
   
   .main-content {
     flex-direction: row !important;
+    overflow: hidden !important;
+  }
+
+  /* Force Scroll on PC */
+  .form-scroll-body, 
+  .preview-body-v2 {
+    overflow-y: auto !important;
+    height: calc(100vh - 80px) !important;
   }
 }
 
