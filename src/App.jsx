@@ -30,69 +30,57 @@ const formatAuthUser = (authUser) => {
 const App = () => {
   // --- Auth & Persistence ---
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [reportMode, setReportMode] = useState(() => {
-    const saved = localStorage.getItem('vtsp_report_mode');
-    return (saved === 'incident' || saved === 'violator') ? saved : null;
+    try {
+      const saved = localStorage.getItem('vtsp_report_mode');
+      return (saved === 'incident' || saved === 'violator') ? saved : null;
+    } catch (e) { return null; }
   });
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
+    let subscription = null;
     try {
       if (!supabase) {
-        // demo mode: restore from localstorage
         const saved = localStorage.getItem('vtsp_user');
         if (saved) setUser(JSON.parse(saved));
-        return;
+        setAuthChecked(true);
+      } else {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) setUser(formatAuthUser(session.user));
+          setAuthChecked(true);
+        }).catch(() => setAuthChecked(true));
+
+        const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+          setUser(session?.user ? formatAuthUser(session.user) : null);
+        });
+        subscription = data.subscription;
       }
-
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) setUser(formatAuthUser(session.user));
-      }).catch(e => console.warn("Auth Session Fetch Failed", e));
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ? formatAuthUser(session.user) : null);
-      });
-
-      return () => subscription?.unsubscribe();
     } catch (e) {
-      console.error("VTSP: Root Auth Effect Failed Safely", e);
+      console.warn("VTSP: Auth Init Failed Safely", e);
+      setAuthChecked(true);
     }
+    return () => subscription?.unsubscribe();
   }, []);
 
-  // Demo mode only: persist user to localStorage
-  useEffect(() => {
-    if (supabase) return;
-    if (user) localStorage.setItem('vtsp_user', JSON.stringify(user));
-    else localStorage.removeItem('vtsp_user');
-  }, [user]);
-
-  useEffect(() => {
-    if (reportMode) localStorage.setItem('vtsp_report_mode', reportMode);
-    else localStorage.removeItem('vtsp_report_mode');
-  }, [reportMode]);
-
-  const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
-    setUser(null);
-    setReportMode(null);
-    localStorage.removeItem('vtsp_report_mode');
-    localStorage.removeItem('vtsp_user');
-    window.location.reload();
-  };
+  // Safe Mode: Ensure we have a valid state before rendering complex hooks
+  const safeUserId = user?.id || 'demo';
 
   // --- UI State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState('form');
+  const [activeMobileTab, setActiveMobileTab] = useState('templates'); // Start at templates for better UX
   const [isSplitMode, setIsSplitMode] = useState(false);
   const [isLoadingCAAT, setIsLoadingCAAT] = useState(false);
   const [translatedCAAT, setTranslatedCAAT] = useState('');
   const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
 
-  // --- Hooks ---
+  // --- Hooks (Guarded) ---
+  const htmlPreviewHook = useHtmlPreview();
   const {
     thaiPreview,
     extraPreview,
@@ -100,14 +88,15 @@ const App = () => {
     processAndLoadItem,
     handleInputChange: previewHandleInputChange,
     resetPreview,
-  } = useHtmlPreview();
+  } = htmlPreviewHook || {};
 
-  const historyData = useHistory(user?.id);
-  const { history, renameReport, deleteReport } = historyData;
+  const historyData = useHistory(safeUserId);
+  const { history = [], renameReport, deleteReport } = historyData || {};
 
+  const templatesHook = useUserTemplates(safeUserId, reportMode);
   const {
-    templates: customTemplates,
-    folders,
+    templates: customTemplates = [],
+    folders = [],
     saveTemplate,
     deleteTemplate,
     updateTemplateName,
@@ -117,9 +106,9 @@ const App = () => {
     toggleFolderExpansion,
     moveTemplateToFolder,
     moveFolder,
-  } = useUserTemplates(user?.id, reportMode);
+  } = templatesHook || {};
 
-  const dynamicFields = useDynamicFields(selectedTemplate, reportMode);
+  const dynamicFields = useDynamicFields(selectedTemplate, reportMode) || [];
 
   // Build hierarchical folder tree from flat list (memoized)
   const folderTree = useMemo(() => {
