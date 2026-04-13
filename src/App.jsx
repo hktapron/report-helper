@@ -13,10 +13,12 @@ import { APP_VERSION } from './constants/templates';
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
 import Sidebar from './components/Sidebar/Sidebar';
-import DynamicForm from './components/DynamicForm';
-import ReportPreview from './components/ReportPreview';
+import ReportForm from './components/ReportForm';
+import PreviewArea from './components/PreviewArea';
 import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
+import MobileHeader from './components/MobileHeader';
+import DemoWarning from './components/DemoWarning';
 
 const App = () => {
   // --- Auth & Persistence ---
@@ -194,45 +196,13 @@ const App = () => {
 
   return (
     <div className="app-container">
-      {/* Database Connection Warning */}
-      {!supabase && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          background: 'rgba(239, 68, 68, 0.9)',
-          color: 'white',
-          padding: '8px 16px',
-          textAlign: 'center',
-          fontSize: '12px',
-          fontWeight: 600,
-          zIndex: 9999,
-          backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
-        }}>
-          ⚠️ ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Supabase Config) | โหมดสาธิต (Admin/Admin) ทำงานอยู่
-        </div>
-      )}
-
-      {/* Mobile Header */}
-      <div className="mobile-header" style={{ marginTop: !supabase ? '36px' : '0' }}>
-        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
-        <div className="app-title">
-           {reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}
-           <span style={{ fontSize: '9px', opacity: 0.5, marginLeft: '6px' }}>{APP_VERSION}</span>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            className="header-action-btn"
-            style={{ color: 'var(--accent-red)', padding: '0 4px' }}
-            onClick={handleLogout}
-            title="ออกจากระบบ"
-          >
-            <User size={18} />
-          </button>
-        </div>
-      </div>
+      <DemoWarning show={!supabase} />
+      <MobileHeader 
+        reportMode={reportMode} 
+        onMenuToggle={() => setIsSidebarOpen(true)}
+        onLogout={handleLogout}
+        hasWarning={!supabase}
+      />
 
       <div
         className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
@@ -266,7 +236,7 @@ const App = () => {
 
       <main className={`main-content ${isSplitMode && activeMobileTab === 'form' ? 'split-active' : ''}`}>
         <section className={`pc-form-section ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
-          <DynamicForm
+          <ReportForm
             selectedTemplate={selectedTemplate}
             reportMode={reportMode}
             dynamicFields={dynamicFields}
@@ -282,7 +252,7 @@ const App = () => {
         </section>
 
         <section className={`pc-preview-section ${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
-          <ReportPreview
+          <PreviewArea
             thaiPreviewRef={thaiPreviewRef}
             thaiPreview={thaiPreview}
             activeMobileTab={activeMobileTab}

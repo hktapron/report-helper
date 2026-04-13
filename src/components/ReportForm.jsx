@@ -5,7 +5,7 @@ import {
   FileCheck, ArrowRight 
 } from 'lucide-react';
 
-const DynamicForm = ({
+const ReportForm = ({
   selectedTemplate,
   reportMode,
   dynamicFields,
@@ -114,5 +114,5 @@ const DynamicForm = ({
   );
 };
 
-export default DynamicForm;
+export default ReportForm;
 

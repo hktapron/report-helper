@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, Loader2, Sparkles } from 'lucide-react';
 
-const ReportPreview = ({
+const PreviewArea = ({
   thaiPreviewRef,
   thaiPreview,
   activeMobileTab,
@@ -87,4 +87,4 @@ const ReportPreview = ({
   );
 };
 
-export default ReportPreview;
+export default PreviewArea;
