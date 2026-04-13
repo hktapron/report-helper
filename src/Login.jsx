@@ -13,15 +13,16 @@ const Login = ({ onLogin }) => {
     setError(null);
 
     try {
+      // 1. Hardcoded Override for admin/admin (Works even if Supabase is connected or not)
+      if (username.trim() === 'admin' && password === 'admin') {
+        onLogin({ id: 'demo', username: 'admin', display_name: 'Administrator (Demo)' });
+        return;
+      }
+
       if (!supabase) {
-        // Fallback to Demo mode if Supabase is missing
-        if (username === 'admin' && password === 'admin') {
-          onLogin({ id: 'demo', username: 'admin', display_name: 'Administrator (Demo)' });
-        } else {
-          setError('ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Config). กรุณาใช้ admin / admin สำหรับโหมดทดลอง');
-        }
+        setError('ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Config). กรุณาใช้ admin / admin สำหรับโหมดทดลอง');
       } else {
-        const email = `${username.trim()}@vtsp.internal`;
+        const email = username.includes('@') ? username.trim() : `${username.trim()}@vtsp.internal`;
         const { data, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,

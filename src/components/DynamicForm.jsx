@@ -97,17 +97,20 @@ const DynamicForm = ({
                 padding: '1.5rem', 
                 marginBottom: '1.5rem',
                 boxShadow: 'var(--shadow-md)',
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.2rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.8rem' }}>
-                   <div style={{ width: '4px', height: '18px', background: 'var(--accent-indigo)', borderRadius: '2px' }} />
-                   <h4 className="group-title" style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>{groupName}</h4>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent-indigo)' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                   <h4 className="group-title" style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '0.02em' }}>{groupName}</h4>
                 </div>
                 
-                <div className="fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.2rem' }}>
+                <div className="fields-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                   {fields.map(field => (
                     <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
-                      <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.6rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>
+                      <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700' }}>
                         {getFieldIcon(field.id)}
                         <span>{field.label}</span>
                       </label>
@@ -116,7 +119,7 @@ const DynamicForm = ({
                           placeholder={`โปรดระบุ${field.label.toLowerCase()}...`}
                           value={formData[field.id] || ''}
                           onChange={(e) => onInputChange(field.id, e.target.value)}
-                          style={{ width: '100%', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', minHeight: '120px', fontSize: '1rem' }}
+                          style={{ width: '100%', borderRadius: '12px', padding: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', minHeight: '130px', fontSize: '1rem', color: 'var(--text-primary)' }}
                         />
                       ) : (
                         <input
@@ -124,7 +127,7 @@ const DynamicForm = ({
                           placeholder={field.type === 'time' ? 'เช่น 1430' : ''}
                           value={formData[field.id] || ''}
                           onChange={(e) => onInputChange(field.id, e.target.value)}
-                          style={{ width: '100%', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', height: '48px', fontSize: '1rem' }}
+                          style={{ width: '100%', borderRadius: '12px', padding: '0 12px', border: '1px solid var(--border-subtle)', background: 'var(--bg-app)', height: '50px', fontSize: '1rem', color: 'var(--text-primary)' }}
                         />
                       )}
                     </div>

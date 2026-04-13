@@ -230,7 +230,10 @@ const App = () => {
       {/* Mobile Header */}
       <div className="mobile-header" style={{ marginTop: !supabase ? '36px' : '0' }}>
         <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>☰</button>
-        <div className="app-title">{reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}</div>
+        <div className="app-title">
+           {reportMode === 'incident' ? 'VTSP Incident' : 'ทภก. Violator'}
+           <span style={{ fontSize: '9px', opacity: 0.5, marginLeft: '6px' }}>v18.1</span>
+        </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             className="header-action-btn"
