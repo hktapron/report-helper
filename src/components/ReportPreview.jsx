@@ -51,7 +51,7 @@ const ReportPreview = ({
               className="btn btn-dark btn-save-template"
               onClick={handleSaveTemplate}
               title="บันทึกต้นแบบ"
-              style={{ fontWeight: '600', padding: '10px 20px' }}
+              style={{ fontWeight: '700', padding: '10px 24px' }}
             >
               บันทึก
             </button>

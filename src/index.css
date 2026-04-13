@@ -1580,11 +1580,12 @@ input:focus, textarea:focus {
   }
 }
 
-/* --- v20 THEME & PC STABILIZATION --- */
+/* --- v20.1 THEME & PC ABSOLUTE FIX --- */
 .btn-copy-save {
   background: #10b981 !important;
   color: white !important;
   box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+  border: none !important;
 }
 
 .btn-copy-save:hover {
@@ -1596,6 +1597,7 @@ input:focus, textarea:focus {
   background: #27272a !important;
   color: #f4f4f5 !important;
   border: 1px solid #3f3f46 !important;
+  opacity: 1 !important;
 }
 
 .btn-dark:hover {
@@ -1604,8 +1606,16 @@ input:focus, textarea:focus {
 }
 
 @media (min-width: 769px) {
+  /* Absolute Hide for Bottom Nav on PC */
+  .app-container .mobile-nav,
   .mobile-nav {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .sidebar.pc-sidebar {
@@ -1617,13 +1627,20 @@ input:focus, textarea:focus {
   .main-content {
     flex-direction: row !important;
     overflow: hidden !important;
+    height: 100vh !important;
   }
 
-  /* Force Scroll on PC */
+  /* Force Scroll on PC Content */
   .form-scroll-body, 
   .preview-body-v2 {
     overflow-y: auto !important;
-    height: calc(100vh - 80px) !important;
+    max-height: calc(100vh - 80px) !important;
+    padding-bottom: 100px !important; /* Extra breathing room */
+  }
+  
+  .pc-form-section, .pc-preview-section {
+    overflow: hidden !important;
+    height: 100vh !important;
   }
 }
 
