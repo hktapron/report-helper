@@ -225,6 +225,7 @@ const App = () => {
 
       <Sidebar
         user={user}
+        className="pc-sidebar"
         reportMode={reportMode}
         handleSwitchMode={handleSwitchMode}
         handleLogout={handleLogout}
@@ -248,7 +249,7 @@ const App = () => {
       />
 
       <main className={`main-content ${isSplitMode && activeMobileTab === 'form' ? 'split-active' : ''}`}>
-        <section className={`desktop-column-form ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
+        <section className={`pc-form-section ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
           <DynamicForm
             selectedTemplate={selectedTemplate}
             reportMode={reportMode}
@@ -264,7 +265,7 @@ const App = () => {
           />
         </section>
 
-        <section className={`desktop-column-preview ${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
+        <section className={`pc-preview-section ${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
           <ReportPreview
             thaiPreviewRef={thaiPreviewRef}
             thaiPreview={thaiPreview}
