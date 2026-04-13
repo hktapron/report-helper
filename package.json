@@ -10,11 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/generative-ai": "0.24.1",
-    "@supabase/supabase-js": "2.45.0",
-    "lucide-react": "1.7.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.47.1",
+    "lucide-react": "^0.471.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",

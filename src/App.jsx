@@ -28,11 +28,8 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [reportMode, setReportMode] = useState(() => {
     const saved = localStorage.getItem('vtsp_report_mode');
-    console.log('[App] Restored Mode:', saved);
     return (saved === 'incident' || saved === 'violator') ? saved : null;
   });
-
-  console.log('[App] Render Stage - User:', !!user, 'Mode:', reportMode);
 
   // Restore Supabase session on mount; listen for auth changes
   useEffect(() => {
