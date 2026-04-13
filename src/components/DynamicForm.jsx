@@ -13,7 +13,6 @@ const DynamicForm = ({
   setIsSplitMode,
   thaiPreview,
 }) => {
-  if (window.innerWidth <= 768 && activeMobileTab !== 'form') return null;
 
   return (
     <section

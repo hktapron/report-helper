@@ -15,6 +15,8 @@ import DynamicForm from './components/DynamicForm';
 import ReportPreview from './components/ReportPreview';
 import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
+import QuickTools from './components/QuickTools';
+import { Sparkles } from 'lucide-react';
 
 // Normalise a Supabase auth user → app user object
 const formatAuthUser = (authUser) => ({
@@ -204,14 +206,6 @@ const App = () => {
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             className="header-action-btn"
-            style={{ fontSize: '0.65rem', width: 'auto', padding: '0 8px' }}
-            onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
-            title="สลับโหมด"
-          >
-            {reportMode === 'incident' ? 'ผู้กระทำความผิด' : 'เหตุการณ์ไม่ปกติ'}
-          </button>
-          <button
-            className="header-action-btn"
             style={{ color: 'var(--accent-red)', padding: '0 4px' }}
             onClick={handleLogout}
             title="ออกจากระบบ"
@@ -250,34 +244,51 @@ const App = () => {
         createFolder={createFolder}
       />
 
-      <main className="main-content">
-        <DynamicForm
-          selectedTemplate={selectedTemplate}
-          reportMode={reportMode}
-          dynamicFields={dynamicFields}
-          formData={formData}
-          onInputChange={handleInputChange}
-          onReset={handleFullReset}
-          activeMobileTab={activeMobileTab}
-          isSplitMode={isSplitMode}
-          setIsSplitMode={setIsSplitMode}
-          thaiPreview={thaiPreview}
-        />
+      <main className={`main-content ${isSplitMode && activeMobileTab === 'form' ? 'split-active' : ''}`}>
+        <section className={`${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
+          <DynamicForm
+            selectedTemplate={selectedTemplate}
+            reportMode={reportMode}
+            dynamicFields={dynamicFields}
+            formData={formData}
+            onInputChange={handleInputChange}
+            onReset={handleFullReset}
+            activeMobileTab={activeMobileTab}
+            isSplitMode={isSplitMode}
+            setIsSplitMode={setIsSplitMode}
+            thaiPreview={thaiPreview}
+          />
+        </section>
 
-        <ReportPreview
-          thaiPreviewRef={thaiPreviewRef}
-          thaiPreview={thaiPreview}
-          activeMobileTab={activeMobileTab}
-          reportMode={reportMode}
-          handleSwitchMode={handleSwitchMode}
-          isLoadingCAAT={isLoadingCAAT}
-          onCAATTranslate={handleCAATTranslate}
-          saveTemplate={saveTemplate}
-          saveReport={historyData.saveReport}
-          selectedTemplate={selectedTemplate}
-          formData={formData}
-          extraPreview={extraPreview}
-        />
+        <section className={`${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
+          <ReportPreview
+            thaiPreviewRef={thaiPreviewRef}
+            thaiPreview={thaiPreview}
+            activeMobileTab={activeMobileTab}
+            reportMode={reportMode}
+            handleSwitchMode={handleSwitchMode}
+            isLoadingCAAT={isLoadingCAAT}
+            onCAATTranslate={handleCAATTranslate}
+            saveTemplate={saveTemplate}
+            saveReport={historyData.saveReport}
+            selectedTemplate={selectedTemplate}
+            formData={formData}
+            extraPreview={extraPreview}
+            isSplitMode={isSplitMode}
+          />
+        </section>
+
+        <div className={`quick-tools-view ${activeMobileTab === 'tools' ? 'mobile-visible' : ''}`}>
+          <QuickTools
+            activeMobileTab={activeMobileTab}
+            onCAATTranslate={handleCAATTranslate}
+            isLoadingCAAT={isLoadingCAAT}
+            thaiPreview={thaiPreview}
+            onReset={handleFullReset}
+            isSplitMode={isSplitMode}
+            setIsSplitMode={setIsSplitMode}
+          />
+        </div>
 
         <nav className="mobile-nav">
           <button
@@ -293,10 +304,10 @@ const App = () => {
             <Edit2 size={20} /><span>กรอกข้อมูล</span>
           </button>
           <button
-            className={`nav-item ${activeMobileTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveMobileTab('history')}
+            className={`nav-item ${activeMobileTab === 'tools' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('tools')}
           >
-            <Clock size={20} /><span>ประวัติ</span>
+            <Sparkles size={20} /><span>ตัวช่วย AI</span>
           </button>
         </nav>
       </main>

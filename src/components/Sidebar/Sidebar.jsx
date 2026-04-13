@@ -47,15 +47,13 @@ const Sidebar = ({
       <div className="sidebar-header" style={{ padding: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
-          {window.innerWidth > 768 && (
             <button
               className="btn btn-mode-switch"
-              style={{ fontSize: '10px', whiteSpace: 'nowrap' }}
+              style={{ fontSize: '10px', whiteSpace: 'nowrap', width: 'auto' }}
               onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
             >
-              {reportMode === 'incident' ? 'สลับรายงานผู้กระทำความผิด' : 'สลับรายงานเหตุการณ์ไม่ปกติ'}
+              {reportMode === 'incident' ? 'สลับฟอร์มผู้กระทำความผิด' : 'สลับฟอร์มเหตุการณ์ไม่ปกติ'}
             </button>
-          )}
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           User: <strong>{user.username}</strong>

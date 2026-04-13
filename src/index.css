@@ -1104,3 +1104,129 @@ input:focus, textarea:focus {
 .btn-mode-switch:active {
   transform: translateY(0);
 }
+
+/* --- QUICK TOOLS VIEW (MOBILE) --- */
+.quick-tools-view {
+  padding: 1.5rem;
+  background: var(--bg-main);
+  min-height: calc(100vh - 130px);
+}
+
+.tools-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--accent-indigo);
+  text-align: center;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  color: white;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-btn:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tool-btn.active {
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+}
+
+.tool-btn.ai-btn {
+  background: linear-gradient(135deg, var(--accent-indigo), #6366f1);
+  border: none;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.tool-btn.danger-btn {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.tool-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.tool-desc {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.tools-footer-info {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  letter-spacing: 0.05em;
+}
+
+/* --- MOBILE SPLIT MODE --- */
+@media (max-width: 768px) {
+  .main-content.split-active {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 130px);
+    overflow: hidden;
+  }
+
+  .main-content.split-active > section {
+    height: 50% !important;
+    display: flex !important;
+    overflow-y: auto !important;
+    border-bottom: 1px solid var(--border-glass);
+  }
+
+  .main-content.split-active > section:last-of-type {
+    border-bottom: none;
+    background: var(--bg-glass);
+  }
+
+  /* Hide tools tab content if not active */
+  .quick-tools-view {
+    display: none;
+  }
+  .quick-tools-view.mobile-visible {
+    display: block !important;
+  }
+}
+
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

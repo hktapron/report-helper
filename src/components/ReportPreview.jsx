@@ -41,22 +41,11 @@ const ReportPreview = ({
   };
 
   return (
-    <section
-      className={`preview-container-main ${activeMobileTab === 'preview' || activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'}`}
-      style={{ flex: '1' }}
-    >
+    <section className="preview-container-main" style={{ flex: '1' }}>
       <div className="card">
         <div className="card-header">
           <h2 className="card-title">Preview</h2>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {window.innerWidth <= 768 && (
-              <button
-                className="btn btn-mode-switch"
-                onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
-              >
-                {reportMode === 'incident' ? 'สลับผู้กระทำความผิด' : 'สลับเหตุการณ์'}
-              </button>
-            )}
             <button
               className="btn btn-ghost"
               style={{ border: '1px solid var(--border-subtle)', fontSize: '11px' }}
