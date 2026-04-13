@@ -9,10 +9,15 @@ const isReady =
   supabaseUrl.startsWith('http') && 
   !supabaseUrl.includes('YOUR_SUPABASE_URL');
 
-export const supabase = isReady 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
+// Robust client initialization
+let supabaseClient = null;
 
-if (!supabase) {
-  console.warn('Supabase Client: Initialized in Local/Demo mode.');
+if (isReady) {
+  try {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (err) {
+    console.error('Supabase Initialization Error:', err);
+  }
 }
+
+export const supabase = supabaseClient;
