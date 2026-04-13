@@ -302,12 +302,13 @@ input:focus, textarea:focus {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 65px;
-  background: rgba(15, 15, 18, 0.95);
+  height: 70px;
+  background: rgba(9, 9, 11, 0.98);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-subtle);
   z-index: 1000;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -720,11 +721,13 @@ input:focus, textarea:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 65px;
+    height: 70px;
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border-subtle);
-    z-index: 100;
+    z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .nav-item {
@@ -769,6 +772,62 @@ input:focus, textarea:focus {
   @keyframes fabPop {
     from { transform: scale(0); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
+  }
+}
+
+/* Final Phase V.Mobile: Action Bar Logic */
+.report-action-bar {
+  display: flex !important;
+  gap: 8px;
+  width: 100%;
+}
+
+.report-action-bar .btn {
+  padding: 8px 12px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.btn-save-only {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  flex: 0.5 !important;
+}
+
+.btn-caat-action {
+  background: var(--bg-input);
+  border: 1px solid var(--accent-indigo);
+  color: var(--text-primary);
+}
+
+.btn-copy-action {
+  background: linear-gradient(135deg, var(--accent-indigo), var(--accent-blue)) !important;
+  border: none !important;
+  flex: 1.5 !important;
+}
+
+@media (max-width: 768px) {
+  .report-action-bar {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: rgba(9, 9, 11, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 990;
+    gap: 10px;
+  }
+  
+  .preview-body-v2 {
+    padding-bottom: 80px;
   }
 }
 

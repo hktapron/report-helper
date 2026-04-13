@@ -45,12 +45,13 @@ const ReportPreview = ({
       <div className="card">
         <div className="card-header action-bar-header">
           <h2 className="card-title">Preview</h2>
-          <div className="action-buttons-group">
+          <div className="action-buttons-group report-action-bar">
             <button
               className="btn btn-ghost btn-save-template"
               onClick={handleSaveTemplate}
+              title="บันทึกต้นแบบ"
             >
-              บันทึกแม่แบบ
+              บันทึก
             </button>
             <button
               className="btn btn-primary btn-ai-translate"
@@ -58,10 +59,10 @@ const ReportPreview = ({
               disabled={isLoadingCAAT}
             >
               {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              แปล AI กพท.22
+              <span>กพท.22</span>
             </button>
             <button className="btn btn-primary btn-copy-save" onClick={handleCopyAndSave}>
-              <Check size={16} /> คัดลอกและบันทึก
+              <Check size={16} /> <span>คัดลอกและบันทึก</span>
             </button>
           </div>
         </div>

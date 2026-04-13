@@ -160,9 +160,8 @@ const App = () => {
       preview: finalHtml,
     });
     setIsSidebarOpen(false);
-    if (window.innerWidth <= 768) {
-      setActiveMobileTab('form');
-    }
+    // Auto-jump to "Data Entry" tab on mobile
+    setActiveMobileTab('form');
   };
 
   const handleInputChange = (id, value) => {
@@ -283,7 +282,7 @@ const App = () => {
           />
         </section>
 
-        <nav className="mobile-nav" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <nav className="mobile-nav">
           <button
             className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
             onClick={() => setActiveMobileTab('templates')}

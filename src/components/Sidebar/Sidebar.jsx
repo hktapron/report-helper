@@ -45,16 +45,25 @@ const Sidebar = ({
       className={`sidebar ${isSidebarOpen ? 'open' : ''} ${activeMobileTab === 'templates' ? 'mobile-active-templates' : ''} ${activeMobileTab === 'history' ? 'mobile-active-history' : ''}`}
     >
       <div className="sidebar-header" style={{ padding: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
           <div className="app-title" style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-indigo)' }}>VTSP</div>
-            <button
-              className="btn btn-mode-switch"
-              style={{ fontSize: '10px', whiteSpace: 'nowrap', width: 'auto' }}
-              onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
-            >
-              {reportMode === 'incident' ? 'สลับฟอร์มผู้กระทำความผิด' : 'สลับฟอร์มเหตุการณ์ไม่ปกติ'}
-            </button>
+          <button
+            className="btn btn-mode-switch mobile-mode-btn"
+            style={{ fontSize: '11px', whiteSpace: 'nowrap', padding: '6px 10px', width: 'auto' }}
+            onClick={() => handleLogout()}
+          >
+            <User size={12} />
+          </button>
         </div>
+
+        <button
+          className="btn btn-mode-switch"
+          style={{ width: '100%', marginBottom: '1.2rem', justifyContent: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', fontWeight: 'bold' }}
+          onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
+        >
+          {reportMode === 'incident' ? 'สลับเป็น: ผู้กระทำความผิด' : 'สลับเป็น: เหตุการณ์ไม่ปกติ'}
+        </button>
+
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           User: <strong>{user.username}</strong>
         </div>
@@ -72,6 +81,14 @@ const Sidebar = ({
 
       <div className="sidebar-scroll-area">
         <div style={{ padding: '0 0.5rem' }}>
+          <button
+            className="btn btn-mode-switch"
+            style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', fontWeight: 'bold' }}
+            onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
+          >
+            {reportMode === 'incident' ? 'สลับเป็น: ผู้กระทำความผิด' : 'สลับเป็น: เหตุการณ์ไม่ปกติ'}
+          </button>
+
           <button
             className="btn btn-primary btn-full"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
