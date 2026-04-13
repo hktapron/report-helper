@@ -59,7 +59,7 @@ const ReportPreview = ({
               className="btn btn-outline btn-ai-translate"
               onClick={onCAATTranslate}
               disabled={isLoadingCAAT}
-              style={{ border: '1px solid var(--accent-indigo)', color: 'var(--accent-indigo)', fontWeight: '600', padding: '10px 20px' }}
+              style={{ border: '1px solid #0ea5e9', color: '#0ea5e9', fontWeight: '600', padding: '10px 20px' }}
             >
               {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               <span>กพท.22</span>
@@ -67,7 +67,7 @@ const ReportPreview = ({
             <button 
               className="btn btn-primary btn-copy-save" 
               onClick={handleCopyAndSave}
-              style={{ background: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px' }}
+              style={{ background: '#0ea5e9', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', border: 'none' }}
             >
               <Check size={16} /> <span>คัดลอกและบันทึก</span>
             </button>

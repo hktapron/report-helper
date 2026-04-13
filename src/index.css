@@ -1580,16 +1580,16 @@ input:focus, textarea:focus {
   }
 }
 
-/* --- v20.1 THEME & PC ABSOLUTE FIX --- */
+/* --- v21 UNIFIED THEME & SKY BLUE --- */
 .btn-copy-save {
-  background: #10b981 !important;
+  background: #0ea5e9 !important;
   color: white !important;
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+  box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.45) !important;
   border: none !important;
 }
 
 .btn-copy-save:hover {
-  background: #059669 !important;
+  background: #0284c7 !important;
   transform: translateY(-1px);
 }
 
@@ -1603,6 +1603,23 @@ input:focus, textarea:focus {
 .btn-dark:hover {
   background: #18181b !important;
   border-color: #52525b !important;
+}
+
+/* Mobile Touch Optimization */
+@media (max-width: 768px) {
+  .form-scroll-body {
+    padding: 1.25rem !important;
+    gap: 1.5rem !important;
+  }
+  
+  .input-wrapper {
+    margin-bottom: 1.25rem;
+  }
+  
+  .unified-card {
+    border-radius: 20px !important;
+    padding: 1.5rem !important;
+  }
 }
 
 @media (min-width: 769px) {
