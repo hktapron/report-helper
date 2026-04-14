@@ -60,16 +60,11 @@ const ReportForm = ({
               className="form-category-card unified-card"
               style={{
                 ...(window.innerWidth <= 768 ? {
-                  position: 'relative',
-                  width: '100vw',
-                  left: '50%',
-                  right: '50%',
-                  marginLeft: '-50vw',
-                  marginRight: '-50vw',
+                  width: '100%',
                   borderRadius: '0px',
                   border: 'none',
                   boxShadow: 'none',
-                  padding: '0px' // v39: Absolute flush-to-edge
+                  padding: '0px' 
                 } : {})
               }}
             >
