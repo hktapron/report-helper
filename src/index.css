@@ -457,7 +457,7 @@ input:focus, textarea:focus {
 .form-scroll-zone {
   flex: 0 0 125px; /* STRICT: Height for exactly one row (2 fields) (v28) */
   background: var(--bg-sidebar);
-  padding-bottom: 50px !important; /* Space for action buttons */
+  padding-bottom: 0px !important; /* v39: Flush with action bar */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
   max-width: none !important;
@@ -522,9 +522,9 @@ input:focus, textarea:focus {
   .group-header {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 0 1rem !important; /* v34: Inner padding for legibility */
+    padding: 0 !important; /* v39: Absolute flush-to-edge */
     margin: 0 !important;
-    height: 40px;
+    height: 34px; /* Even more compact */
     display: flex;
     align-items: center;
   }
@@ -536,8 +536,8 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.5rem 1rem !important; /* v34: Inner padding for legibility */
-    gap: 0.35rem 0.5rem !important;
+    padding: 4px 0 !important; /* v39: Absolute flush-to-edge */
+    gap: 0.25rem 0.5rem !important; /* Ultra-tight */
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;

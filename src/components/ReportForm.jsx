@@ -69,7 +69,7 @@ const ReportForm = ({
                   borderRadius: '0px',
                   border: 'none',
                   boxShadow: 'none',
-                  padding: '1rem' // Inner breathing room
+                  padding: '0px' // v39: Absolute flush-to-edge
                 } : {})
               }}
             >
