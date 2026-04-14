@@ -437,11 +437,6 @@ input:focus, textarea:focus {
   background: var(--bg-dark);
   overflow: hidden;
   position: relative;
-  width: 100% !important; /* Force full width (v32) */
-  max-width: none !important;
-  margin: 0 !important;
-  padding-left: 0 !important; /* v34: Parent override */
-  padding-right: 0 !important; /* v34: Parent override */
 }
 
 .preview-scroll-zone {
@@ -460,11 +455,6 @@ input:focus, textarea:focus {
   background: var(--bg-sidebar);
   padding-bottom: 50px !important; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-  width: 100% !important; /* Force full width (v32) */
-  max-width: none !important;
-  margin: 0 !important;
-  padding-left: 0 !important; /* v34: Parent override */
-  padding-right: 0 !important; /* v34: Parent override */
 }
 
 .mobile-action-bar {
@@ -490,27 +480,18 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
-  /* v34: Multi-layer Parent Padding Reset */
-  .main-content, 
-  .mobile-unified-container, 
-  .form-scroll-zone, 
-  .form-section-container, 
-  .premium-form-container, 
-  .form-scroll-body {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-  }
-
-  /* v34: Unified Card Reset (Removing margins and rounding) */
+  /* v35: CSS Breakout / Full Bleed Technique */
   .form-category-card.unified-card {
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      border-radius: 0 !important; /* Edge-to-edge on mobile */
+      width: 100vw !important;
+      max-width: 100vw !important;
+      margin-left: calc(-50vw + 50.1%) !important; /* Forces breakout of any parent container */
+      margin-right: calc(-50vw + 50.1%) !important;
+      
+      /* De-decoration for Edge-to-Edge block look */
+      border-radius: 0 !important;
       border-left: none !important;
       border-right: none !important;
-      width: 100% !important;
-      max-width: none !important;
-      background: transparent !important;
+      background: var(--bg-sidebar) !important; /* Ensure solid box look */
       box-shadow: none !important;
   }
 
