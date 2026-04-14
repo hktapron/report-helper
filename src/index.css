@@ -447,11 +447,25 @@ input:focus, textarea:focus {
 .preview-scroll-zone {
   flex: 1; /* Occupies top half/remaining space */
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0 !important; /* v40.2: Absolute flush-to-edge */
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
+}
+
+/* Cleanup internal spacing for Absolute Flush */
+.preview-scroll-zone .card,
+.preview-scroll-zone .preview-textarea {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+.preview-textarea {
+  padding: 10px 10px !important; /* Minimal inner padding for text readability */
+  line-height: 1.6;
 }
 
 .form-scroll-zone {
@@ -483,14 +497,14 @@ input:focus, textarea:focus {
 }
 
 .divider-line {
-  height: 2px;
-  background: var(--accent-indigo);
-  opacity: 0.3;
+  height: 1px; /* Thinner */
+  background: var(--border-subtle);
   width: 100%;
 }
 
 @media (max-width: 768px) {
-  /* v37: Ultimate Full-Width Reset & Overflow Unlock */
+  /* v40: Root Mobile Flush */
+  .app-container,
   .main-content, 
   .mobile-unified-container, 
   .form-scroll-zone, 
@@ -499,17 +513,18 @@ input:focus, textarea:focus {
   .form-scroll-body {
       padding: 0 !important;
       margin: 0 !important;
-      width: 100% !important;
-      max-width: none !important;
+      width: 100vw !important;
+      max-width: 100vw !important;
       overflow-x: visible !important;
+      left: 0 !important;
   }
 
   /* v35: CSS Breakout / Full Bleed Technique */
   .form-category-card.unified-card {
       width: 100vw !important;
       max-width: 100vw !important;
-      margin-left: calc(-50vw + 50.1%) !important; /* Forces breakout of any parent container */
-      margin-right: calc(-50vw + 50.1%) !important;
+      margin-left: calc(-50vw + 50%) !important; 
+      margin-right: calc(-50vw + 50%) !important;
       
       /* De-decoration for Edge-to-Edge block look */
       border-radius: 0 !important;
@@ -517,6 +532,7 @@ input:focus, textarea:focus {
       border-right: none !important;
       background: var(--bg-sidebar) !important; /* Ensure solid box look */
       box-shadow: none !important;
+      left: 0 !important; /* Force flush (v40.1) */
   }
 
   .group-header {
@@ -533,6 +549,8 @@ input:focus, textarea:focus {
     padding: 0 !important;
     font-size: 0.85rem;
     margin: 0 !important;
+    color: var(--text-primary);
+    font-weight: 600;
   }
 
   .fields-grid {
