@@ -24,7 +24,6 @@ const ReportForm = ({
   return (
     <section
       className={`form-section-container ${activeMobileTab === 'form' ? 'mobile-active' : 'mobile-hidden'} ${isSplitMode ? 'split-mode-active' : ''}`}
-      style={window.innerWidth > 768 ? { flex: '0 0 55%' } : {}}
     >
       {!selectedTemplate && reportMode !== 'violator' ? (
         <div className="empty-state-container">

@@ -503,7 +503,9 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
-  /* v41: Absolute 100% Hard-Reset (No 100vw/calc) */
+  /* v43: Definitive 100% Hierarchy Reset */
+  body, 
+  #root,
   .app-container,
   .main-content, 
   .mobile-unified-container, 
@@ -516,7 +518,7 @@ input:focus, textarea:focus {
       width: 100% !important;
       min-width: 100% !important;
       max-width: none !important;
-      overflow-x: hidden !important; /* Prevent horizontal scroll */
+      overflow-x: hidden !important;
       left: 0 !important;
       right: 0 !important;
   }
@@ -819,9 +821,8 @@ input:focus, textarea:focus {
   }
 
   .main-content {
-    padding: 0 !important; /* Full-width mobile (v31) */
-    padding-top: 5rem; /* Space for fixed header if any */
-    width: 100% !important; /* Force full width (v32) */
+    padding: 0 !important; 
+    width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
   }
