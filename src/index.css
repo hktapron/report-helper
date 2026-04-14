@@ -463,13 +463,20 @@ input:focus, textarea:focus {
   }
 
   .unified-card {
-    padding: 0.6rem !important; /* Compressed (v28) */
-    border-radius: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 0 !important;
   }
 
   .group-title {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 0 4px 0 !important;
     margin-bottom: 0.4rem !important;
-    font-size: 0.85rem !important;
+    font-size: 0.85rem;
   }
 
   .input-label {
