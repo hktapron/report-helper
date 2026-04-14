@@ -56,20 +56,7 @@ const ReportForm = ({
           )}
 
           <div className="form-scroll-body" key={selectedTemplate?.id || 'none'}>
-            <div 
-              className="form-category-card unified-card"
-              style={{
-                ...(window.innerWidth <= 768 ? {
-                  width: '100%',
-                  borderRadius: '0px',
-                  border: 'none',
-                  boxShadow: 'none',
-                  padding: '0px' 
-                } : {})
-              }}
-            >
-              <div className="card-indicator" />
-              
+            <div className="form-category-card unified-card">
               <div className="group-header">
                  <Plane size={16} color="var(--accent-indigo)" />
                  <h4 className="group-title">ข้อมูลเที่ยวบิน (Flight)</h4>

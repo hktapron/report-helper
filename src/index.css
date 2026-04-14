@@ -521,10 +521,11 @@ input:focus, textarea:focus {
       right: 0 !important;
   }
 
-  /* v41: Card Full-Width Reset */
+  /* v42: Card Full-Width Reset & Sharp Corners */
   .form-category-card.unified-card {
       width: 100% !important;
-      max-width: none !important;
+      max-width: 100% !important;
+      min-width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
       
@@ -532,29 +533,34 @@ input:focus, textarea:focus {
       border: none !important;
       background: var(--bg-sidebar) !important;
       box-shadow: none !important;
+      left: 0 !important;
+  }
+
+  .card-indicator {
+    display: none !important; /* v42: Clean Header */
   }
 
   .group-header {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 0 !important; /* v39: Absolute flush-to-edge */
+    padding: 0 1rem !important; /* v42: Safe breathing room for content */
     margin: 0 !important;
-    height: 34px; /* Even more compact */
+    height: 38px;
     display: flex;
     align-items: center;
   }
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.85rem;
-    margin: 0 !important;
+    font-size: 0.9rem;
+    margin: 0 0 0 8px !important;
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .fields-grid {
-    padding: 4px 0 !important; /* v39: Absolute flush-to-edge */
-    gap: 0.25rem 0.5rem !important; /* Ultra-tight */
+    padding: 0.75rem 1rem !important; /* v42: Safe breathing room for content */
+    gap: 0.5rem 0.5rem !important; 
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
