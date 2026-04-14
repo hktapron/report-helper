@@ -250,14 +250,39 @@ body {
   letter-spacing: -0.01em;
 }
 
-.form-body {
-  padding: 0.5rem 0.75rem;
+.form-scroll-body {
   flex: 1;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.5rem 0.75rem;
-  align-content: start;
+  padding: 0.75rem; /* PC Default */
+}
+
+.unified-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: var(--accent-indigo);
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .form-field.full { grid-column: 1 / -1; }
@@ -428,8 +453,8 @@ input:focus, textarea:focus {
   flex: 0 0 125px; /* STRICT: Height for exactly one row (2 fields) (v28) */
   overflow-y: auto;
   background: var(--bg-sidebar);
-  padding: 0.5rem; /* Compact */
-  padding-bottom: 50px; /* Space for action buttons */
+  padding: 0 !important; /* Edge-to-edge (v30) */
+  padding-bottom: 50px !important; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
 }
 
@@ -471,12 +496,22 @@ input:focus, textarea:focus {
     border-radius: 0 !important;
   }
 
-  .group-title {
+  .group-header {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 0 0 4px 0 !important;
-    margin-bottom: 0.4rem !important;
+    padding: 4px 0.75rem !important; /* Local padding (v30) */
+    margin: 0 !important;
+  }
+
+  .group-title {
+    padding: 0 !important;
     font-size: 0.85rem;
+    margin: 0 !important;
+  }
+
+  .fields-grid {
+    padding: 0.4rem 0.75rem !important; /* Local padding (v30) */
+    gap: 0.35rem 0.5rem !important;
   }
 
   .input-label {
