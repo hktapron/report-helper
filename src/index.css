@@ -435,8 +435,13 @@ input:focus, textarea:focus {
   flex-direction: column;
   height: calc(100dvh - 70px - 60px); /* Fill space between Header (60px) and Tab Bar (70px) */
   background: var(--bg-dark);
-  overflow: hidden;
   position: relative;
+  width: 100% !important; 
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: visible !important; /* v37: Unlock breakout */
+  overflow-y: hidden;
 }
 
 .preview-scroll-zone {
@@ -451,10 +456,15 @@ input:focus, textarea:focus {
 
 .form-scroll-zone {
   flex: 0 0 125px; /* STRICT: Height for exactly one row (2 fields) (v28) */
-  overflow-y: auto;
   background: var(--bg-sidebar);
   padding-bottom: 50px !important; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: visible !important; /* v37: Unlock breakout */
+  overflow-y: auto;
 }
 
 .mobile-action-bar {
@@ -480,6 +490,20 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
+  /* v37: Ultimate Full-Width Reset & Overflow Unlock */
+  .main-content, 
+  .mobile-unified-container, 
+  .form-scroll-zone, 
+  .form-section-container, 
+  .premium-form-container, 
+  .form-scroll-body {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+      overflow-x: visible !important;
+  }
+
   /* v35: CSS Breakout / Full Bleed Technique */
   .form-category-card.unified-card {
       width: 100vw !important;
