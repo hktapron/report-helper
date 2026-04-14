@@ -425,11 +425,12 @@ input:focus, textarea:focus {
 }
 
 .form-scroll-zone {
-  height: 230px; /* Approximately 2 rows of 2 columns */
+  flex: 1.2; /* Better ratio for form fields */
+  min-height: 280px; /* Ensure at least 4 fields are clearly visible */
   overflow-y: auto;
   background: var(--bg-sidebar);
   padding: 0.75rem;
-  padding-bottom: 60px; /* Space for fixed action buttons */
+  padding-bottom: 70px; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
 }
 
@@ -778,16 +779,17 @@ input:focus, textarea:focus {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    gap: 4px;
+    gap: 2px;
     transition: all 0.2s;
   }
 
-  .nav-item.active {
-    color: var(--accent-indigo);
+  .nav-item svg {
+    width: 18px !important;
+    height: 18px !important;
   }
 
   .nav-item span {
-    font-size: 0.65rem;
+    font-size: 0.6rem !important;
     font-weight: 600;
   }
 
