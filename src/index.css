@@ -503,7 +503,7 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
-  /* v43: Definitive 100% Hierarchy Reset */
+  /* v44: Definitive 100% Hierarchy Reset & High Top Flush */
   body, 
   #root,
   .app-container,
@@ -544,25 +544,25 @@ input:focus, textarea:focus {
 
   .group-header {
     background: transparent !important;
-    border-bottom: 1px solid var(--border-subtle);
-    padding: 0 1rem !important; /* v42: Safe breathing room for content */
+    border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
+    padding: 0 1rem !important;
     margin: 0 !important;
-    height: 38px;
+    height: 30px; /* v44: Ultra-compact height */
     display: flex;
     align-items: center;
   }
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.9rem;
-    margin: 0 0 0 8px !important;
+    font-size: 0.85rem; /* Slightly smaller */
+    margin: 0 0 0 6px !important;
     color: var(--text-primary);
     font-weight: 700;
   }
 
   .fields-grid {
-    padding: 0.75rem 1rem !important; /* v42: Safe breathing room for content */
-    gap: 0.5rem 0.5rem !important; 
+    padding: 0.35rem 1rem !important; /* v44: Halved top space */
+    gap: 0.4rem 0.5rem !important; /* Tighter gap */
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
