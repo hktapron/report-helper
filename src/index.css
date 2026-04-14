@@ -440,7 +440,8 @@ input:focus, textarea:focus {
   width: 100% !important; /* Force full width (v32) */
   max-width: none !important;
   margin: 0 !important;
-  padding: 0 !important;
+  padding-left: 0 !important; /* v34: Parent override */
+  padding-right: 0 !important; /* v34: Parent override */
 }
 
 .preview-scroll-zone {
@@ -457,12 +458,13 @@ input:focus, textarea:focus {
   flex: 0 0 125px; /* STRICT: Height for exactly one row (2 fields) (v28) */
   overflow-y: auto;
   background: var(--bg-sidebar);
-  padding: 0 !important; /* Edge-to-edge (v30) */
   padding-bottom: 50px !important; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important; /* Force full width (v32) */
   max-width: none !important;
   margin: 0 !important;
+  padding-left: 0 !important; /* v34: Parent override */
+  padding-right: 0 !important; /* v34: Parent override */
 }
 
 .mobile-action-bar {
@@ -488,32 +490,38 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
+  /* v34: Multi-layer Parent Padding Reset */
+  .main-content, 
+  .mobile-unified-container, 
+  .form-scroll-zone, 
+  .form-section-container, 
+  .premium-form-container, 
   .form-scroll-body {
-    padding: 0 !important; /* Edge-to-edge content (v31) */
+      padding-left: 0 !important;
+      padding-right: 0 !important;
   }
 
-  .fields-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important; /* 2 Columns */
-    gap: 0.35rem 0.5rem !important; /* Tight (v28) */
-  }
-
-  .unified-card {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important; /* v33: STRICT EDGE-TO-EDGE */
-    border-radius: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
+  /* v34: Unified Card Reset (Removing margins and rounding) */
+  .form-category-card.unified-card {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      border-radius: 0 !important; /* Edge-to-edge on mobile */
+      border-left: none !important;
+      border-right: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
   }
 
   .group-header {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 4px 16px !important; /* Balanced inner padding (v32) */
+    padding: 0 1rem !important; /* v34: Inner padding for legibility */
     margin: 0 !important;
+    height: 40px;
+    display: flex;
+    align-items: center;
   }
 
   .group-title {
@@ -523,9 +531,11 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.4rem 16px !important; /* Balanced inner padding (v32) */
+    padding: 0.5rem 1rem !important; /* v34: Inner padding for legibility */
     gap: 0.35rem 0.5rem !important;
     width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .input-label {
