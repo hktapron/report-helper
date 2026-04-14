@@ -83,14 +83,6 @@ const Sidebar = ({
       <div className="sidebar-scroll-area">
         <div style={{ padding: '0 0.5rem' }}>
           <button
-            className="btn btn-mode-switch"
-            style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', fontWeight: 'bold' }}
-            onClick={() => handleSwitchMode(reportMode === 'incident' ? 'violator' : 'incident')}
-          >
-            {reportMode === 'incident' ? 'สลับเป็น: ผู้กระทำความผิด' : 'สลับเป็น: เหตุการณ์ไม่ปกติ'}
-          </button>
-
-          <button
             className="btn btn-primary btn-full"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
             onClick={() => {
