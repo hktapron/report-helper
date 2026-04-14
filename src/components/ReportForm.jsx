@@ -60,14 +60,16 @@ const ReportForm = ({
               className="form-category-card unified-card"
               style={{
                 ...(window.innerWidth <= 768 ? {
+                  position: 'relative',
                   width: '100vw',
-                  maxWidth: '100vw',
-                  marginLeft: 'calc(-50vw + 50%)',
-                  marginRight: 'calc(-50vw + 50%)',
+                  left: '50%',
+                  right: '50%',
+                  marginLeft: '-50vw',
+                  marginRight: '-50vw',
                   borderRadius: '0px',
-                  borderLeft: 'none',
-                  borderRight: 'none',
-                  padding: '1rem' // Added inner padding for legibility
+                  border: 'none',
+                  boxShadow: 'none',
+                  padding: '1rem' // Inner breathing room
                 } : {})
               }}
             >
