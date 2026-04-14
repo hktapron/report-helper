@@ -56,7 +56,21 @@ const ReportForm = ({
           )}
 
           <div className="form-scroll-body" key={selectedTemplate?.id || 'none'}>
-            <div className="form-category-card unified-card">
+            <div 
+              className="form-category-card unified-card"
+              style={{
+                ...(window.innerWidth <= 768 ? {
+                  width: '100vw',
+                  maxWidth: '100vw',
+                  marginLeft: 'calc(-50vw + 50%)',
+                  marginRight: 'calc(-50vw + 50%)',
+                  borderRadius: '0px',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  padding: '1rem' // Added inner padding for legibility
+                } : {})
+              }}
+            >
               <div className="card-indicator" />
               
               <div className="group-header">
