@@ -75,7 +75,7 @@ const ReportForm = ({
               <div style={{ position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: 'var(--accent-indigo)' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
-                 <Plane size={18} color="var(--accent-indigo)" />
+                 <Plane size={16} color="var(--accent-indigo)" />
                  <h4 className="group-title">ข้อมูลเที่ยวบิน (Flight)</h4>
               </div>
               
@@ -84,7 +84,7 @@ const ReportForm = ({
                   <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
                     <label className="input-label">
                       {/* Using generic icon for simplicity in unified view */}
-                      <FileCheck size={14} />
+                      <FileCheck size={12} />
                       <span>{field.label}</span>
                     </label>
                     {field.type === 'textarea' ? (
