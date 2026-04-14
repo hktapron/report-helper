@@ -38,30 +38,24 @@ const ReportForm = ({
           )}
         </div>
       ) : (
-        <div className="premium-form-container">
-          <div className="form-header-bar">
-            <div className="form-title-group">
-              <div className={`status-dot ${reportMode}`} />
-              <h2>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด')}</h2>
-            </div>
-            
-            <div className="form-header-actions">
-              {window.innerWidth <= 768 && (
-                <button
-                  className={`btn-icon-toggle ${isSplitMode ? 'active' : ''}`}
-                  onClick={() => setIsSplitMode(!isSplitMode)}
-                  title="แบ่งหน้าจอ"
-                >
-                  <Pin size={18} />
+        <div className="premium-form-container" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Hide internal header on mobile for unified layout */}
+          {window.innerWidth > 768 && (
+            <div className="form-header-bar">
+              <div className="form-title-group">
+                <div className={`status-dot ${reportMode}`} />
+                <h2>{selectedTemplate?.name || (reportMode === 'incident' ? 'รายงานเหตุการณ์ไม่ปกติ' : 'รายงานผู้กระทำความผิด')}</h2>
+              </div>
+              
+              <div className="form-header-actions">
+                <button className="btn-icon-danger" onClick={onReset} title="ล้างข้อมูล">
+                  <Trash2 size={18} />
                 </button>
-              )}
-              <button className="btn-icon-danger" onClick={onReset} title="ล้างข้อมูล">
-                <Trash2 size={18} />
-              </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="form-scroll-body" key={selectedTemplate?.id || 'none'} style={{ padding: '1.25rem', paddingBottom: '80px' }}>
+          <div className="form-scroll-body" key={selectedTemplate?.id || 'none'} style={{ padding: '0.75rem', flex: 1, overflowY: 'auto' }}>
             <div className="form-category-card unified-card" style={{ 
               background: 'var(--bg-card)', 
               border: '1px solid var(--border-subtle)', 

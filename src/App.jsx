@@ -235,57 +235,144 @@ const App = () => {
       />
 
       <main className={`main-content ${isSplitMode && activeMobileTab === 'form' ? 'split-active' : ''}`}>
-        <section className={`pc-form-section ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
-          <ReportForm
-            selectedTemplate={selectedTemplate}
-            reportMode={reportMode}
-            dynamicFields={dynamicFields}
-            formData={formData}
-            onInputChange={handleInputChange}
-            onReset={handleFullReset}
-            activeMobileTab={activeMobileTab}
-            setActiveMobileTab={setActiveMobileTab}
-            isSplitMode={isSplitMode}
-            setIsSplitMode={setIsSplitMode}
-            thaiPreview={thaiPreview}
-          />
-        </section>
+        {/* MOBILE UNIFIED FORM LAYOUT (v26) */}
+        {window.innerWidth <= 768 && activeMobileTab === 'form' ? (
+          <div className="mobile-unified-container">
+            <div className="preview-scroll-zone">
+              <PreviewArea
+                thaiPreviewRef={thaiPreviewRef}
+                thaiPreview={thaiPreview}
+                activeMobileTab={activeMobileTab}
+                reportMode={reportMode}
+                handleSwitchMode={handleSwitchMode}
+                isLoadingCAAT={isLoadingCAAT}
+                onCAATTranslate={handleCAATTranslate}
+                saveTemplate={saveTemplate}
+                saveReport={historyData.saveReport}
+                selectedTemplate={selectedTemplate}
+                formData={formData}
+                extraPreview={extraPreview}
+                isSplitMode={isSplitMode}
+              />
+            </div>
+            
+            <div className="divider-line" />
+            
+            <div className="form-scroll-zone">
+              <ReportForm
+                selectedTemplate={selectedTemplate}
+                reportMode={reportMode}
+                dynamicFields={dynamicFields}
+                formData={formData}
+                onInputChange={handleInputChange}
+                onReset={handleFullReset}
+                activeMobileTab={activeMobileTab}
+                setActiveMobileTab={setActiveMobileTab}
+                isSplitMode={isSplitMode}
+                setIsSplitMode={setIsSplitMode}
+                thaiPreview={thaiPreview}
+              />
+            </div>
 
-        <section className={`pc-preview-section ${activeMobileTab === 'form' || activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
-          <PreviewArea
-            thaiPreviewRef={thaiPreviewRef}
-            thaiPreview={thaiPreview}
-            activeMobileTab={activeMobileTab}
-            reportMode={reportMode}
-            handleSwitchMode={handleSwitchMode}
-            isLoadingCAAT={isLoadingCAAT}
-            onCAATTranslate={handleCAATTranslate}
-            saveTemplate={saveTemplate}
-            saveReport={historyData.saveReport}
-            selectedTemplate={selectedTemplate}
-            formData={formData}
-            extraPreview={extraPreview}
-            isSplitMode={isSplitMode}
-          />
-        </section>
+            {/* Fixed Action Bar above Tab Bar */}
+            <div className="mobile-action-bar">
+               <button 
+                 className="btn btn-dark" 
+                 style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-input)' }}
+                 onClick={() => {
+                   const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
+                   if (n) {
+                     const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
+                     saveTemplate(n, formData, currentHtml, extraPreview, selectedTemplate?.folder_id);
+                     alert('บันทึกฟอร์มเรียบร้อย');
+                   }
+                 }}
+               >
+                 บันทึก
+               </button>
+               <button 
+                 className="btn btn-outline" 
+                 onClick={handleCAATTranslate}
+                 disabled={isLoadingCAAT}
+                 style={{ border: '1px solid #0ea5e9', color: '#0ea5e9' }}
+               >
+                 กพท.22
+               </button>
+               <button 
+                 className="btn btn-primary" 
+                 onClick={() => {
+                   const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
+                   navigator.clipboard.writeText(text);
+                   historyData.saveReport({
+                     mode: reportMode,
+                     templateName: selectedTemplate?.name || 'กำหนดเอง',
+                     preview: text,
+                     data: formData,
+                   });
+                   alert('คัดลอกและบันทึกแล้ว');
+                 }}
+                 style={{ background: '#0ea5e9', border: 'none' }}
+               >
+                 คัดลอกและบันทึก
+               </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <section className={`pc-form-section ${activeMobileTab === 'form' ? 'mobile-visible' : ''}`}>
+              <ReportForm
+                selectedTemplate={selectedTemplate}
+                reportMode={reportMode}
+                dynamicFields={dynamicFields}
+                formData={formData}
+                onInputChange={handleInputChange}
+                onReset={handleFullReset}
+                activeMobileTab={activeMobileTab}
+                setActiveMobileTab={setActiveMobileTab}
+                isSplitMode={isSplitMode}
+                setIsSplitMode={setIsSplitMode}
+                thaiPreview={thaiPreview}
+              />
+            </section>
 
-        {window.innerWidth <= 768 && (
-          <nav className="mobile-nav">
-            <button
-              className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
-              onClick={() => setActiveMobileTab('templates')}
-            >
-              <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
-            </button>
-            <button
-              className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
-              onClick={() => setActiveMobileTab('form')}
-            >
-              <Edit2 size={20} /><span>กรอกข้อมูล</span>
-            </button>
-          </nav>
+            <section className={`pc-preview-section ${activeMobileTab === 'preview' ? 'mobile-visible' : ''}`}>
+              <PreviewArea
+                thaiPreviewRef={thaiPreviewRef}
+                thaiPreview={thaiPreview}
+                activeMobileTab={activeMobileTab}
+                reportMode={reportMode}
+                handleSwitchMode={handleSwitchMode}
+                isLoadingCAAT={isLoadingCAAT}
+                onCAATTranslate={handleCAATTranslate}
+                saveTemplate={saveTemplate}
+                saveReport={historyData.saveReport}
+                selectedTemplate={selectedTemplate}
+                formData={formData}
+                extraPreview={extraPreview}
+                isSplitMode={isSplitMode}
+              />
+            </section>
+          </>
         )}
       </main>
+
+      {/* MOBILE TAB BAR (Always at bottom on mobile) */}
+      {window.innerWidth <= 768 && (
+        <nav className="mobile-nav">
+          <button
+            className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('templates')}
+          >
+            <Calendar size={20} /><span>ฟอร์มเหตุการณ์</span>
+          </button>
+          <button
+            className={`nav-item ${activeMobileTab === 'form' ? 'active' : ''}`}
+            onClick={() => setActiveMobileTab('form')}
+          >
+            <Edit2 size={20} /><span>กรอกข้อมูล</span>
+          </button>
+        </nav>
+      )}
 
       <CAATModal
         isOpen={isCAATModalOpen}
