@@ -503,8 +503,10 @@ input:focus, textarea:focus {
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    margin-bottom: 0.5rem !important;
+    margin: 0 !important; /* v33: STRICT EDGE-TO-EDGE */
     border-radius: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
   }
 
   .group-header {
@@ -1238,8 +1240,14 @@ input:focus, textarea:focus {
   }
 
   .form-section-container.mobile-active,
-  .preview-container-main.mobile-active {
+  .preview-container-main.mobile-active,
+  .premium-form-container,
+  .form-section-container {
     display: flex !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
   }
 }
 
