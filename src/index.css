@@ -481,6 +481,10 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 768px) {
+  .form-scroll-body {
+    padding: 0 !important; /* Edge-to-edge content (v31) */
+  }
+
   .fields-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important; /* 2 Columns */
@@ -767,7 +771,7 @@ input:focus, textarea:focus {
   }
 
   .main-content {
-    padding: 1rem;
+    padding: 0 !important; /* Full-width mobile (v31) */
     padding-top: 5rem; /* Space for fixed header if any */
   }
 
