@@ -469,16 +469,16 @@ input:focus, textarea:focus {
 }
 
 .form-scroll-zone {
-  flex: 0 0 125px; /* STRICT: Height for exactly one row (2 fields) (v28) */
+  flex: 1.5; /* v45: Increased space for scrolling fields */
   background: var(--bg-sidebar);
-  padding-bottom: 0px !important; /* v39: Flush with action bar */
+  padding-bottom: 0px !important;
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow-x: visible !important; /* v37: Unlock breakout */
-  overflow-y: auto;
+  overflow-x: visible !important;
+  overflow-y: auto !important; /* v45: Forced scrolling */
 }
 
 .mobile-action-bar {
@@ -554,8 +554,8 @@ input:focus, textarea:focus {
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.85rem; /* Slightly smaller */
-    margin: 0 0 0 6px !important;
+    font-size: 0.85rem;
+    margin: 0 !important; /* v45: Absolute left flush (no logo space) */
     color: var(--text-primary);
     font-weight: 700;
   }
