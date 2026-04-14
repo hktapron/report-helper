@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { DEFAULT_INCIDENT_BODY, DEFAULT_VIOLATOR_BODY } from '../constants/templates';
 import { hydrateHtmlTemplate, formatTimeInput } from '../utils/parser';
 
