@@ -523,12 +523,12 @@ input:focus, textarea:focus {
       right: 0 !important;
   }
 
-  /* v42: Card Full-Width Reset & Sharp Corners */
+  /* v46: Balanced Mobile Flush (Slightly relaxed top push) */
   .form-category-card.unified-card {
       width: 100% !important;
       max-width: 100% !important;
       min-width: 100% !important;
-      margin: 0 !important;
+      margin: 4px 0 0 0 !important; /* Added slight top margin */
       padding: 0 !important;
       
       border-radius: 0 !important;
@@ -547,7 +547,7 @@ input:focus, textarea:focus {
     border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 30px; /* v44: Ultra-compact height */
+    height: 34px; /* v46: Re-balanced height */
     display: flex;
     align-items: center;
   }
@@ -561,7 +561,7 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.35rem 1rem !important; /* v44: Halved top space */
+    padding: 0.6rem 1rem !important; /* v46: Relaxed top space */
     gap: 0.4rem 0.5rem !important; /* Tighter gap */
     width: 100% !important;
     display: grid !important;
