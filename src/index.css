@@ -437,6 +437,10 @@ input:focus, textarea:focus {
   background: var(--bg-dark);
   overflow: hidden;
   position: relative;
+  width: 100% !important; /* Force full width (v32) */
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .preview-scroll-zone {
@@ -456,6 +460,9 @@ input:focus, textarea:focus {
   padding: 0 !important; /* Edge-to-edge (v30) */
   padding-bottom: 50px !important; /* Space for action buttons */
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+  width: 100% !important; /* Force full width (v32) */
+  max-width: none !important;
+  margin: 0 !important;
 }
 
 .mobile-action-bar {
@@ -503,7 +510,7 @@ input:focus, textarea:focus {
   .group-header {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 4px 0.75rem !important; /* Local padding (v30) */
+    padding: 4px 16px !important; /* Balanced inner padding (v32) */
     margin: 0 !important;
   }
 
@@ -514,8 +521,9 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.4rem 0.75rem !important; /* Local padding (v30) */
+    padding: 0.4rem 16px !important; /* Balanced inner padding (v32) */
     gap: 0.35rem 0.5rem !important;
+    width: 100% !important;
   }
 
   .input-label {
@@ -773,6 +781,9 @@ input:focus, textarea:focus {
   .main-content {
     padding: 0 !important; /* Full-width mobile (v31) */
     padding-top: 5rem; /* Space for fixed header if any */
+    width: 100% !important; /* Force full width (v32) */
+    max-width: none !important;
+    margin: 0 !important;
   }
 
   .form-body {
