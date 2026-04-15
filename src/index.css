@@ -472,7 +472,7 @@ input:focus, textarea:focus {
 
 .form-scroll-zone {
   flex: none !important;
-  height: 48vh !important; /* v54: Restored to original compact height (~50%) while keeping scroll lock */
+  height: 43vh !important; /* v55: Reduced height by another 10% (from 48vh to 43vh) */
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
@@ -481,8 +481,8 @@ input:focus, textarea:focus {
   padding: 0 !important;
   padding-bottom: 70px !important;
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: scroll !important; /* Force scroll */
+  -webkit-overflow-scrolling: touch; /* Force hardware scroll on iOS */
   min-height: 0;
 }
 

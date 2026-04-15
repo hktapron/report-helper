@@ -43,20 +43,12 @@ const ContextMenu = ({
       style={{ top: contextMenu.y, left: contextMenu.x }}
       onClick={(e) => e.stopPropagation()}
     >
-      {contextMenu.type === 'system-template' ? (
-        <div className="context-item disabled" style={{ opacity: 0.6, fontSize: '0.75rem', cursor: 'default' }}>
-          ฟอร์มมาตรฐาน (อ่านอย่างเดียว)
-        </div>
-      ) : (
-        <>
-          <div className="context-item" onClick={handleRename}>
-            <Edit2 size={14} /> เปลี่ยนชื่อ
-          </div>
-          <div className="context-item danger" onClick={handleDelete}>
-            <Trash2 size={14} /> ลบทิ้ง
-          </div>
-        </>
-      )}
+      <div className="context-item" onClick={handleRename}>
+        <Edit2 size={14} /> เปลี่ยนชื่อ
+      </div>
+      <div className="context-item danger" onClick={handleDelete}>
+        <Trash2 size={14} /> ลบทิ้ง
+      </div>
     </div>
   );
 };
