@@ -433,7 +433,7 @@ input:focus, textarea:focus {
 .mobile-unified-container {
   display: flex !important;
   flex-direction: column !important;
-  height: calc(100dvh - 60px) !important; 
+  height: calc(100dvh - 60px) !important; /* Matches new v56 nav height */
   background: var(--bg-dark);
   position: relative !important; 
   width: 100vw !important; 
@@ -443,7 +443,7 @@ input:focus, textarea:focus {
   overflow: hidden !important; 
   z-index: 10;
   display: grid !important;
-  grid-template-rows: auto 1fr; /* Preview takes auto, Form takes remainder */
+  grid-template-rows: auto 1fr;
 }
 
 .preview-scroll-zone {
@@ -466,13 +466,13 @@ input:focus, textarea:focus {
 }
 
 .preview-textarea {
-  padding: 10px 10px !important; /* Minimal inner padding for text readability */
+  padding: 10px 10px 100px !important; /* v56: Extra bottom padding so scroll reaches the end */
   line-height: 1.6;
 }
 
 .form-scroll-zone {
   flex: none !important;
-  height: 43vh !important; /* v55: Reduced height by another 10% (from 48vh to 43vh) */
+  height: 38vh !important; /* v56: Reduced another 10% from 43vh to 38vh */
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
@@ -481,9 +481,14 @@ input:focus, textarea:focus {
   padding: 0 !important;
   padding-bottom: 70px !important;
   overflow-x: hidden !important;
-  overflow-y: scroll !important; /* Force scroll */
-  -webkit-overflow-scrolling: touch; /* Force hardware scroll on iOS */
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch;
   min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.form-scroll-zone > div {
+  min-height: 101% !important; /* v56: Force scroll state on mobile browsers */
 }
 
 /* Force child form elements to fit the height so scroll works */
@@ -565,18 +570,18 @@ input:focus, textarea:focus {
 
   .group-header {
     background: transparent !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 34px; /* v46: Re-balanced height */
+    height: 30px; /* v56: Reduced height 10% */
     display: flex;
     align-items: center;
   }
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.85rem;
-    margin: 0 !important; /* v45: Absolute left flush (no logo space) */
+    font-size: 0.8rem; /* v56: Smaller text */
+    margin: 0 !important;
     color: var(--text-primary);
     font-weight: 700;
   }
@@ -595,8 +600,9 @@ input:focus, textarea:focus {
   }
 
   .form-input {
-    height: 38px !important; /* Touch-friendly but compact */
+    height: 34px !important; /* v56: Reduced compact height 10% */
     margin-bottom: 0 !important;
+    font-size: 0.85rem !important; 
   }
   
   .sidebar {
@@ -891,18 +897,16 @@ input:focus, textarea:focus {
 
   .mobile-nav {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70px;
+    height: 60px; /* v56: Reduced height 10% (from 70px) */
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border-subtle);
     z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
   }
 
   .nav-item {
