@@ -469,7 +469,7 @@ input:focus, textarea:focus {
 }
 
 .form-scroll-zone {
-  flex: 0.6; /* v47: Reduced height by 60% of previous v45 state */
+  flex: 0.6; 
   background: var(--bg-sidebar);
   padding-bottom: 0px !important;
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
@@ -478,32 +478,34 @@ input:focus, textarea:focus {
   margin: 0 !important;
   padding: 0 !important;
   overflow-x: visible !important;
-  overflow-y: auto !important;
+  overflow-y: scroll !important; /* v48: Explicit scroll force */
+  min-height: 0; /* v48: Flexbox scroll unlock */
 }
 
 .mobile-action-bar {
-  display: flex;
+  display: grid; /* v48: Grid for pixel-perfect alignment */
+  grid-template-columns: repeat(3, 1fr); /* 3 exactly equal columns */
   position: fixed;
-  bottom: 55px; /* Closer to Tab Bar (v28) */
+  bottom: 55px;
   left: 0;
   right: 0;
   background: rgba(15, 15, 18, 0.95);
   backdrop-filter: blur(10px);
   padding: 0.6rem; 
   border-top: 1px solid var(--border-subtle);
-  gap: 8px; /* Consistent spacing */
+  gap: 8px; 
   z-index: 1001;
-  justify-content: space-between; /* Equal spread */
 }
 
 .mobile-action-bar .btn {
-  flex: 1; /* All buttons equal width */
+  width: 100%; /* Fill the grid cell */
   min-width: 0;
-  font-size: 0.7rem !important; /* Smaller text for 3-button spread */
-  padding: 0.6rem 0.2rem !important;
+  font-size: 0.72rem !important; 
+  padding: 0.6rem 0.1rem !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0 !important;
 }
 
 .divider-line {
@@ -571,8 +573,8 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.6rem 1rem !important; /* v46: Relaxed top space */
-    gap: 0.4rem 0.5rem !important; /* Tighter gap */
+    padding: 0.3rem 1rem !important; /* v48: Even tighter top flush */
+    gap: 0.4rem 0.5rem !important; 
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
