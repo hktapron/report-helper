@@ -282,10 +282,9 @@ const App = () => {
             </div>
 
             {/* Fixed Action Bar above Tab Bar (v27 Polish) */}
-            <div className="mobile-action-bar" style={{ display: 'flex', gap: '8px' }}>
+            <div className="mobile-action-bar">
                <button 
                  className="btn btn-dark" 
-                 style={{ flex: 1, border: '1px solid var(--border-subtle)', background: 'var(--bg-input)', padding: '10px 0' }}
                  onClick={() => {
                    const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
                    if (n) {
@@ -301,7 +300,6 @@ const App = () => {
                  className="btn btn-outline" 
                  onClick={handleCAATTranslate}
                  disabled={isLoadingCAAT}
-                 style={{ flex: 1, border: '1px solid #0ea5e9', color: '#0ea5e9', padding: '10px 0' }}
                >
                  กพท.22
                </button>
@@ -318,7 +316,6 @@ const App = () => {
                    });
                    alert('คัดลอกและบันทึกแล้ว');
                  }}
-                 style={{ flex: 2, background: '#0ea5e9', border: 'none', padding: '10px 0' }}
                >
                  คัดลอกและบันทึก
                </button>
