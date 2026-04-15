@@ -124,7 +124,7 @@ const FolderTree = ({
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // No alert, just block default to avoid confusion
+              onContextMenu(e, 'system-template', t.id, t);
             }}
           >
             <FileText size={12} style={{ opacity: 0.6 }} />
