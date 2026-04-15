@@ -124,7 +124,7 @@ const FolderTree = ({
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              alert("ไม่สามารถลบหรือเปลี่ยนชื่อฟอร์มเริ่มต้นของระบบได้");
+              // No alert, just block default to avoid confusion
             }}
           >
             <FileText size={12} style={{ opacity: 0.6 }} />

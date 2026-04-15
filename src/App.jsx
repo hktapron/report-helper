@@ -301,7 +301,7 @@ const App = () => {
                  onClick={handleCAATTranslate}
                  disabled={isLoadingCAAT}
                >
-                 กพท.22
+                 แปลภาษา
                </button>
                <button 
                  className="btn btn-outline" 

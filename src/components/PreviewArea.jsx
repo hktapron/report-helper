@@ -63,15 +63,15 @@ const PreviewArea = ({
                 disabled={isLoadingCAAT}
                 style={{ border: '1px solid #0ea5e9', color: '#0ea5e9', fontWeight: '600', padding: '10px 20px' }}
               >
-                {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                <span>กพท.22</span>
+                {isLoadingCAAT ? <Loader2 size={16} className="animate-spin" /> : null}
+                <span>แปลภาษา</span>
               </button>
               <button 
                 className="btn btn-primary btn-copy-save" 
                 onClick={handleCopyAndSave}
                 style={{ background: '#0ea5e9', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', border: 'none' }}
               >
-                <Check size={16} /> <span>คัดลอกและบันทึก</span>
+                <span>คัดลอกและบันทึก</span>
               </button>
             </div>
           </div>
