@@ -121,6 +121,11 @@ const FolderTree = ({
             className="template-item"
             style={{ marginLeft: '1.25rem' }}
             onClick={() => onSelectTemplate(t)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert("ไม่สามารถลบหรือเปลี่ยนชื่อฟอร์มเริ่มต้นของระบบได้");
+            }}
           >
             <FileText size={12} style={{ opacity: 0.6 }} />
             <span style={{ fontSize: '0.8rem' }}>{t.name}</span>
@@ -139,7 +144,11 @@ const FolderTree = ({
               e.dataTransfer.effectAllowed = 'move';
             }}
             onClick={() => onSelectTemplate(ct, 'custom')}
-            onContextMenu={(e) => onContextMenu(e, 'template', ct.id, ct)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onContextMenu(e, 'template', ct.id, ct);
+            }}
           >
             <FileText size={12} style={{ opacity: 0.6 }} />
             <span style={{ fontSize: '0.8rem' }}>{ct.name}</span>

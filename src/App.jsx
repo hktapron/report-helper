@@ -297,14 +297,14 @@ const App = () => {
                  บันทึก
                </button>
                <button 
-                 className="btn btn-outline" 
+                 className="btn btn-primary" 
                  onClick={handleCAATTranslate}
                  disabled={isLoadingCAAT}
                >
                  กพท.22
                </button>
                <button 
-                 className="btn btn-primary" 
+                 className="btn btn-outline" 
                  onClick={() => {
                    const text = thaiPreviewRef.current ? thaiPreviewRef.current.innerText : thaiPreview;
                    navigator.clipboard.writeText(text);
