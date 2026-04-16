@@ -459,7 +459,8 @@ input:focus, textarea:focus {
 
 .preview-scroll-zone {
   flex: 1; /* Occupies top half/remaining space */
-  overflow-y: auto;
+  overflow-y: scroll !important; /* Native mobile scroll block */
+  -webkit-overflow-scrolling: touch !important;
   padding: 0 !important; /* v40.2: Absolute flush-to-edge */
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-subtle);
@@ -476,8 +477,18 @@ input:focus, textarea:focus {
   margin: 0 !important;
 }
 
+/* CRITICAL: Destroy all mobile flex scroll traps in the preview area */
+.preview-scroll-zone .preview-container-main,
+.preview-scroll-zone .card,
+.preview-scroll-zone .preview-body-v2 {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important; /* Force inline overflow:auto out of existence */
+  display: block !important; /* Kill nested flexbox sizing bugs */
+}
+
 .preview-textarea {
-  padding: 10px 10px 120px !important; /* Ensure absolute bottom scroll clearance */
+  padding: 10px 10px 250px !important; /* Enormous foolproof clearance for the bottom of the text */
   line-height: 1.6;
 }
 
@@ -588,7 +599,7 @@ input:focus, textarea:focus {
     border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 30px; /* Reduced by ~10% from 34px */
+    height: 25px; /* Reduced by an additional 15% */
     display: flex;
     align-items: center;
   }
@@ -615,7 +626,7 @@ input:focus, textarea:focus {
   }
 
   .form-input {
-    height: 34px !important; /* Reduced by ~10% from 38px */
+    height: 28px !important; /* Reduced by an additional 15% */
     margin-bottom: 0 !important;
   }
   
