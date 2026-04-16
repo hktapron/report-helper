@@ -37,14 +37,7 @@ const ReportForm = ({
           )}
         </div>
       ) : (
-        <div 
-          className="premium-form-container" 
-          style={{ 
-            height: window.innerWidth <= 768 ? 'auto' : '100%', 
-            display: 'flex', 
-            flexDirection: 'column' 
-          }}
-        >
+        <div className="premium-form-container" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           {/* Hide internal header on mobile for unified layout */}
           {window.innerWidth > 768 && (
             <div className="form-header-bar">
