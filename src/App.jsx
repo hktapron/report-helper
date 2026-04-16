@@ -105,6 +105,7 @@ const App = () => {
   // --- Hooks ---
   const {
     thaiPreview,
+    setThaiPreview,
     extraPreview,
     thaiPreviewRef,
     processAndLoadItem,
