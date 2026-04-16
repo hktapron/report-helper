@@ -613,20 +613,22 @@ input:focus, textarea:focus {
   }
 
   .fields-grid {
-    padding: 0.3rem 1rem !important; /* v48: Even tighter top flush */
-    gap: 0.4rem 0.5rem !important; 
+    padding: 0.2rem 1rem !important; /* Extremely tight top flush */
+    gap: 0.3rem 0.5rem !important; /* Compressed grid gaps */
     width: 100% !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
   }
 
   .input-label {
-    margin-bottom: 1px !important; /* Tight Label (v28) */
-    font-size: 0.75rem !important;
+    margin-bottom: 1px !important; 
+    font-size: 0.7rem !important; /* Smaller label text */
   }
 
   .form-input {
-    height: 24px !important; /* Extremely high density */
+    height: 20px !important; /* Micro-sized (another 15% off 24px) */
+    font-size: 0.75rem !important; /* Fit text inside the tiny box */
+    padding: 0 8px !important;
     margin-bottom: 0 !important;
   }
   
