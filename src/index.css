@@ -483,26 +483,32 @@ input:focus, textarea:focus {
 
 .form-scroll-zone {
   flex: none !important;
-  height: 48vh !important; /* v54: Restored to original compact height (~50%) while keeping scroll lock */
+  height: 48vh !important; 
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow: hidden !important; /* CRITICAL: Disable nested scroll trap to let inner form scroll natively */
+  overflow-x: hidden !important;
+  overflow-y: scroll !important; /* Native outer scroll */
+  -webkit-overflow-scrolling: touch !important;
+  pointer-events: auto !important; /* Ensure touch capture */
 }
 
-/* Let the organic scroll body handle it */
+/* Destroy all flexbox/nested-scroll bugs by forcing primitive HTML block rendering */
 .form-scroll-zone .form-section-container,
-.form-scroll-zone .premium-form-container {
-  height: 100% !important; 
-  min-height: 100% !important;
+.form-scroll-zone .premium-form-container,
+.form-scroll-zone .form-scroll-body {
+  height: auto !important; 
+  min-height: auto !important;
+  overflow: visible !important; /* Destroy inner scroll traps completely */
+  display: block !important; /* Kill flexbox to force content-based height */
 }
 
+/* Ensure empty space at the bottom so the last field can be dragged above the Action Bar */
 .form-scroll-zone .form-scroll-body {
-  padding-bottom: 80px !important; /* Pass clearance to the actual scroll body */
-  -webkit-overflow-scrolling: touch;
+  padding-bottom: 150px !important; 
 }
 
 .mobile-action-bar {
