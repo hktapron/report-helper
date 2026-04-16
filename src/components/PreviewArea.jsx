@@ -85,8 +85,6 @@ const PreviewArea = ({
             suppressContentEditableWarning
             style={{ whiteSpace: 'pre-wrap', minHeight: '100%' }}
           />
-          {/* v59: Physical spacer to ensure scroll clearance on mobile */}
-          <div className="mobile-scroll-spacer" style={{ height: '200px', width: '100%' }}></div>
         </div>
       </div>
     </section>

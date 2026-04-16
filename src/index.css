@@ -488,7 +488,7 @@ input:focus, textarea:focus {
 }
 
 .preview-textarea {
-  padding: 10px 10px 250px !important; /* Enormous foolproof clearance for the bottom of the text */
+  padding: 10px 10px 20px !important; /* Proper bottom clearance matching the divider line */
   line-height: 1.6;
 }
 
@@ -599,7 +599,7 @@ input:focus, textarea:focus {
     border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 25px; /* Reduced by an additional 15% */
+    height: 22px; /* Ultra high-density */
     display: flex;
     align-items: center;
   }
@@ -626,7 +626,7 @@ input:focus, textarea:focus {
   }
 
   .form-input {
-    height: 28px !important; /* Reduced by an additional 15% */
+    height: 24px !important; /* Extremely high density */
     margin-bottom: 0 !important;
   }
   
