@@ -1229,6 +1229,31 @@ input:focus, textarea:focus {
 }
 
 .context-item:hover {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-indigo);
+}
+
+.context-item.highlight {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.context-item.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+/* Mapping Active State */
+.mapping-active {
+  border-color: var(--accent-indigo) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+
+.mapping-active .input-label {
+  color: var(--accent-indigo) !important;
+}
+
+.context-item:hover {
   background: var(--accent-indigo-soft);
   color: var(--text-primary);
 }

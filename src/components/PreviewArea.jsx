@@ -15,6 +15,7 @@ const PreviewArea = ({
   formData,
   extraPreview,
   isSplitMode = false,
+  onContextMenu,
 }) => {
   const handleSaveTemplate = async () => {
     const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
@@ -77,7 +78,15 @@ const PreviewArea = ({
           </div>
         )}
         
-        <div className="preview-body-v2" style={{ flex: 1, overflowY: 'auto' }}>
+        <div 
+          className="preview-body-v2" 
+          style={{ flex: 1, overflowY: 'auto' }}
+          onContextMenu={(e) => {
+            if (window.innerWidth > 768) {
+              onContextMenu(e, 'preview', 'preview', null);
+            }
+          }}
+        >
           <div
             ref={thaiPreviewRef}
             className="preview-textarea"

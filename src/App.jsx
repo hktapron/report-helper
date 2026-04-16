@@ -88,6 +88,17 @@ const App = () => {
   const [translatedCAAT, setTranslatedCAAT] = useState('');
   const [isCAATModalOpen, setIsCAATModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
+  const [mappingFieldId, setMappingFieldId] = useState(null);
+  const [customFieldLabels, setCustomFieldLabels] = useState(() => {
+    const saved = localStorage.getItem('vtsp_custom_labels');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [manualFields, setManualFields] = useState([]);
+
+  // Persist custom labels
+  useEffect(() => {
+    localStorage.setItem('vtsp_custom_labels', JSON.stringify(customFieldLabels));
+  }, [customFieldLabels]);
 
   // --- Hooks ---
   const {
@@ -116,7 +127,7 @@ const App = () => {
     moveFolder,
   } = useUserTemplates(user?.id, reportMode);
 
-  const dynamicFields = useDynamicFields(selectedTemplate, reportMode);
+  const dynamicFields = useDynamicFields(selectedTemplate, reportMode, manualFields, customFieldLabels);
 
   // Build hierarchical folder tree from flat list (memoized)
   const folderTree = useMemo(() => {
@@ -169,6 +180,78 @@ const App = () => {
     previewHandleInputChange(id, value, setFormData);
   };
 
+  const handleAddField = () => {
+    const label = window.prompt("ชื่อหัวข้อที่ต้องการเพิ่ม:");
+    if (!label) return;
+    const id = `custom_${Date.now()}`;
+    setCustomFieldLabels(prev => ({ ...prev, [id]: label }));
+    setManualFields(prev => [...prev, id]);
+  };
+
+  const handleDeleteField = (id) => {
+    if (!window.confirm(`ยืนยันการลบฟิลด์ "${customFieldLabels[id] || id}"?`)) return;
+    
+    // Remove from manual list if present
+    setManualFields(prev => prev.filter(fid => fid !== id));
+    
+    // Remove from mapping in HTML
+    if (thaiPreviewRef.current) {
+      thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(el => {
+        const text = el.innerText;
+        el.outerHTML = text; // Keep text, remove span
+      });
+      setThaiPreview(thaiPreviewRef.current.innerHTML);
+    }
+    
+    // Clean up formData
+    setFormData(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    
+    if (mappingFieldId === id) setMappingFieldId(null);
+  };
+
+  const handleRenameField = (id) => {
+    const oldLabel = customFieldLabels[id] || id;
+    const newLabel = window.prompt("เปลี่ยนชื่อเป็น:", oldLabel);
+    if (newLabel && newLabel !== oldLabel) {
+      setCustomFieldLabels(prev => ({ ...prev, [id]: newLabel }));
+    }
+  };
+
+  const handleStartMapping = (id) => {
+    setMappingFieldId(id);
+    alert(`เข้าสู่โหมดการจับคู่: เลือกข้อความที่ต้องการใน Preview แล้วคลิกขวาเลือก "Mapping" เพื่อผูกกับฟอนต์นี้`);
+  };
+
+  const handleExecuteMapping = () => {
+    const selection = window.getSelection();
+    if (!selection.toString() || !mappingFieldId) return;
+
+    if (thaiPreviewRef.current) {
+      const range = selection.getRangeAt(0);
+      const span = document.createElement('span');
+      span.className = 'sync-field';
+      span.dataset.field = mappingFieldId;
+      span.innerText = selection.toString();
+      
+      range.deleteContents();
+      range.insertNode(span);
+      
+      // Sync state
+      setThaiPreview(thaiPreviewRef.current.innerHTML);
+      
+      // Once mapped, it will be detected by useDynamicFields naturally, 
+      // but we can remove it from manualFields to avoid duplicates if it was there
+      setManualFields(prev => prev.filter(id => id !== mappingFieldId));
+      
+      setMappingFieldId(null);
+      alert("จับคู่ข้อความเรียบร้อย");
+    }
+  };
+
   const handleCAATTranslate = async () => {
     if (!window.confirm("ยืนยันการทำรายงาน กพท.22?")) return;
     setIsLoadingCAAT(true);
@@ -186,7 +269,14 @@ const App = () => {
 
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
-    setContextMenu({ x: e.pageX, y: e.pageY, type, id, data });
+    setContextMenu({ 
+      x: e.pageX, 
+      y: e.pageY, 
+      type, 
+      id, 
+      data,
+      selection: type === 'preview' ? window.getSelection()?.toString() : null
+    });
   };
 
   // --- Route Guards ---
@@ -278,6 +368,9 @@ const App = () => {
                 isSplitMode={isSplitMode}
                 setIsSplitMode={setIsSplitMode}
                 thaiPreview={thaiPreview}
+                onAddField={handleAddField}
+                onContextMenu={onContextMenu}
+                mappingFieldId={mappingFieldId}
               />
             </div>
 
@@ -336,6 +429,9 @@ const App = () => {
                 isSplitMode={isSplitMode}
                 setIsSplitMode={setIsSplitMode}
                 thaiPreview={thaiPreview}
+                onAddField={handleAddField}
+                onContextMenu={onContextMenu}
+                mappingFieldId={mappingFieldId}
               />
             </section>
 
@@ -354,6 +450,7 @@ const App = () => {
                 formData={formData}
                 extraPreview={extraPreview}
                 isSplitMode={isSplitMode}
+                onContextMenu={onContextMenu}
               />
             </section>
           </>
@@ -404,6 +501,12 @@ const App = () => {
         deleteFolder={deleteFolder}
         deleteReport={deleteReport}
         deleteTemplate={deleteTemplate}
+        mappingFieldId={mappingFieldId}
+        handleRenameField={handleRenameField}
+        handleDeleteField={handleDeleteField}
+        handleStartMapping={handleStartMapping}
+        handleExecuteMapping={handleExecuteMapping}
+        customFieldLabels={customFieldLabels}
       />
     </div>
   );

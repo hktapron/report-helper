@@ -17,6 +17,9 @@ const ReportForm = ({
   isSplitMode = false,
   setIsSplitMode,
   thaiPreview,
+  onAddField,
+  onContextMenu,
+  mappingFieldId,
 }) => {
   
   // No grouping logic needed for unified layout
@@ -47,6 +50,14 @@ const ReportForm = ({
               </div>
               
               <div className="form-header-actions">
+                <button 
+                  className="btn-icon-primary" 
+                  onClick={onAddField} 
+                  title="เพิ่มหัวข้อ" 
+                  style={{ marginRight: '8px', color: 'var(--accent-indigo)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <Edit3 size={18} />
+                </button>
                 <button className="btn-icon-danger" onClick={onReset} title="ล้างข้อมูล">
                   <Trash2 size={18} />
                 </button>
@@ -62,7 +73,16 @@ const ReportForm = ({
               
               <div className="fields-grid">
                 {dynamicFields.map(field => (
-                  <div key={field.id} className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}>
+                  <div 
+                    key={field.id} 
+                    className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''} ${mappingFieldId === field.id ? 'mapping-active' : ''}`} 
+                    style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}
+                    onContextMenu={(e) => {
+                      if (window.innerWidth > 768) {
+                        onContextMenu(e, 'field', field.id, field);
+                      }
+                    }}
+                  >
                     <label className="input-label">
                       <FileCheck size={12} />
                       <span>{field.label}</span>

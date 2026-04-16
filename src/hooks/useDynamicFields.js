@@ -26,53 +26,56 @@ const FIELD_LABELS = {
   retraining_date: 'วันอบรม',
 };
 
-const toField = (id) => ({ id, label: FIELD_LABELS[id] || id });
+export const useDynamicFields = (selectedTemplate, reportMode, manualFields = [], customFieldLabels = {}) => {
+  const toField = (id) => ({ 
+    id, 
+    label: customFieldLabels[id] || FIELD_LABELS[id] || id 
+  });
 
-export const useDynamicFields = (selectedTemplate, reportMode) => {
   return useMemo(() => {
+    let keys = [];
+
     if (!selectedTemplate) {
-      if (reportMode === 'incident') return [
-        toField('report_time'), toField('informant'), toField('flight_no'),
-        toField('atc_time'), toField('original_airport'), toField('stand'),
-        toField('ac_reg'), toField('ac_type'), toField('route'),
-      ];
-      return [
-        toField('incident_time'), toField('violator_name'), toField('id_card'),
-        toField('company'), toField('position'), toField('vehicle_type'),
-        toField('vehicle_no'), toField('location'), toField('seizure_days'),
-        toField('seizure_start'), toField('seizure_end'), toField('retraining_date'),
-      ];
-    }
+      if (reportMode === 'incident') {
+        keys = ['report_time', 'informant', 'flight_no', 'atc_time', 'original_airport', 'stand', 'ac_reg', 'ac_type', 'route'];
+      } else {
+        keys = ['incident_time', 'violator_name', 'id_card', 'company', 'position', 'vehicle_type', 'vehicle_no', 'location', 'seizure_days', 'seizure_start', 'seizure_end', 'retraining_date'];
+      }
+    } else {
+      const body = selectedTemplate.preview || selectedTemplate.content || "";
 
-    const body = selectedTemplate.preview || selectedTemplate.content || "";
-    const keys = [];
+      // PRIMARY: DOM scan in document order
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(body, 'text/html');
+        doc.querySelectorAll('[data-field]').forEach(el => {
+          const k = el.getAttribute('data-field');
+          if (k && !keys.includes(k.trim())) keys.push(k.trim());
+        });
+      } catch (e) {
+        const attrRegex = /data-field=["']([^"']+)["']/g;
+        let attrMatch;
+        while ((attrMatch = attrRegex.exec(body)) !== null) {
+          const k = attrMatch[1].trim();
+          if (!keys.includes(k)) keys.push(k);
+        }
+      }
 
-    // PRIMARY: DOM scan in document order
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(body, 'text/html');
-      doc.querySelectorAll('[data-field]').forEach(el => {
-        const k = el.getAttribute('data-field');
-        if (k && !keys.includes(k.trim())) keys.push(k.trim());
-      });
-    } catch (e) {
-      const attrRegex = /data-field=["']([^"']+)["']/g;
-      let attrMatch;
-      while ((attrMatch = attrRegex.exec(body)) !== null) {
-        const k = attrMatch[1].trim();
-        if (!keys.includes(k)) keys.push(k);
+      // SECONDARY: {braces} scan for raw templates
+      const textOnly = body.replace(/<[^>]*>?/gm, ' ');
+      const braceRegex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
+      let braceMatch;
+      while ((braceMatch = braceRegex.exec(textOnly)) !== null) {
+        const k = (braceMatch[1] || braceMatch[2])?.trim();
+        if (k && !keys.includes(k)) keys.push(k);
       }
     }
 
-    // SECONDARY: {braces} scan for raw templates
-    const textOnly = body.replace(/<[^>]*>?/gm, ' ');
-    const braceRegex = /\{([^{}]+)\}|\[([^\[\]]+)\]/g;
-    let braceMatch;
-    while ((braceMatch = braceRegex.exec(textOnly)) !== null) {
-      const k = (braceMatch[1] || braceMatch[2])?.trim();
-      if (k && !keys.includes(k)) keys.push(k);
-    }
+    // Add manual fields if not already present
+    manualFields.forEach(id => {
+      if (!keys.includes(id)) keys.push(id);
+    });
 
     return keys.map(toField);
-  }, [selectedTemplate, reportMode]);
+  }, [selectedTemplate, reportMode, manualFields, customFieldLabels]);
 };
