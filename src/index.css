@@ -324,6 +324,8 @@ input:focus, textarea:focus {
   padding: 0.75rem;
   overflow-y: auto;
   display: flex;
+  flex-direction: column;
+  width: 100%;
   background: var(--bg-input);
   min-height: 400px; /* Ensure it has body even when empty */
   cursor: text; /* Focus indicator */
@@ -331,6 +333,7 @@ input:focus, textarea:focus {
 
 .preview-textarea {
   flex: 1;
+  width: 100%;
   background: transparent;
   border: none;
   resize: none;
@@ -487,18 +490,19 @@ input:focus, textarea:focus {
   max-width: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  padding-bottom: 70px !important;
-  overflow-x: hidden !important;
-  overflow-y: scroll !important;
-  -webkit-overflow-scrolling: touch;
-  min-height: 0;
+  overflow: hidden !important; /* CRITICAL: Disable nested scroll trap to let inner form scroll natively */
 }
 
-/* Force child form elements to fit the height so scroll works */
+/* Let the organic scroll body handle it */
 .form-scroll-zone .form-section-container,
 .form-scroll-zone .premium-form-container {
-  height: auto !important; 
+  height: 100% !important; 
   min-height: 100% !important;
+}
+
+.form-scroll-zone .form-scroll-body {
+  padding-bottom: 80px !important; /* Pass clearance to the actual scroll body */
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-action-bar {
