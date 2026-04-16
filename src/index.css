@@ -361,18 +361,31 @@ input:focus, textarea:focus {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.nav-item {
+.mobile-nav .nav-item {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   background: none;
   border: none;
-  color: var(--text-muted);
-  font-size: 0.65rem;
-  font-weight: 600;
+  padding: 4px 0;
+  color: var(--text-secondary);
   transition: all 0.2s;
-  padding: 0.5rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.mobile-nav .nav-item span {
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mobile-nav svg {
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .nav-item.active {
@@ -485,25 +498,14 @@ input:focus, textarea:focus {
     overflow-y: auto !important;
     background: var(--bg-sidebar);
     padding: 0 !important;
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
     z-index: 50 !important;
     position: relative !important;
   }
 
-  .form-scroll-zone .form-section-container,
-  .form-scroll-zone .premium-form-container,
-  .form-scroll-zone > div {
-    height: auto !important; 
-    min-height: 0 !important; /* v62: Allow scrolling by being taller than parent */
-  }
-
-  .mobile-action-bar {
-    z-index: 100 !important;
-    pointer-events: none !important;
-  }
-  
-  .mobile-action-bar .btn {
-    pointer-events: auto !important;
+  .form-scroll-zone .form-scroll-body {
+    padding-bottom: 200px !important; /* v63: Definitively ensure the last field can be raised above the UI */
+    height: auto !important;
   }
 }
 
