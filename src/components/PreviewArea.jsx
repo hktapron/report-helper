@@ -18,13 +18,51 @@ const PreviewArea = ({
   onContextMenu,
 }) => {
   const handleSaveTemplate = async () => {
-    const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
-    if (n) {
-      const currentHtml = thaiPreviewRef.current
-        ? thaiPreviewRef.current.innerHTML
-        : thaiPreview;
-      await saveTemplate(n, formData, currentHtml, extraPreview, selectedTemplate?.folder_id);
-      alert('บันทึกฟอร์มเรียบร้อย');
+    // Determine if we are editing an existing custom template
+    // ID format: custom_UUID_timestamp
+    const idParts = selectedTemplate?.id?.split('_') || [];
+    const isCustom = idParts[0] === 'custom' || idParts[0] === 'template';
+    const originalUuid = isCustom ? idParts[1] : null;
+    const currentName = selectedTemplate?.name || "";
+
+    let targetName = currentName;
+    let folderId = selectedTemplate?.folder_id;
+    let templateIdToUpdate = null;
+
+    if (isCustom && originalUuid && originalUuid !== 'new') {
+      const choice = window.confirm(`คุณกำลังแก้ไขฟอร์ม "${currentName}"\n\n- ตกลง: บันทึกทดแทนฟอร์มเดิม (Overwrite)\n- ยกเลิก: บันทึกเป็นฟอร์มใหม่ (Save as New)`);
+      
+      if (choice) {
+        templateIdToUpdate = originalUuid;
+      } else {
+        const newName = window.prompt("ชื่อฟอร์มใหม่:", currentName + " (Copy)");
+        if (!newName) return;
+        targetName = newName;
+      }
+    } else {
+      const newName = window.prompt("ชื่อฟอร์มที่จะบันทึก:", currentName);
+      if (!newName) return;
+      targetName = newName;
+    }
+
+    const currentHtml = thaiPreviewRef.current
+      ? thaiPreviewRef.current.innerHTML
+      : thaiPreview;
+
+    const { error } = await saveTemplate(
+      targetName, 
+      formData, 
+      currentHtml, 
+      extraPreview, 
+      folderId, 
+      reportMode, 
+      templateIdToUpdate
+    );
+
+    if (!error) {
+      alert(templateIdToUpdate ? 'บันทึกการแก้ไขเรียบร้อย' : 'บันทึกฟอร์มใหม่เรียบร้อย');
+    } else {
+      alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
     }
   };
 
@@ -39,7 +77,7 @@ const PreviewArea = ({
       preview: text,
       data: formData,
     });
-    alert('คัดลอกและบันทึกแล้ว');
+    alert('คัดลอกและเก็บประวัติแล้ว');
   };
 
   return (
@@ -72,7 +110,7 @@ const PreviewArea = ({
                 onClick={handleCopyAndSave}
                 style={{ background: '#0ea5e9', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', border: 'none' }}
               >
-                <span>คัดลอกและบันทึก</span>
+                <span>คัดลอกและเก็บประวัติ</span>
               </button>
             </div>
           </div>

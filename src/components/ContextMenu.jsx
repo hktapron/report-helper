@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Plus } from 'lucide-react';
 
 const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
 
@@ -18,6 +18,7 @@ const ContextMenu = ({
   handleStartMapping,
   handleExecuteMapping,
   customFieldLabels,
+  onAddField,
 }) => {
   if (!contextMenu) return null;
 
@@ -25,6 +26,16 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleRenameField(contextMenu.id);
     } else {
+      // Check if it's a custom template/folder (UUIDs are usually longer than system IDs)
+      const isSystem = typeof contextMenu.id === 'string' && !contextMenu.id.includes('-'); 
+      const isSystemNum = typeof contextMenu.id === 'number';
+      
+      if (contextMenu.type === 'template' && (isSystem || isSystemNum)) {
+        alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
+        setContextMenu(null);
+        return;
+      }
+
       const currentTitle = contextMenu.type === 'history'
         ? getSmartTitle(contextMenu.data)
         : contextMenu.data.name;
@@ -32,7 +43,7 @@ const ContextMenu = ({
       if (newName) {
         if (contextMenu.type === 'folder') renameFolder(contextMenu.id, newName);
         else if (contextMenu.type === 'history') renameReport(contextMenu.id, newName);
-        else updateTemplateName(contextMenu.id, newName);
+        else if (contextMenu.type === 'template') updateTemplateName(contextMenu.id, newName);
       }
     }
     setContextMenu(null);
@@ -42,10 +53,19 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleDeleteField(contextMenu.id);
     } else {
+      const isSystem = typeof contextMenu.id === 'string' && !contextMenu.id.includes('-');
+      const isSystemNum = typeof contextMenu.id === 'number';
+
+      if (contextMenu.type === 'template' && (isSystem || isSystemNum)) {
+        alert("ไม่สามารถลบฟอร์มมาตรฐานได้");
+        setContextMenu(null);
+        return;
+      }
+
       if (window.confirm("ยืนยันการลบ?")) {
         if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
         else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
-        else deleteTemplate(contextMenu.id);
+        else if (contextMenu.type === 'template') deleteTemplate(contextMenu.id);
       }
     }
     setContextMenu(null);
@@ -79,6 +99,20 @@ const ContextMenu = ({
         </div>
         <div className="context-item danger" onClick={handleDelete}>
           <Trash2 size={14} /> ลบทิ้ง
+        </div>
+      </div>
+    );
+  }
+
+  if (contextMenu.type === 'form') {
+    return (
+      <div
+        className="context-menu"
+        style={{ top: contextMenu.y, left: contextMenu.x }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
+          <Plus size={14} /> เพิ่มหัวข้อใหม่
         </div>
       </div>
     );

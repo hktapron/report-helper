@@ -196,7 +196,9 @@ const App = () => {
     
     // Remove from mapping in HTML
     if (thaiPreviewRef.current) {
-      thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(el => {
+      // THE FIX: Target ALL sync-field spans with the matching data-field
+      const selector = `.sync-field[data-field="${id}"]`;
+      thaiPreviewRef.current.querySelectorAll(selector).forEach(el => {
         const text = el.innerText;
         el.outerHTML = text; // Keep text, remove span
       });
@@ -407,10 +409,10 @@ const App = () => {
                      preview: text,
                      data: formData,
                    });
-                   alert('คัดลอกและบันทึกแล้ว');
+                   alert('คัดลอกและเก็บประวัติแล้ว');
                  }}
                >
-                 คัดลอกและบันทึก
+                 คัดลอกและเก็บประวัติ
                </button>
             </div>
           </div>
@@ -507,6 +509,7 @@ const App = () => {
         handleStartMapping={handleStartMapping}
         handleExecuteMapping={handleExecuteMapping}
         customFieldLabels={customFieldLabels}
+        onAddField={handleAddField}
       />
     </div>
   );

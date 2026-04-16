@@ -38,23 +38,33 @@ export const useUserTemplates = (userId, reportMode) => {
   }, [userId]); // Still refresh if user changes, but fetchAll no longer blocks if userId is missing initially
 
   // Accept mode explicitly to avoid stale closure bug
-  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode) => {
+  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode, templateId = null) => {
     if (!supabase || !userId) return;
 
-    const { error } = await supabase
-      .from('user_templates')
-      .insert([{
-        name,
-        mode,
-        data: formData,
-        preview,
-        extra_preview: extraPreview,
-        user_id: userId,
-        folder_id: folderId,
-      }]);
+    const payload = {
+      name,
+      mode,
+      data: formData,
+      preview,
+      extra_preview: extraPreview,
+      user_id: userId,
+      folder_id: folderId,
+    };
 
-    if (!error) fetchAll();
-    return { error };
+    let result;
+    if (templateId) {
+      result = await supabase
+        .from('user_templates')
+        .update(payload)
+        .eq('id', templateId);
+    } else {
+      result = await supabase
+        .from('user_templates')
+        .insert([payload]);
+    }
+
+    if (!result.error) fetchAll();
+    return { error: result.error };
   };
 
   const deleteTemplate = async (id) => {

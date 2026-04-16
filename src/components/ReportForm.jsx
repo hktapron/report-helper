@@ -50,14 +50,6 @@ const ReportForm = ({
               </div>
               
               <div className="form-header-actions">
-                <button 
-                  className="btn-icon-primary" 
-                  onClick={onAddField} 
-                  title="เพิ่มหัวข้อ" 
-                  style={{ marginRight: '8px', color: 'var(--accent-indigo)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <Edit3 size={18} />
-                </button>
                 <button className="btn-icon-danger" onClick={onReset} title="ล้างข้อมูล">
                   <Trash2 size={18} />
                 </button>
@@ -65,7 +57,15 @@ const ReportForm = ({
             </div>
           )}
 
-          <div className="form-scroll-body" key={selectedTemplate?.id || 'none'}>
+          <div 
+            className="form-scroll-body" 
+            key={selectedTemplate?.id || 'none'}
+            onContextMenu={(e) => {
+              if (window.innerWidth > 768) {
+                onContextMenu(e, 'form', 'new', null);
+              }
+            }}
+          >
             <div className="form-category-card unified-card">
               <div className="group-header">
                  <h4 className="group-title">ข้อมูลเที่ยวบิน (Flight)</h4>

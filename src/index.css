@@ -1671,6 +1671,23 @@ input:focus, textarea:focus {
   opacity: 0.8;
 }
 
+.sync-field {
+  display: inline-block;
+  min-width: 20px;
+  color: #3b82f6 !important; /* Force interactive blue color (v59) */
+  font-weight: 700 !important;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+  padding: 0 2px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.05);
+  transition: all 0.2s ease;
+}
+
+.sync-field:hover {
+  background: rgba(59, 130, 246, 0.15);
+  cursor: pointer;
+}
+
 .fields-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
