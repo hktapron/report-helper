@@ -430,34 +430,81 @@ input:focus, textarea:focus {
 
 /* RESPONSIVE OVERRIDES */
 /* MOBILE 2.0: UNIFIED FORM LAYOUT (v26) */
+/* PC DEFAULTS (Restore full functionality) */
+.preview-scroll-zone {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.form-scroll-zone {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-sidebar);
+}
+
 .mobile-unified-container {
   display: flex !important;
   flex-direction: column !important;
-  height: calc(100dvh - 54px) !important; /* v57 nav height preserved */
-  background: var(--bg-dark);
-  position: relative !important; 
-  width: 100vw !important; 
-  max-width: 100vw !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important; 
-  z-index: 10;
+  height: 100% !important;
 }
 
-.preview-scroll-zone {
-  flex: none !important;
-  height: 55% !important;
-  min-height: 55% !important;
-  overflow-y: scroll !important;
-  -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important; /* Force native verticals */
-  padding: 0 !important;
-  background: var(--bg-card);
-  border-bottom: 2px solid var(--border-subtle);
-  display: flex !important;
-  flex-direction: column !important;
-  position: relative !important;
-  z-index: 10 !important; /* Lower priority than form */
+/* MOBILE 2.0: UNIFIED FORM LAYOUT (v62 Isolation) */
+@media (max-width: 768px) {
+  .mobile-unified-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100dvh - 54px) !important;
+    background: var(--bg-dark);
+    position: relative !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+  }
+
+  .preview-scroll-zone {
+    flex: 1 !important; /* v62: Takes remaining top half */
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 0 !important;
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--border-subtle);
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  .form-scroll-zone {
+    flex: 0 0 32vh !important; /* v62: Fixed short window for 2-3 fields */
+    height: 32vh !important;
+    min-height: 32vh !important;
+    overflow-y: auto !important;
+    background: var(--bg-sidebar);
+    padding: 0 !important;
+    padding-bottom: 100px !important;
+    z-index: 50 !important;
+    position: relative !important;
+  }
+
+  .form-scroll-zone .form-section-container,
+  .form-scroll-zone .premium-form-container,
+  .form-scroll-zone > div {
+    height: auto !important; 
+    min-height: 0 !important; /* v62: Allow scrolling by being taller than parent */
+  }
+
+  .mobile-action-bar {
+    z-index: 100 !important;
+    pointer-events: none !important;
+  }
+  
+  .mobile-action-bar .btn {
+    pointer-events: auto !important;
+  }
 }
 
 /* Cleanup internal spacing for Absolute Flush */
@@ -470,34 +517,14 @@ input:focus, textarea:focus {
 }
 
 .preview-textarea {
-  flex: 1 !important;
+  flex: 1;
   height: auto !important;
   min-height: 100% !important;
-  padding: 10px 10px 150px !important; /* v57/v58 buffer */
+  padding: 10px 10px 100px !important;
   line-height: 1.6;
 }
 
-.form-scroll-zone {
-  flex: none !important;
-  height: 45% !important;
-  min-height: 45% !important;
-  overflow-y: scroll !important;
-  -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important; /* Force native verticals */
-  background: var(--bg-sidebar);
-  box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-  margin: 0 !important;
-  padding: 0 !important;
-  padding-bottom: 120px !important;
-  overscroll-behavior: contain;
-  z-index: 50 !important; /* High priority to capture touch events */
-  position: relative !important;
-  pointer-events: auto !important; /* Ensure it's interactive */
-}
-
-.form-scroll-zone > div {
-  min-height: 101% !important; /* v59: Ensure content overflow is detected */
-}
+/* Removed global min-height 101% to prevent clipping issues */
 
 /* Force child form elements to fit the height so scroll works */
 .form-scroll-zone .form-section-container,
