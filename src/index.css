@@ -494,7 +494,7 @@ input:focus, textarea:focus {
 
 .form-scroll-zone {
   flex: none !important;
-  height: 48vh !important; 
+  height: 38vh !important; /* Cut down significantly to give much more screen space to Preview */
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   width: 100% !important;
