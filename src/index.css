@@ -445,18 +445,19 @@ input:focus, textarea:focus {
 }
 
 .preview-scroll-zone {
-  flex: none !important; /* v60: Removed fluid growth to prevent overlap */
-  height: 55% !important; /* Fixed 55% share of the container */
+  flex: none !important;
+  height: 55% !important;
   min-height: 55% !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important;
+  touch-action: pan-y !important; /* Force native verticals */
   padding: 0 !important;
   background: var(--bg-card);
   border-bottom: 2px solid var(--border-subtle);
   display: flex !important;
   flex-direction: column !important;
   position: relative !important;
+  z-index: 10 !important; /* Lower priority than form */
 }
 
 /* Cleanup internal spacing for Absolute Flush */
@@ -477,20 +478,21 @@ input:focus, textarea:focus {
 }
 
 .form-scroll-zone {
-  flex: none !important; /* v60: Hard bounded boundary */
-  height: 45% !important; /* Fixed 45% share */
+  flex: none !important;
+  height: 45% !important;
   min-height: 45% !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important;
+  touch-action: pan-y !important; /* Force native verticals */
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   margin: 0 !important;
   padding: 0 !important;
-  padding-bottom: 120px !important; /* Extra clearance for bottom fields */
+  padding-bottom: 120px !important;
   overscroll-behavior: contain;
-  z-index: 20;
+  z-index: 50 !important; /* High priority to capture touch events */
   position: relative !important;
+  pointer-events: auto !important; /* Ensure it's interactive */
 }
 
 .form-scroll-zone > div {
@@ -508,15 +510,16 @@ input:focus, textarea:focus {
   display: grid; /* v48: Grid for pixel-perfect alignment */
   grid-template-columns: repeat(3, 1fr); /* 3 exactly equal columns */
   position: fixed;
-  bottom: 55px;
+  bottom: 54px; /* v57 alignment */
   left: 0;
   right: 0;
-  background: rgba(15, 15, 18, 0.95);
+  background: rgba(15, 15, 18, 0.6); /* v61: More transparent */
   backdrop-filter: blur(10px);
   padding: 0.6rem; 
   border-top: 1px solid var(--border-subtle);
   gap: 8px; 
   z-index: 1001;
+  pointer-events: none !important; /* KEY: Interaction passes through to form below */
 }
 
 .mobile-action-bar .btn {
@@ -528,6 +531,7 @@ input:focus, textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0 !important;
+  pointer-events: auto !important; /* RE-ENABLE for actual buttons */
 }
 
 .divider-line {
