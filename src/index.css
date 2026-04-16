@@ -488,7 +488,7 @@ input:focus, textarea:focus {
 }
 
 .preview-textarea {
-  padding: 10px 10px 20px !important; /* Proper bottom clearance matching the divider line */
+  padding: 10px 10px 5px !important; /* Extremely tight bottom gap */
   line-height: 1.6;
 }
 
@@ -580,7 +580,7 @@ input:focus, textarea:focus {
       width: 100% !important;
       max-width: 100% !important;
       min-width: 100% !important;
-      margin: 4px 0 0 0 !important; /* Added slight top margin */
+      margin: 0 !important; /* Removed 4px top margin to ultra-compress gap */
       padding: 0 !important;
       
       border-radius: 0 !important;
@@ -599,17 +599,18 @@ input:focus, textarea:focus {
     border-bottom: 1px solid rgba(255,255,255,0.05); /* v44: Ultra-subtle divider */
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 22px; /* Ultra high-density */
+    height: 20px; /* Reduced to match new micro font size */
     display: flex;
     align-items: center;
   }
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.85rem;
-    margin: 0 !important; /* v45: Absolute left flush (no logo space) */
-    color: var(--text-primary);
-    font-weight: 700;
+    font-size: 0.70rem !important; /* Match .input-label size */
+    margin: 0 !important; 
+    color: var(--text-secondary) !important; /* Match label color to reduce visual hierarchy */
+    font-weight: 700 !important;
+    border-left: none !important; /* Removed purple indicator line */
   }
 
   .fields-grid {
