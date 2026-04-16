@@ -17,53 +17,19 @@ const PreviewArea = ({
   isSplitMode = false,
   onContextMenu,
 }) => {
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = () => {
     // Determine if we are editing an existing custom template
-    // ID format: custom_UUID_timestamp
+    // ID format: custom_UUID_timestamp or template_UUID_timestamp
     const idParts = selectedTemplate?.id?.split('_') || [];
     const isCustom = idParts[0] === 'custom' || idParts[0] === 'template';
     const originalUuid = isCustom ? idParts[1] : null;
-    const currentName = selectedTemplate?.name || "";
 
-    let targetName = currentName;
-    let folderId = selectedTemplate?.folder_id;
-    let templateIdToUpdate = null;
-
-    if (isCustom && originalUuid && originalUuid !== 'new') {
-      const choice = window.confirm(`คุณกำลังแก้ไขฟอร์ม "${currentName}"\n\n- ตกลง: บันทึกทดแทนฟอร์มเดิม (Overwrite)\n- ยกเลิก: บันทึกเป็นฟอร์มใหม่ (Save as New)`);
-      
-      if (choice) {
-        templateIdToUpdate = originalUuid;
-      } else {
-        const newName = window.prompt("ชื่อฟอร์มใหม่:", currentName + " (Copy)");
-        if (!newName) return;
-        targetName = newName;
-      }
-    } else {
-      const newName = window.prompt("ชื่อฟอร์มที่จะบันทึก:", currentName);
-      if (!newName) return;
-      targetName = newName;
-    }
-
-    const currentHtml = thaiPreviewRef.current
-      ? thaiPreviewRef.current.innerHTML
-      : thaiPreview;
-
-    const { error } = await saveTemplate(
-      targetName, 
-      formData, 
-      currentHtml, 
-      extraPreview, 
-      folderId, 
-      reportMode, 
-      templateIdToUpdate
-    );
-
-    if (!error) {
-      alert(templateIdToUpdate ? 'บันทึกการแก้ไขเรียบร้อย' : 'บันทึกฟอร์มใหม่เรียบร้อย');
-    } else {
-      alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
-    }
+    setSaveModalData({
+      isOpen: true,
+      currentName: selectedTemplate?.name || '',
+      folderId: selectedTemplate?.folder_id,
+      templateId: (isCustom && originalUuid !== 'new') ? originalUuid : null
+    });
   };
 
   const handleCopyAndSave = () => {

@@ -19,6 +19,7 @@ import CAATModal from './components/CAATModal';
 import ContextMenu from './components/ContextMenu';
 import MobileHeader from './components/MobileHeader';
 import DemoWarning from './components/DemoWarning';
+import SaveTemplateModal from './components/SaveTemplateModal';
 
 const App = () => {
   // --- Auth & Persistence ---
@@ -94,6 +95,7 @@ const App = () => {
     return saved ? JSON.parse(saved) : {};
   });
   const [manualFields, setManualFields] = useState([]);
+  const [saveModalData, setSaveModalData] = useState({ isOpen: false, currentName: '', folderId: null, templateId: null });
 
   // Persist custom labels
   useEffect(() => {
@@ -225,7 +227,7 @@ const App = () => {
 
   const handleStartMapping = (id) => {
     setMappingFieldId(id);
-    alert(`เข้าสู่โหมดการจับคู่: เลือกข้อความที่ต้องการใน Preview แล้วคลิกขวาเลือก "Mapping" เพื่อผูกกับฟอนต์นี้`);
+    // Silent mode - no alert per user request
   };
 
   const handleExecuteMapping = () => {
@@ -250,7 +252,32 @@ const App = () => {
       setManualFields(prev => prev.filter(id => id !== mappingFieldId));
       
       setMappingFieldId(null);
-      alert("จับคู่ข้อความเรียบร้อย");
+      // alert("จับคู่ข้อความเรียบร้อย"); // Silent confirm per style
+    }
+  };
+
+  const handleSaveTemplateChoice = async (type) => {
+    const { currentName, folderId, templateId } = saveModalData;
+    let targetName = currentName;
+    let targetTemplateId = null;
+
+    if (type === 'saveNew') {
+      const newName = window.prompt("ชื่อฟอร์มใหม่:", currentName + " (Copy)");
+      if (!newName) return;
+      targetName = newName;
+    } else {
+      // Overwrite
+      targetTemplateId = templateId;
+    }
+
+    const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
+    const { error } = await saveTemplate(targetName, formData, currentHtml, extraPreview, folderId, reportMode, targetTemplateId);
+
+    if (!error) {
+      alert(type === 'overwrite' ? 'บันทึกการแก้ไขเรียบร้อย' : 'บันทึกฟอร์มใหม่เรียบร้อย');
+      setSaveModalData({ ...saveModalData, isOpen: false });
+    } else {
+      alert('เกิดข้อผิดพลาด: ' + error.message);
     }
   };
 
@@ -352,6 +379,7 @@ const App = () => {
                 formData={formData}
                 extraPreview={extraPreview}
                 isSplitMode={isSplitMode}
+                setSaveModalData={setSaveModalData}
               />
             </div>
             
@@ -381,12 +409,16 @@ const App = () => {
                <button 
                  className="btn btn-dark" 
                  onClick={() => {
-                   const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:", selectedTemplate?.name || "");
-                   if (n) {
-                     const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
-                     saveTemplate(n, formData, currentHtml, extraPreview, selectedTemplate?.folder_id);
-                     alert('บันทึกฟอร์มเรียบร้อย');
-                   }
+                   const idParts = selectedTemplate?.id?.split('_') || [];
+                   const isCustom = idParts[0] === 'custom' || idParts[0] === 'template';
+                   const originalUuid = isCustom ? idParts[1] : null;
+
+                   setSaveModalData({
+                     isOpen: true,
+                     currentName: selectedTemplate?.name || '',
+                     folderId: selectedTemplate?.folder_id,
+                     templateId: (isCustom && originalUuid !== 'new') ? originalUuid : null
+                   });
                  }}
                >
                  บันทึก
@@ -453,6 +485,7 @@ const App = () => {
                 extraPreview={extraPreview}
                 isSplitMode={isSplitMode}
                 onContextMenu={onContextMenu}
+                setSaveModalData={setSaveModalData}
               />
             </section>
           </>
@@ -510,6 +543,14 @@ const App = () => {
         handleExecuteMapping={handleExecuteMapping}
         customFieldLabels={customFieldLabels}
         onAddField={handleAddField}
+      />
+
+      <SaveTemplateModal 
+        isOpen={saveModalData.isOpen}
+        onClose={() => setSaveModalData({ ...saveModalData, isOpen: false })}
+        currentName={saveModalData.currentName}
+        onOverwrite={() => handleSaveTemplateChoice('overwrite')}
+        onSaveNew={() => handleSaveTemplateChoice('saveNew')}
       />
     </div>
   );

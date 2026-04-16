@@ -26,11 +26,11 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleRenameField(contextMenu.id);
     } else {
-      // Check if it's a custom template/folder (UUIDs are usually longer than system IDs)
-      const isSystem = typeof contextMenu.id === 'string' && !contextMenu.id.includes('-'); 
-      const isSystemNum = typeof contextMenu.id === 'number';
+      // Robust check for system templates: Usually short strings or numbers
+      // Custom templates in this DB are UUIDs (36 chars with dashes)
+      const isSystem = !(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contextMenu.id));
       
-      if (contextMenu.type === 'template' && (isSystem || isSystemNum)) {
+      if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
         setContextMenu(null);
         return;
@@ -53,10 +53,9 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleDeleteField(contextMenu.id);
     } else {
-      const isSystem = typeof contextMenu.id === 'string' && !contextMenu.id.includes('-');
-      const isSystemNum = typeof contextMenu.id === 'number';
+      const isSystem = !(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contextMenu.id));
 
-      if (contextMenu.type === 'template' && (isSystem || isSystemNum)) {
+      if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถลบฟอร์มมาตรฐานได้");
         setContextMenu(null);
         return;
@@ -91,28 +90,17 @@ const ContextMenu = ({
         style={{ top: contextMenu.y, left: contextMenu.x }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
+          <Plus size={14} /> เพิ่มหัวข้อใหม่
+        </div>
         <div className="context-item" onClick={handleRename}>
           <Edit2 size={14} /> เปลี่ยนชื่อ
         </div>
         <div className="context-item" onClick={() => { handleStartMapping(contextMenu.id); setContextMenu(null); }}>
-          <Edit2 size={14} /> จับคู่ข้อความ
+          <Edit2 size={14} /> จับคู่คำ
         </div>
         <div className="context-item danger" onClick={handleDelete}>
           <Trash2 size={14} /> ลบทิ้ง
-        </div>
-      </div>
-    );
-  }
-
-  if (contextMenu.type === 'form') {
-    return (
-      <div
-        className="context-menu"
-        style={{ top: contextMenu.y, left: contextMenu.x }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
-          <Plus size={14} /> เพิ่มหัวข้อใหม่
         </div>
       </div>
     );
@@ -136,9 +124,22 @@ const ContextMenu = ({
         </div>
         {mappingFieldId && contextMenu.selection && (
           <div className="context-item highlight" onClick={() => handleAction('mapping')} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold', borderTop: '1px solid var(--border-subtle)' }}>
-            Mapping ({customFieldLabels[mappingFieldId] || mappingFieldId})
+            Confirm Mapping
           </div>
         )}
+      </div>
+    );
+  }
+  if (contextMenu.type === 'form') {
+    return (
+      <div
+        className="context-menu"
+        style={{ top: contextMenu.y, left: contextMenu.x }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
+          <Plus size={14} /> เพิ่มหัวข้อใหม่
+        </div>
       </div>
     );
   }
