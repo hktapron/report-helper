@@ -363,6 +363,12 @@ const App = () => {
       {/* MOBILE TAB BAR (Always at bottom on mobile) */}
       {window.innerWidth <= 768 && (
         <nav className="mobile-nav">
+          {/* v59: Visible label to confirm deployment */}
+          <div style={{ position: 'absolute', top: '-18px', width: '100%', textAlign: 'center', pointerEvents: 'none', zIndex: 10001 }}>
+            <span style={{ background: '#ff0000', color: '#ffffff', fontSize: '9px', padding: '1px 8px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.5)', fontWeight: 'bold' }}>
+              v59 - EMERGENCY FIX
+            </span>
+          </div>
           <button
             className={`nav-item ${activeMobileTab === 'templates' ? 'active' : ''}`}
             onClick={() => setActiveMobileTab('templates')}

@@ -445,9 +445,11 @@ input:focus, textarea:focus {
 }
 
 .preview-scroll-zone {
-  flex: 1 !important; /* v58: Fluid growth to eliminate gaps */
-  min-height: 0 !important; /* Essential for flex scroll context */
-  overflow-y: auto !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: scroll !important; /* v59: Forced scroll context */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
   padding: 0 !important;
   background: var(--bg-card);
   border-bottom: 2px solid var(--border-subtle);
@@ -474,22 +476,24 @@ input:focus, textarea:focus {
 }
 
 .form-scroll-zone {
-  flex: 0 0 32% !important; /* v58: Fixed reduced height bottom section */
+  flex: 0 0 30vh !important; /* v59: Explicitly bounded for scroll trigger */
+  height: 30vh !important;
   min-height: 0 !important;
-  overflow-y: auto !important;
+  overflow-y: scroll !important; /* v59: Forced scroll context */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
   background: var(--bg-sidebar);
   box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
   margin: 0 !important;
   padding: 0 !important;
   padding-bottom: 80px !important;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   z-index: 20;
   position: relative !important;
 }
 
 .form-scroll-zone > div {
-  min-height: 101% !important; /* Force scroll trigger */
+  min-height: 101% !important; /* v59: Ensure content overflow is detected */
 }
 
 /* Force child form elements to fit the height so scroll works */
@@ -574,14 +578,14 @@ input:focus, textarea:focus {
     border-bottom: 1px solid rgba(255,255,255,0.05);
     padding: 0 1rem !important;
     margin: 0 !important;
-    height: 27px; /* v57: Final 10% reduction */
+    height: 24px; /* v59: Maximum density reduction */
     display: flex;
     align-items: center;
   }
 
   .group-title {
     padding: 0 !important;
-    font-size: 0.72rem; /* v57: Even smaller */
+    font-size: 0.7rem; /* v59: Even smaller */
     margin: 0 !important;
     color: var(--text-primary);
     font-weight: 700;
@@ -601,9 +605,9 @@ input:focus, textarea:focus {
   }
 
   .form-input {
-    height: 31px !important; /* v57: Final compact height reduction */
+    height: 28px !important; /* v59: Aggressive height reduction */
     margin-bottom: 0 !important;
-    font-size: 0.8rem !important; 
+    font-size: 0.78rem !important; 
     border-radius: 4px !important;
   }
   
