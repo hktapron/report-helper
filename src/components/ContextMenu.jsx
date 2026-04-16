@@ -26,9 +26,8 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleRenameField(contextMenu.id);
     } else {
-      // Robust check for system templates: Usually short strings or numbers
-      // Custom templates in this DB are UUIDs (36 chars with dashes)
-      const isSystem = !(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contextMenu.id));
+      // Improved UUID check: look for a UUID pattern anywhere in the ID string
+      const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(contextMenu.id));
       
       if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
@@ -53,7 +52,7 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleDeleteField(contextMenu.id);
     } else {
-      const isSystem = !(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contextMenu.id));
+      const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(contextMenu.id));
 
       if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถลบฟอร์มมาตรฐานได้");

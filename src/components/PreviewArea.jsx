@@ -16,6 +16,7 @@ const PreviewArea = ({
   extraPreview,
   isSplitMode = false,
   onContextMenu,
+  setSaveModalData,
 }) => {
   const handleSaveTemplate = () => {
     // Determine if we are editing an existing custom template
