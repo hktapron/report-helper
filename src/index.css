@@ -442,8 +442,16 @@ input:focus, textarea:focus {
   padding: 0 !important;
   overflow: hidden !important; 
   z-index: 10;
-  display: grid !important;
-  grid-template-rows: auto 1fr; /* Preview takes auto, Form takes remainder */
+}
+
+/* Enforce Full Width on PC & Mobile Preview */
+.pc-preview-section .preview-container-main,
+.pc-preview-section .card,
+.preview-scroll-zone .preview-container-main,
+.preview-scroll-zone .card {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 !important;
 }
 
 .preview-scroll-zone {
