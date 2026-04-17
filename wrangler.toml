@@ -1,0 +1,9 @@
+#:schema node_modules/wrangler/config-schema.json
+compatibility_date = "2024-04-17"
+pages_build_output_dir = "dist"
+
+[vars]
+# Add your environment variables here if deploying via CLI
+# For Pages Dashboard deployment, add them in the UI settings
+VITE_SUPABASE_URL = "https://pjckyxzydofbuclsiaxp.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqY2t5eHp5ZG9mYnVjbHNpYXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTMyNDksImV4cCI6MjA5MTEyOTI0OX0.-f8UoItBzvDY_Y9yKf__8zVZ2cFgKKveMgzJv6DvHAw"
