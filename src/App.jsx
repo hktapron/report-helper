@@ -20,6 +20,7 @@ import ContextMenu from './components/ContextMenu';
 import MobileHeader from './components/MobileHeader';
 import DemoWarning from './components/DemoWarning';
 import SaveTemplateModal from './components/SaveTemplateModal';
+import FieldNamingModal from './components/FieldNamingModal';
 
 const App = () => {
   // --- Auth & Persistence ---
