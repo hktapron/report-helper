@@ -19,7 +19,6 @@ const ReportForm = ({
   thaiPreview,
   onAddField,
   onContextMenu,
-  mappingFieldId,
 }) => {
   
   // No grouping logic needed for unified layout
@@ -75,7 +74,7 @@ const ReportForm = ({
                 {dynamicFields.map(field => (
                   <div 
                     key={field.id} 
-                    className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''} ${mappingFieldId === field.id ? 'mapping-active' : ''}`} 
+                    className={`input-wrapper ${field.type === 'textarea' ? 'full-width' : ''}`} 
                     style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}
                     onContextMenu={(e) => {
                       if (window.innerWidth > 768) {

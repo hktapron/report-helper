@@ -96,6 +96,8 @@ const App = () => {
   });
   const [manualFields, setManualFields] = useState([]);
   const [saveModalData, setSaveModalData] = useState({ isOpen: false, currentName: '', folderId: null, templateId: null });
+  const [isFieldNamingModalOpen, setIsFieldNamingModalOpen] = useState(false);
+  const [pendingMappingSelection, setPendingMappingSelection] = useState(null);
 
   // Persist custom labels
   useEffect(() => {
@@ -231,41 +233,41 @@ const App = () => {
     // Silent mode - no alert per user request
   };
 
-  const handleExecuteMapping = () => {
-    const selection = window.getSelection();
-    if (!selection.toString() || !mappingFieldId) return;
+  const handleConfirmFieldNaming = (name) => {
+    if (!pendingMappingSelection || !name) return;
 
-    if (thaiPreviewRef.current) {
-      const range = selection.getRangeAt(0);
+    const fieldId = `custom_${Date.now()}`;
+    
+    // 1. Add to labels and manual fields
+    setCustomFieldLabels(prev => ({ ...prev, [fieldId]: name }));
+    setManualFields(prev => [...prev, fieldId]);
+
+    // 2. Wrap in HTML
+    if (thaiPreviewRef.current && pendingMappingSelection.range) {
+      const range = pendingMappingSelection.range;
       const span = document.createElement('span');
       span.className = 'sync-field';
-      span.dataset.field = mappingFieldId;
-      span.innerText = selection.toString();
+      span.dataset.field = fieldId;
+      span.innerText = pendingMappingSelection.text;
       
       range.deleteContents();
       range.insertNode(span);
       
-      // Sync state
       setThaiPreview(thaiPreviewRef.current.innerHTML);
-      
-      // Once mapped, it will be detected by useDynamicFields naturally, 
-      // but we can remove it from manualFields to avoid duplicates if it was there
-      setManualFields(prev => prev.filter(id => id !== mappingFieldId));
-      
-      setMappingFieldId(null);
-      // alert("จับคู่ข้อความเรียบร้อย"); // Silent confirm per style
     }
+
+    setIsFieldNamingModalOpen(false);
+    setPendingMappingSelection(null);
   };
 
-  const handleSaveTemplateChoice = async (type) => {
+  const handleSaveTemplateChoice = async (type, newNameFromModal) => {
     const { currentName, folderId, templateId } = saveModalData;
     let targetName = currentName;
     let targetTemplateId = null;
 
     if (type === 'saveNew') {
-      const newName = window.prompt("ชื่อฟอร์มใหม่:", currentName + " (Copy)");
-      if (!newName) return;
-      targetName = newName;
+      if (!newNameFromModal) return;
+      targetName = newNameFromModal;
     } else {
       // Overwrite
       targetTemplateId = templateId;
@@ -299,13 +301,17 @@ const App = () => {
 
   const onContextMenu = (e, type, id, data) => {
     e.preventDefault();
+    const selection = window.getSelection();
+    const selectionText = selection?.toString();
+    
     setContextMenu({ 
       x: e.pageX, 
       y: e.pageY, 
       type, 
       id, 
       data,
-      selection: type === 'preview' ? window.getSelection()?.toString() : null
+      selection: selectionText,
+      selectionRange: selectionText && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
     });
   };
 
@@ -541,7 +547,10 @@ const App = () => {
         handleRenameField={handleRenameField}
         handleDeleteField={handleDeleteField}
         handleStartMapping={handleStartMapping}
-        handleExecuteMapping={handleExecuteMapping}
+        handleStartNewMapping={(sel) => {
+          setPendingMappingSelection(sel);
+          setIsFieldNamingModalOpen(true);
+        }}
         customFieldLabels={customFieldLabels}
         onAddField={handleAddField}
       />
@@ -551,7 +560,13 @@ const App = () => {
         onClose={() => setSaveModalData({ ...saveModalData, isOpen: false })}
         currentName={saveModalData.currentName}
         onOverwrite={() => handleSaveTemplateChoice('overwrite')}
-        onSaveNew={() => handleSaveTemplateChoice('saveNew')}
+        onSaveNew={(name) => handleSaveTemplateChoice('saveNew', name)}
+      />
+
+      <FieldNamingModal
+        isOpen={isFieldNamingModalOpen}
+        onClose={() => setIsFieldNamingModalOpen(false)}
+        onConfirm={handleConfirmFieldNaming}
       />
     </div>
   );

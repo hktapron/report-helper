@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, Plus } from 'lucide-react';
+import { Edit2, Trash2, Plus, Link } from 'lucide-react';
 
 const getSmartTitle = (h) => h.customTitle || h.template_name || 'รายงานเหตุการณ์';
 
@@ -12,23 +12,21 @@ const ContextMenu = ({
   deleteFolder,
   deleteReport,
   deleteTemplate,
-  mappingFieldId,
   handleRenameField,
   handleDeleteField,
-  handleStartMapping,
-  handleExecuteMapping,
-  customFieldLabels,
+  handleStartNewMapping,
   onAddField,
 }) => {
   if (!contextMenu) return null;
+
+  // SYSTEM TEMPLATE IDs that cannot be deleted/renamed
+  const SYSTEM_IDS = ['new_report', 'apu_technical', 'violator_core'];
+  const isSystem = typeof contextMenu.id === 'string' && SYSTEM_IDS.includes(contextMenu.id);
 
   const handleRename = () => {
     if (contextMenu.type === 'field') {
       handleRenameField(contextMenu.id);
     } else {
-      // Improved UUID check: look for a UUID pattern anywhere in the ID string
-      const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(contextMenu.id));
-      
       if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
         setContextMenu(null);
@@ -52,8 +50,6 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleDeleteField(contextMenu.id);
     } else {
-      const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(contextMenu.id));
-
       if (contextMenu.type === 'template' && isSystem) {
         alert("ไม่สามารถลบฟอร์มมาตรฐานได้");
         setContextMenu(null);
@@ -71,7 +67,10 @@ const ContextMenu = ({
 
   const handleAction = (action) => {
     if (action === 'mapping') {
-      handleExecuteMapping();
+      handleStartNewMapping({
+        text: contextMenu.selection,
+        range: contextMenu.selectionRange
+      });
     } else if (action === 'copy') {
       document.execCommand('copy');
     } else if (action === 'paste') {
@@ -89,14 +88,8 @@ const ContextMenu = ({
         style={{ top: contextMenu.y, left: contextMenu.x }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
-          <Plus size={14} /> เพิ่มหัวข้อใหม่
-        </div>
         <div className="context-item" onClick={handleRename}>
           <Edit2 size={14} /> เปลี่ยนชื่อ
-        </div>
-        <div className="context-item" onClick={() => { handleStartMapping(contextMenu.id); setContextMenu(null); }}>
-          <Edit2 size={14} /> จับคู่คำ
         </div>
         <div className="context-item danger" onClick={handleDelete}>
           <Trash2 size={14} /> ลบทิ้ง
@@ -121,14 +114,15 @@ const ContextMenu = ({
         <div className="context-item" onClick={() => handleAction('paste')}>
           Paste
         </div>
-        {mappingFieldId && contextMenu.selection && (
+        {contextMenu.selection && (
           <div className="context-item highlight" onClick={() => handleAction('mapping')} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold', borderTop: '1px solid var(--border-subtle)' }}>
-            Confirm Mapping
+            <Link size={14} /> Mapping
           </div>
         )}
       </div>
     );
   }
+
   if (contextMenu.type === 'form') {
     return (
       <div
