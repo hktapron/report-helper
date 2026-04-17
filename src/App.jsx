@@ -246,6 +246,16 @@ const App = () => {
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
+
+    // If it's a blank template, use the specialized initialization
+    if (item.id === 'blank') {
+      initBlankReport(mode);
+      setIsSidebarOpen(false);
+      // Auto-jump to "Data Entry" tab on mobile
+      setActiveMobileTab('form');
+      return;
+    }
+
     const { finalHtml, savedData } = processAndLoadItem(item, type);
     setFormData(savedData);
     
