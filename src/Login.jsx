@@ -22,7 +22,7 @@ const Login = ({ onLogin }) => {
       if (!supabase) {
         setError('ฐานข้อมูลไม่ได้เชื่อมต่อ (Missing Config). กรุณาใช้ admin / admin สำหรับโหมดทดลอง');
       } else {
-        const email = username.includes('@') ? username.trim() : `${username.trim()}@vtsp.internal`;
+        const email = username.includes('@') ? username.trim() : `${username.trim()}@airport.com`;
         const { data, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,

@@ -69,7 +69,7 @@ const Sidebar = ({
         </button>
 
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          User: <strong>{user.username}</strong>
+          User: <strong>{user.display_name}</strong>
         </div>
       </div>
 
