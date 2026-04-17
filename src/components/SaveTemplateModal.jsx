@@ -47,11 +47,12 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                 ต้องการดำเนินการอย่างไร?
               </p>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
                 <button 
                   className="btn btn-primary" 
                   style={{ 
                     padding: '16px', 
+                    width: '320px',
                     justifyContent: 'center', 
                     fontSize: '1.1rem', 
                     fontWeight: '800', 
@@ -66,6 +67,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                   className="btn btn-outline" 
                   style={{ 
                     padding: '14px', 
+                    width: '320px',
                     justifyContent: 'center', 
                     fontSize: '1rem', 
                     border: '1px solid #ddd'
@@ -94,12 +96,12 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                 />
               </div>
               
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', alignItems: 'center' }}>
                 {!currentName?.includes('(ใหม่)') && (
                   <button 
                     type="button" 
                     className="btn btn-ghost" 
-                    style={{ flex: 1, justifyContent: 'center' }} 
+                    style={{ width: '120px', justifyContent: 'center' }} 
                     onClick={() => setView('choice')}
                   >
                     กลับ
@@ -109,7 +111,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                   type="button" 
                   className="btn btn-outline" 
                   style={{ 
-                    flex: 1, 
+                    width: '180px', 
                     justifyContent: 'center',
                     background: 'black',
                     color: 'white',
@@ -124,7 +126,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                   type="submit" 
                   className="btn btn-primary" 
                   style={{ 
-                    flex: 1, 
+                    width: '180px', 
                     justifyContent: 'center', 
                     background: '#fff', 
                     color: '#000', 
