@@ -279,6 +279,23 @@ const App = () => {
     setPendingMappingSelection(null);
   };
 
+  const handleConnectMapping = (selection) => {
+    if (!selection || !mappingFieldId) return;
+
+    if (thaiPreviewRef.current && selection.range) {
+      const range = selection.range;
+      const span = document.createElement('span');
+      span.className = 'sync-field';
+      span.dataset.field = mappingFieldId;
+      span.innerText = selection.text;
+      
+      range.deleteContents();
+      range.insertNode(span);
+      
+      setThaiPreview(thaiPreviewRef.current.innerHTML);
+    }
+  };
+
   const handleSaveTemplateChoice = async (type, newNameFromModal) => {
     const { currentName, folderId, templateId } = saveModalData;
     let targetName = currentName;
@@ -563,6 +580,8 @@ const App = () => {
         deleteFolder={deleteFolder}
         deleteReport={deleteReport}
         deleteTemplate={deleteTemplate}
+        onSelectTemplate={handleSelectTemplate}
+        onContextMenu={onContextMenu}
         mappingFieldId={mappingFieldId}
         handleRenameField={handleRenameField}
         handleDeleteField={handleDeleteField}
@@ -571,6 +590,7 @@ const App = () => {
           setPendingMappingSelection(sel);
           setIsFieldNamingModalOpen(true);
         }}
+        handleConnectMapping={handleConnectMapping}
         customFieldLabels={customFieldLabels}
         onAddField={handleAddField}
       />

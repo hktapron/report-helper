@@ -15,7 +15,10 @@ const ContextMenu = ({
   handleRenameField,
   handleDeleteField,
   handleStartNewMapping,
+  handleConnectMapping,
   onAddField,
+  mappingFieldId,
+  setMappingFieldId,
 }) => {
   if (!contextMenu) return null;
 
@@ -64,10 +67,17 @@ const ContextMenu = ({
 
   const handleAction = (action) => {
     if (action === 'mapping') {
-      handleStartNewMapping({
-        text: contextMenu.selection,
-        range: contextMenu.selectionRange
-      });
+      if (mappingFieldId) {
+        handleConnectMapping({
+          text: contextMenu.selection,
+          range: contextMenu.selectionRange
+        });
+      } else {
+        handleStartNewMapping({
+          text: contextMenu.selection,
+          range: contextMenu.selectionRange
+        });
+      }
     } else if (action === 'copy') {
       document.execCommand('copy');
     } else if (action === 'paste') {
@@ -88,6 +98,9 @@ const ContextMenu = ({
         <div className="context-item" onClick={handleRename}>
           <Edit2 size={14} /> เปลี่ยนชื่อ
         </div>
+        <div className={`context-item ${mappingFieldId === contextMenu.id ? 'active-mapping' : ''}`} onClick={() => { setMappingFieldId(mappingFieldId === contextMenu.id ? null : contextMenu.id); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
+          <Plus size={14} /> {mappingFieldId === contextMenu.id ? 'ยกเลิกการเพิ่มจุดจับคู่' : 'เพิ่มการจับคู่'}
+        </div>
         <div className="context-item danger" onClick={handleDelete}>
           <Trash2 size={14} /> ลบทิ้ง
         </div>
@@ -96,6 +109,7 @@ const ContextMenu = ({
   }
 
   if (contextMenu.type === 'preview') {
+    const isConnectingMapping = !!mappingFieldId;
     return (
       <div
         className="context-menu"
@@ -113,7 +127,7 @@ const ContextMenu = ({
         </div>
         {contextMenu.selection && (
           <div className="context-item highlight" onClick={() => handleAction('mapping')} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold', borderTop: '1px solid var(--border-subtle)' }}>
-            <Link size={14} /> Mapping
+            <Link size={14} /> {isConnectingMapping ? 'เชื่อมข้อมูลกับหัวข้อนี้' : 'Mapping'}
           </div>
         )}
       </div>

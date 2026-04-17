@@ -26,6 +26,7 @@ const Sidebar = ({
   moveTemplateToFolder,
   moveFolder,
   createFolder,
+  hiddenTemplateIds = [],
   className = '',
 }) => {
   const matchesSearch = (text) =>
@@ -36,6 +37,7 @@ const Sidebar = ({
   );
   const filteredTemplates = (templatesData || [])
     .filter(t => t.mode === reportMode)
+    .filter(t => !hiddenTemplateIds.includes(t.id))
     .filter(t => matchesSearch(t.name));
   const filteredHistory = history
     .filter(h => (h.mode || 'incident') === reportMode)
