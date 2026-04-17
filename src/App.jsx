@@ -399,6 +399,7 @@ const App = () => {
       <div className="app-container">
         <AccountManagementView 
           user={user} 
+          logActivity={logActivity}
           onBack={() => setIsAccountViewOpen(false)} 
           onLogout={handleLogout}
         />

@@ -6,7 +6,7 @@ import {
   Activity, Calendar, Search, User as UserIcon
 } from 'lucide-react';
 
-const AccountManagementView = ({ user, onBack, onLogout }) => {
+const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
   const [activeTab, setActiveTab] = useState('password'); // 'password' | 'rbac' | 'logs'
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -95,6 +95,11 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
       
       if (error) throw error;
       
+      // LOG: Password change
+      if (logActivity) {
+        logActivity('change_password', 'User Account', { user_id: user.id });
+      }
+
       setMessage({ type: 'success', text: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' });
       setOldPassword('');
       setNewPassword('');
@@ -114,6 +119,7 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
     setMessage({ type: '', text: '' });
 
     try {
+      const targetUser = userList.find(u => u.id === selectedUserId);
       const { error } = await supabase.rpc('update_user_role', {
         target_user_id: selectedUserId,
         new_role: selectedRole
@@ -121,6 +127,14 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
 
       if (error) throw error;
       
+      // LOG: Role update
+      if (logActivity) {
+        logActivity('update_user_role', targetUser?.username || 'Unknown User', { 
+          target_id: selectedUserId, 
+          new_role: selectedRole 
+        });
+      }
+
       setMessage({ type: 'success', text: 'อัปเดตสิทธิ์การใช้งานเรียบร้อย' });
       fetchUserList(); // Refresh list to see updated labels
     } catch (err) {
@@ -153,6 +167,8 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
       delete_custom_template: 'ลบฟอร์ม',
       hide_system_template: 'ซ่อนฟอร์มมาตรฐาน',
       delete_field: 'ลบหัวข้อกรงข้อมูล',
+      update_user_role: 'ปรับระดับสิทธิ์',
+      change_password: 'เปลี่ยนรหัสผ่าน'
     };
     return map[action] || action;
   };
