@@ -12,6 +12,7 @@ export const formatAuthUser = (authUser) => {
     id: authUser.id,
     username: authUser.user_metadata?.username || fallback,
     display_name: authUser.user_metadata?.display_name || fallback,
+    role: authUser.user_metadata?.role || 'operation',
   };
 };
 
