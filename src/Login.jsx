@@ -91,7 +91,18 @@ const Login = ({ onLogin }) => {
           </button>
         </form>
 
-        <div style={{ marginTop: '3.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.8', opacity: 0.8 }}>
+        <div style={{ 
+          marginTop: '3.5rem', 
+          textAlign: 'center', 
+          fontSize: '0.75rem', 
+          color: 'var(--text-secondary)', 
+          lineHeight: '1.8', 
+          opacity: 0.8,
+          borderTop: '1px solid var(--border-subtle)',
+          paddingTop: '1.5rem'
+        }}>
+          <b>VTSP Incident Reporting Workstation</b><br/>
+          Internal Operational Monitoring System (HKT)<br/>
           งานบริการเขตการบิน ส่วนปฏิบัติการเขตการบิน<br/>
           ฝ่ายปฏิบัติการเขตการบิน ท่าอากาศยานภูเก็ต (Apron Control)
         </div>
