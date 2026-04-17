@@ -5,11 +5,7 @@ export const APP_VERSION = 'v22.1';
 export const DEFAULT_INCIDENT_BODY = `รายงานเหตุการณ์ไม่ปกติ
 วันที่ {current_date}
 
-- รายละเอียดเหตุการณ์:
-{narrative}
-
-- การดำเนินการ:
-{action_taken}
+เมื่อเวลา {report_time}
 
 =============
 งานบริหารหลุมจอด (Apron Control)
