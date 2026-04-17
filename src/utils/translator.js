@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Smart Gemini Translation Engine for CAAT-22
+/**
+ * Smart Gemini Translation Engine for CAAT-22
  * @param {string} thaiText - The current Thai preview text
  * @param {object} formData - Current state values
  * @returns {string} - Professional English CAAT-22 report
