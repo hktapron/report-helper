@@ -191,21 +191,35 @@ const App = () => {
 
   // --- Actions ---
   const handleFullReset = () => {
-    setSelectedTemplate(null);
-    setFormData({});
-    resetPreview(reportMode);
+    initBlankReport(reportMode);
     setMappingFieldId(null);
-    setManualFields([]);
   };
 
   const handleSwitchMode = (newMode) => {
     setReportMode(newMode);
-    setSelectedTemplate(null);
-    setFormData({});
-    resetPreview(newMode);
+    initBlankReport(newMode);
     setMappingFieldId(null);
-    setManualFields([]);
   };
+
+  const initBlankReport = (mode) => {
+    const defaultHtml = getDefaultHtml(mode);
+    setThaiPreview(defaultHtml);
+    setFormData({});
+    setManualFields([]);
+    setSelectedTemplate({
+      id: `blank_${mode}_${Date.now()}`,
+      name: mode === 'incident' ? 'รายงานเหตุการณ์ (กำหนดเอง)' : 'รายงานผู้กระทำความผิด (กำหนดเอง)',
+      mode,
+      preview: defaultHtml,
+    });
+  };
+
+  // Initial load: Prepare a blank report
+  useEffect(() => {
+    if (user && !selectedTemplate) {
+      initBlankReport(reportMode);
+    }
+  }, [user]);
 
   const handleDeleteTemplate = async (templateId) => {
     const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
@@ -366,7 +380,7 @@ const App = () => {
 
     if (!error) {
       logActivity(type === 'overwrite' ? 'update_template' : 'create_template', targetName);
-      alert(type === 'overwrite' ? 'บันทึกการแก้ไขเรียบร้อย' : 'บันทึกฟอร์มใหม่เรียบร้อย');
+      // Silent close - no alert per user request
       setSaveModalData({ ...saveModalData, isOpen: false });
     } else {
       alert('เกิดข้อผิดพลาด: ' + error.message);

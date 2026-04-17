@@ -19,17 +19,12 @@ const PreviewArea = ({
   setSaveModalData,
 }) => {
   const handleSaveTemplate = () => {
-    // Determine if we are editing an existing custom template
-    // ID format: custom_UUID_timestamp or template_UUID_timestamp
-    const idParts = selectedTemplate?.id?.split('_') || [];
-    const isCustom = idParts[0] === 'custom' || idParts[0] === 'template';
-    const originalUuid = isCustom ? idParts[1] : null;
-
-    setSaveModalData({
+    // Force Save As flow per user request
+    onSave('saveNew', {
       isOpen: true,
       currentName: selectedTemplate?.name || '',
-      folderId: selectedTemplate?.folder_id,
-      templateId: (isCustom && originalUuid !== 'new') ? originalUuid : null
+      folderId: null,
+      templateId: null
     });
   };
 
