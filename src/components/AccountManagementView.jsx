@@ -27,6 +27,9 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [logsLoading, setLogsLoading] = useState(false);
 
+  // Gemini State
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('vtsp_gemini_key') || '');
+
   useEffect(() => {
     if (activeTab === 'rbac' && user?.role === 'admin') {
       fetchUserList();
@@ -35,6 +38,12 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
       fetchLogs();
     }
   }, [activeTab]);
+
+  const handleSaveGeminiKey = (e) => {
+    e.preventDefault();
+    localStorage.setItem('vtsp_gemini_key', geminiKey);
+    setMessage({ type: 'success', text: 'บันทึก API Key เรียบร้อยแล้ว (เก็บไว้ในเครื่องนี้เท่านั้น)' });
+  };
 
   const fetchUserList = async () => {
     if (!supabase) return;
@@ -201,6 +210,15 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
               <Lock size={18} /> เปลี่ยนรหัสผ่าน
               <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
             </button>
+
+            <button 
+              className={`account-nav-item ${activeTab === 'gemini' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('gemini'); setMessage({ type: '', text: '' }); }}
+              style={navItemStyle(activeTab === 'gemini')}
+            >
+              <RefreshCw size={18} /> ตั้งค่า AI (Gemini)
+              <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+            </button>
             
             {user?.role === 'admin' && (
               <>
@@ -294,6 +312,54 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
 
                 <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: 'fit-content', padding: '0.8rem 2.5rem' }}>
                   {loading ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'gemini' && (
+            <div style={{ maxWidth: '600px' }}>
+              <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', marginBottom: '0.5rem' }}>
+                ตั้งค่า AI (Gemini API Key)
+              </h1>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>
+                เพื่อให้ระบบสามารถทำรายงานภาษาอังกฤษ (CAAT-22) ได้ คุณต้องระบุ API Key ของ Gemini ส่วนตัวครับ 
+                <br/><small>(ข้อมูลนี้จะถูกเก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น ไม่ได้ส่งไปเก็บที่เซิร์ฟเวอร์ใดๆ)</small>
+              </p>
+
+              <form onSubmit={handleSaveGeminiKey} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="input-group">
+                  <label>Gemini API Key</label>
+                  <input 
+                    type="password" 
+                    value={geminiKey} 
+                    onChange={(e) => setGeminiKey(e.target.value)} 
+                    placeholder="ใส่ API Key ของคุณที่นี่..."
+                    required
+                  />
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    คุณสามารถรับ API Key ได้ฟรีที่ <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)' }}>Google AI Studio</a>
+                  </div>
+                </div>
+
+                {message.text && (
+                  <div style={{ 
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    background: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    color: message.type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    fontSize: '0.9rem'
+                  }}>
+                    {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                    {message.text}
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary" style={{ width: 'fit-content', padding: '0.8rem 2.5rem' }}>
+                  บันทึก Key
                 </button>
               </form>
             </div>

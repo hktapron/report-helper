@@ -1,22 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ตรวจสอบ API Key
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-/**
- * Smart Gemini Translation Engine for CAAT-22
+// Smart Gemini Translation Engine for CAAT-22
  * @param {string} thaiText - The current Thai preview text
  * @param {object} formData - Current state values
  * @returns {string} - Professional English CAAT-22 report
  */
 export const translateToCAAT22 = async (thaiText, formData) => {
-  // Debug Log to verify ENV loading
-  console.log("API Key Status:", import.meta.env.VITE_GEMINI_API_KEY ? "Found" : "Missing");
+  // Priority: 1. localStorage (User's private key), 2. Environment Variable
+  const localKey = localStorage.getItem('vtsp_gemini_key');
+  const finalKey = localKey || import.meta.env.VITE_GEMINI_API_KEY;
 
-  if (!import.meta.env.VITE_GEMINI_API_KEY) {
-    throw new Error("Error: หา VITE_GEMINI_API_KEY ไม่พบ กรุณาเช็ค Vercel Environment");
+  if (!finalKey) {
+    throw new Error("Missing API Key: กรุณาไปที่หน้า Account เพื่อระบุ Gemini API Key ก่อนใช้งานครับ");
   }
+
+  const genAI = new GoogleGenerativeAI(finalKey);
   
   if (!thaiText) return "";
   
