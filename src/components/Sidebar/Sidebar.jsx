@@ -92,7 +92,7 @@ const Sidebar = ({
               onSelectTemplate({ 
                 id: 'blank', 
                 mode: reportMode, 
-                name: reportMode === 'incident' ? 'รายงานเหตุการณ์ (กำหนดเอง)' : 'รายงานผู้กระทำความผิด (กำหนดเอง)', 
+                name: reportMode === 'incident' ? 'รายงานเหตุการณ์ (ใหม่)' : 'รายงานผู้กระทำความผิด (ใหม่)', 
                 content: '' 
               }, 'template');
               if (window.innerWidth <= 768) setActiveMobileTab('form');

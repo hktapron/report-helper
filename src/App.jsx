@@ -212,7 +212,7 @@ const App = () => {
     setManualFields([]);
     setSelectedTemplate({
       id: `blank_${mode}_${Date.now()}`,
-      name: mode === 'incident' ? 'รายงานเหตุการณ์ (กำหนดเอง)' : 'รายงานผู้กระทำความผิด (กำหนดเอง)',
+      name: mode === 'incident' ? 'รายงานเหตุการณ์ (ใหม่)' : 'รายงานผู้กระทำความผิด (ใหม่)',
       mode,
       preview: defaultHtml,
     });
