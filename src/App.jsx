@@ -133,6 +133,7 @@ const App = () => {
     processAndLoadItem,
     handleInputChange: previewHandleInputChange,
     resetPreview,
+    getDefaultHtml,
   } = useHtmlPreview();
 
   const historyData = useHistory(user?.id);
