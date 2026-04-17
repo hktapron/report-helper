@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
   ArrowLeft, Key, Lock, Users, LogOut, ChevronRight, 
-  Shield, CheckCircle, AlertCircle, RefreshCw 
+  Shield, CheckCircle, AlertCircle, RefreshCw,
+  Activity, Calendar, Search, User as UserIcon
 } from 'lucide-react';
 
 const AccountManagementView = ({ user, onBack, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('password'); // 'password' | 'rbac'
+  const [activeTab, setActiveTab] = useState('password'); // 'password' | 'rbac' | 'logs'
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -21,9 +22,17 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
   const [selectedRole, setSelectedRole] = useState('operation');
   const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
 
+  // Logs State
+  const [logs, setLogs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [logsLoading, setLogsLoading] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'rbac' && user?.role === 'admin') {
       fetchUserList();
+    }
+    if (activeTab === 'logs' && user?.role === 'admin') {
+      fetchLogs();
     }
   }, [activeTab]);
 
@@ -46,6 +55,25 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
     }
   };
 
+  const fetchLogs = async () => {
+    if (!supabase) return;
+    setLogsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+      setLogs(data || []);
+    } catch (err) {
+      console.error("Fetch logs error:", err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -61,8 +89,6 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      // Note: oldPassword check is not strictly enforced by Supabase client-side, 
-      // but provided in UI for standard compliance.
       const { error } = await supabase.auth.updateUser({ 
         password: newPassword 
       });
@@ -104,6 +130,33 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
     }
   };
 
+  const filteredLogs = logs.filter(log => 
+    log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.action_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.target_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleString('th-TH', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getActionLabel = (action) => {
+    const map = {
+      create_template: 'สร้างฟอร์มใหม่',
+      update_template: 'แก้ไขฟอร์ม',
+      delete_custom_template: 'ลบฟอร์ม',
+      hide_system_template: 'ซ่อนฟอร์มมาตรฐาน',
+      delete_field: 'ลบหัวข้อกรงข้อมูล',
+    };
+    return map[action] || action;
+  };
+
   return (
     <div className="account-mgmt-container" style={{ display: 'flex', height: '100vh', background: 'var(--bg-main)' }}>
       {/* Sidebar เมนู */}
@@ -134,14 +187,24 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
             </button>
             
             {user?.role === 'admin' && (
-              <button 
-                className={`account-nav-item ${activeTab === 'rbac' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('rbac'); setMessage({ type: '', text: '' }); }}
-                style={navItemStyle(activeTab === 'rbac')}
-              >
-                <Users size={18} /> จัดการสิทธิ์ (Admin)
-                <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-              </button>
+              <>
+                <button 
+                  className={`account-nav-item ${activeTab === 'rbac' ? 'active' : ''}`}
+                  onClick={() => { setActiveTab('rbac'); setMessage({ type: '', text: '' }); }}
+                  style={navItemStyle(activeTab === 'rbac')}
+                >
+                  <Users size={18} /> จัดการสิทธิ์ (Admin)
+                  <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                </button>
+                <button 
+                  className={`account-nav-item ${activeTab === 'logs' ? 'active' : ''}`}
+                  onClick={() => { setActiveTab('logs'); setMessage({ type: '', text: '' }); }}
+                  style={navItemStyle(activeTab === 'logs')}
+                >
+                  <Activity size={18} /> ตรวจสอบประวัติแก้ไข (Log)
+                  <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                </button>
+              </>
             )}
           </nav>
         </div>
@@ -155,9 +218,9 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
 
       {/* พื้นที่แสดงเนื้อหา */}
       <div className="account-content" style={{ flex: 1, padding: '3rem', overflowY: 'auto' }}>
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: '1000px' }}>
           {activeTab === 'password' && (
-            <div>
+            <div style={{ maxWidth: '600px' }}>
               <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', marginBottom: '0.5rem' }}>
                 เปลี่ยนรหัสผ่าน
               </h1>
@@ -221,7 +284,7 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
           )}
 
           {activeTab === 'rbac' && (
-            <div>
+            <div style={{ maxWidth: '600px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', margin: 0 }}>
                   จัดการสิทธิ์ใช้งาน (Update Role)
@@ -309,6 +372,77 @@ const AccountManagementView = ({ user, onBack, onLogout }) => {
                   {loading ? 'กำลังบันทึก...' : 'อัปเดตสิทธิ์ใช้งาน'}
                 </button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'logs' && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                <div>
+                  <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', margin: 0 }}>
+                    ตรวจสอบประวัติแก้ไข (Log)
+                  </h1>
+                  <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>รายการการเปลี่ยนแปลงระบบย้อนหลัง</p>
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={fetchLogs} 
+                  disabled={logsLoading}
+                >
+                  <RefreshCw size={16} className={logsLoading ? 'spin' : ''} style={{ marginRight: '8px' }} /> รีเฟรชข้อมูล
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                <input 
+                  type="text" 
+                  placeholder="ค้นหาตามชื่อผู้ใช้, การกระทำ หรือชื่อฟอร์ม..."
+                  className="search-input"
+                  style={{ width: '100%', paddingLeft: '2.5rem', background: 'var(--bg-card)' }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-subtle)', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.02)' }}>
+                      <th style={{ padding: '1rem' }}><Calendar size={14} /> วันที่/เวลา</th>
+                      <th style={{ padding: '1rem' }}><UserIcon size={14} /> ผู้ใช้งาน</th>
+                      <th style={{ padding: '1rem' }}>สิทธิ์</th>
+                      <th style={{ padding: '1rem' }}><Activity size={14} /> การกระทำ</th>
+                      <th style={{ padding: '1rem' }}>เป้าหมาย</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logsLoading ? (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>กำลังโหลดข้อมูล...</td></tr>
+                    ) : filteredLogs.length === 0 ? (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>ไม่พบข้อมูลประวัติ</td></tr>
+                    ) : filteredLogs.map(log => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background 0.2s' }}>
+                        <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}>{formatDate(log.created_at)}</td>
+                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{log.user_name}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <span style={{ 
+                            padding: '2px 8px', 
+                            borderRadius: '4px', 
+                            fontSize: '0.7rem',
+                            background: log.role === 'admin' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                            color: log.role === 'admin' ? 'var(--accent-indigo)' : 'var(--text-muted)'
+                          }}>
+                            {log.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem' }}>{getActionLabel(log.action_type)}</td>
+                        <td style={{ padding: '1rem' }}>{log.target_name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
