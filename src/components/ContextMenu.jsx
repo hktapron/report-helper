@@ -19,6 +19,7 @@ const ContextMenu = ({
   onAddField,
   mappingFieldId,
   setMappingFieldId,
+  user,
 }) => {
   if (!contextMenu) return null;
 
