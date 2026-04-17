@@ -35,7 +35,9 @@ export const useDynamicFields = (selectedTemplate, reportMode, manualFields = []
   return useMemo(() => {
     let keys = [];
 
-    if (!selectedTemplate) {
+    const isBlank = !selectedTemplate || selectedTemplate.id?.includes('blank') || (!selectedTemplate.content && !selectedTemplate.preview);
+
+    if (isBlank) {
       if (reportMode === 'incident') {
         keys = ['report_time', 'informant', 'flight_no', 'atc_time', 'original_airport', 'stand', 'ac_reg', 'ac_type', 'route'];
       } else {

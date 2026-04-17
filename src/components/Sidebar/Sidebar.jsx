@@ -89,7 +89,12 @@ const Sidebar = ({
             className="btn btn-primary btn-full"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
             onClick={() => {
-              handleFullReset();
+              onSelectTemplate({ 
+                id: 'blank', 
+                mode: reportMode, 
+                name: reportMode === 'incident' ? 'รายงานเหตุการณ์ (กำหนดเอง)' : 'รายงานผู้กระทำความผิด (กำหนดเอง)', 
+                content: '' 
+              }, 'template');
               if (window.innerWidth <= 768) setActiveMobileTab('form');
             }}
           >
