@@ -78,6 +78,7 @@ const ReportForm = ({
                     style={{ gridColumn: field.type === 'textarea' ? '1 / -1' : 'auto' }}
                     onContextMenu={(e) => {
                       if (window.innerWidth > 768) {
+                        e.stopPropagation();
                         onContextMenu(e, 'field', field.id, field);
                       }
                     }}

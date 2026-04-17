@@ -99,6 +99,15 @@ const App = () => {
   const [saveModalData, setSaveModalData] = useState({ isOpen: false, currentName: '', folderId: null, templateId: null });
   const [isFieldNamingModalOpen, setIsFieldNamingModalOpen] = useState(false);
   const [pendingMappingSelection, setPendingMappingSelection] = useState(null);
+  const [hiddenTemplateIds, setHiddenTemplateIds] = useState(() => {
+    const saved = localStorage.getItem('vtsp_hidden_templates');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Persist hidden templates
+  useEffect(() => {
+    localStorage.setItem('vtsp_hidden_templates', JSON.stringify(hiddenTemplateIds));
+  }, [hiddenTemplateIds]);
 
   // Persist custom labels
   useEffect(() => {
@@ -166,6 +175,15 @@ const App = () => {
     resetPreview(newMode);
   };
 
+  const handleDeleteTemplate = async (templateId) => {
+    const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
+    if (isSystem) {
+      setHiddenTemplateIds(prev => [...new Set([...prev, templateId])]);
+      return;
+    }
+    await deleteTemplate(templateId);
+  };
+
   const handleSelectTemplate = (item, type = 'template') => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
@@ -183,7 +201,7 @@ const App = () => {
   };
 
   const handleInputChange = (id, value) => {
-    previewHandleInputChange(id, value, setFormData);
+    previewHandleInputChange(id, value, setFormData, customFieldLabels);
   };
 
   const handleAddField = () => {
@@ -359,6 +377,7 @@ const App = () => {
         folderTree={folderTree}
         folders={folders}
         customTemplates={customTemplates}
+        hiddenTemplateIds={hiddenTemplateIds}
         history={history}
         onSelectTemplate={handleSelectTemplate}
         onContextMenu={onContextMenu}

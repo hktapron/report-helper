@@ -54,8 +54,16 @@ export const useHtmlPreview = () => {
    * Syncs a form field change to the preview DOM and state.
    * Accepts setFormData from App to avoid coupling.
    */
-  const handleInputChange = (id, value, setFormData) => {
-    const isTimeField = /^(report_time|atc_time|departure_time|incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
+  const handleInputChange = (id, value, setFormData, customFieldLabels = {}) => {
+    // 1. Check ID-based time fields
+    const isIdTimeField = /^(report_time|atc_time|departure_time|incident_time|std|sta|atd|ata|time_\d+)$/i.test(id);
+    
+    // 2. Check Label-based time fields (v62 Smart Logic)
+    const label = customFieldLabels[id] || '';
+    const isLabelTimeField = /เวลา|time/i.test(label);
+
+    const isTimeField = isIdTimeField || isLabelTimeField;
+    
     const finalValue = isTimeField ? formatTimeInput(value) : value;
     if (thaiPreviewRef.current) {
       thaiPreviewRef.current.querySelectorAll(`.sync-field[data-field="${id}"]`).forEach(s => {

@@ -5,7 +5,14 @@
  */
 export const formatTimeInput = (val) => {
   const clean = val.replace(/[^0-9.]/g, "");
-  if (/^\d{4}$/.test(clean)) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
+  if (/^\d{4}$/.test(clean)) {
+    const hours = parseInt(clean.slice(0, 2), 10);
+    const mins = parseInt(clean.slice(2), 10);
+    // Validate: 00-23 hours and 00-59 minutes
+    if (hours >= 0 && hours <= 23 && mins >= 0 && mins <= 59) {
+      return `${clean.slice(0, 2)}.${clean.slice(2)}`;
+    }
+  }
   return clean;
 };
 

@@ -27,10 +27,13 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleRenameField(contextMenu.id);
     } else {
-      if (contextMenu.type === 'template' && isSystem) {
-        alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
-        setContextMenu(null);
-        return;
+      if (contextMenu.type === 'template') {
+        const isActuallySystem = ['new_report'].includes(contextMenu.id); // Only block rename for absolute core
+        if (isActuallySystem) {
+          alert("ไม่สามารถเปลี่ยนชื่อฟอร์มมาตรฐานได้");
+          setContextMenu(null);
+          return;
+        }
       }
 
       const currentTitle = contextMenu.type === 'history'
@@ -50,12 +53,6 @@ const ContextMenu = ({
     if (contextMenu.type === 'field') {
       handleDeleteField(contextMenu.id);
     } else {
-      if (contextMenu.type === 'template' && isSystem) {
-        alert("ไม่สามารถลบฟอร์มมาตรฐานได้");
-        setContextMenu(null);
-        return;
-      }
-
       if (window.confirm("ยืนยันการลบ?")) {
         if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
         else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
