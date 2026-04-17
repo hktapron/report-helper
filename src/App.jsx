@@ -247,7 +247,7 @@ const App = () => {
     const mode = item.mode || reportMode;
     setReportMode(mode);
 
-    // If it's a blank template, use the specialized initialization
+    // If it's a blankฟอร์ม, use the specialized initialization
     if (item.id === 'blank') {
       initBlankReport(mode);
       setIsSidebarOpen(false);
@@ -720,12 +720,12 @@ const App = () => {
         onAddField={handleAddField}
       />
 
-      <SaveTemplateModal 
+      <SaveTemplateModal
         isOpen={saveModalData.isOpen}
         onClose={() => setSaveModalData({ ...saveModalData, isOpen: false })}
-        currentName={saveModalData.currentName}
         onOverwrite={() => handleSaveTemplateChoice('overwrite')}
         onSaveNew={(name) => handleSaveTemplateChoice('saveNew', name)}
+        currentName={saveModalData.currentName}
       />
 
       <FieldNamingModal

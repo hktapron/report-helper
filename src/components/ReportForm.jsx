@@ -32,7 +32,7 @@ const ReportForm = ({
         <div className="empty-state-container">
           <FileText size={64} className="empty-icon" />
           <h3>ยังไม่ได้เลือกฟอร์ม</h3>
-          <p>กรุณาเลือกแม่แบบรายงานจากแถบ "ฟอร์มเหตุการณ์" เพื่อเริ่มกรอกข้อมูล</p>
+          <p>กรุณาเลือกรายการฟอร์มจากแถบด้านซ้ายเพื่อเริ่มกรอกข้อมูล</p>
           {window.innerWidth <= 768 && (
              <button className="btn btn-primary" onClick={() => setActiveMobileTab?.('templates')}>
                ไปที่หน้าเลือกฟอร์ม <ArrowRight size={16} />

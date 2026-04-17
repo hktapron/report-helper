@@ -107,7 +107,7 @@ const Sidebar = ({
               size={16}
               style={{ cursor: 'pointer', opacity: 0.6 }}
               onClick={() => {
-                const n = window.prompt("ชื่อฟอร์มที่จะบันทึก:");
+                const n = window.prompt("ชื่อฟอร์มที่จะสร้าง:");
                 if (n) createFolder(n);
               }}
             />
