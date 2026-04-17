@@ -9,6 +9,7 @@ const Sidebar = ({
   reportMode,
   handleSwitchMode,
   handleLogout,
+  toggleAccountView,
   handleFullReset,
   isSidebarOpen,
   setIsSidebarOpen,
@@ -53,7 +54,7 @@ const Sidebar = ({
           <button
             className="btn btn-mode-switch mobile-mode-btn"
             style={{ fontSize: '11px', whiteSpace: 'nowrap', padding: '6px 10px', width: 'auto' }}
-            onClick={() => handleLogout()}
+            onClick={toggleAccountView}
           >
             <User size={12} />
           </button>

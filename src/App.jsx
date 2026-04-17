@@ -13,6 +13,7 @@ import { APP_VERSION } from './constants/templates';
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
 import UsageLogView from './components/UsageLogView';
+import AccountManagementView from './components/AccountManagementView';
 import Sidebar from './components/Sidebar/Sidebar';
 import ReportForm from './components/ReportForm';
 import PreviewArea from './components/PreviewArea';
@@ -85,6 +86,7 @@ const App = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAccountViewOpen, setIsAccountViewOpen] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState('form');
   const [isSplitMode, setIsSplitMode] = useState(false);
   const [isLoadingCAAT, setIsLoadingCAAT] = useState(false);
@@ -392,6 +394,18 @@ const App = () => {
   // --- Route Guards ---
   if (!user) return <Login onLogin={setUser} />;
   
+  if (isAccountViewOpen) {
+    return (
+      <div className="app-container">
+        <AccountManagementView 
+          user={user} 
+          onBack={() => setIsAccountViewOpen(false)} 
+          onLogout={handleLogout}
+        />
+      </div>
+    );
+  }
+
   if (reportMode === 'logs') {
     return (
       <div className="app-container">
@@ -417,6 +431,7 @@ const App = () => {
       <MobileHeader 
         reportMode={reportMode} 
         onMenuToggle={() => setIsSidebarOpen(true)}
+        onProfileToggle={() => setIsAccountViewOpen(true)}
         onLogout={handleLogout}
         hasWarning={!supabase}
       />
@@ -431,6 +446,7 @@ const App = () => {
         className="pc-sidebar"
         reportMode={reportMode}
         handleSwitchMode={handleSwitchMode}
+        toggleAccountView={() => setIsAccountViewOpen(true)}
         handleLogout={handleLogout}
         handleFullReset={handleFullReset}
         isSidebarOpen={isSidebarOpen}

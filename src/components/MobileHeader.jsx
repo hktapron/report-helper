@@ -5,6 +5,7 @@ import { APP_VERSION } from '../constants/templates';
 const MobileHeader = ({ 
   reportMode, 
   onMenuToggle, 
+  onProfileToggle, 
   onLogout, 
   hasWarning 
 }) => {
@@ -18,9 +19,9 @@ const MobileHeader = ({
       <div style={{ display: 'flex', gap: '0.75rem' }}>
         <button
           className="header-action-btn"
-          style={{ color: 'var(--accent-red)', padding: '0 4px' }}
-          onClick={onLogout}
-          title="ออกจากระบบ"
+          style={{ padding: '0 4px' }}
+          onClick={onProfileToggle}
+          title="จัดการบัญชี"
         >
           <User size={18} />
         </button>
