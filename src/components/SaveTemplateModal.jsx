@@ -31,7 +31,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+      <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Save size={20} className="text-indigo" />
@@ -81,11 +81,11 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
               <p style={{ marginBottom: '1.2rem', fontSize: '1rem', opacity: 0.8 }}>
                 ระบุชื่อสำหรับฟอร์มใหม่:
               </p>
-              <div className="input-wrapper" style={{ marginBottom: '2rem' }}>
+              <div className="input-wrapper" style={{ marginBottom: '2.5rem' }}>
                 <input 
                   type="text" 
                   className="form-control" 
-                  style={{ fontSize: '1.1rem', padding: '12px' }}
+                  style={{ fontSize: '1.2rem', padding: '15px' }}
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="พิมพ์ชื่อฟอร์มที่นี่..."
@@ -108,7 +108,14 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                 <button 
                   type="button" 
                   className="btn btn-outline" 
-                  style={{ flex: 1, border: '1px solid #ddd', justifyContent: 'center' }} 
+                  style={{ 
+                    flex: 1, 
+                    justifyContent: 'center',
+                    background: 'black',
+                    color: 'white',
+                    border: '1px solid var(--accent-indigo)',
+                    fontWeight: '600'
+                  }} 
                   onClick={onClose}
                 >
                   ยกเลิก
@@ -117,7 +124,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onOverwrite, onSaveNew, currentNam
                   type="submit" 
                   className="btn btn-primary" 
                   style={{ 
-                    flex: 2, 
+                    flex: 1, 
                     justifyContent: 'center', 
                     background: '#fff', 
                     color: '#000', 
