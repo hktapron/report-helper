@@ -194,6 +194,8 @@ const App = () => {
     setSelectedTemplate(null);
     setFormData({});
     resetPreview(reportMode);
+    setMappingFieldId(null);
+    setManualFields([]);
   };
 
   const handleSwitchMode = (newMode) => {
@@ -201,6 +203,8 @@ const App = () => {
     setSelectedTemplate(null);
     setFormData({});
     resetPreview(newMode);
+    setMappingFieldId(null);
+    setManualFields([]);
   };
 
   const handleDeleteTemplate = async (templateId) => {
@@ -226,6 +230,15 @@ const App = () => {
     setReportMode(mode);
     const { finalHtml, savedData } = processAndLoadItem(item, type);
     setFormData(savedData);
+    
+    // Clear mapping state when changing templates to prevent cross-linking
+    setMappingFieldId(null);
+
+    // If it's a blank template, clear manual fields to ensure clean slate
+    if (item.id === 'blank') {
+      setManualFields([]);
+    }
+
     setSelectedTemplate({
       id: `${type}_${item.id || 'new'}_${Date.now()}`,
       name: item.name || item.customTitle || item.templateName || (type === 'history' ? 'จากประวัติ' : 'กำหนดเอง'),

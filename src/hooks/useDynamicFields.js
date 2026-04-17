@@ -38,11 +38,9 @@ export const useDynamicFields = (selectedTemplate, reportMode, manualFields = []
     const isBlank = !selectedTemplate || selectedTemplate.id?.includes('blank') || (!selectedTemplate.content && !selectedTemplate.preview);
 
     if (isBlank) {
-      if (reportMode === 'incident') {
-        keys = ['report_time', 'informant', 'flight_no', 'atc_time', 'original_airport', 'stand', 'ac_reg', 'ac_type', 'route'];
-      } else {
-        keys = ['incident_time', 'violator_name', 'id_card', 'company', 'position', 'vehicle_type', 'vehicle_no', 'location', 'seizure_days', 'seizure_start', 'seizure_end', 'retraining_date'];
-      }
+      // EMPTY SLATE: No default keys. 
+      // Only manualFields will be added later in the return logic.
+      keys = [];
     } else {
       const body = selectedTemplate.preview || selectedTemplate.content || "";
 
