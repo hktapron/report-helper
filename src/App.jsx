@@ -103,11 +103,18 @@ const App = () => {
     const saved = localStorage.getItem('vtsp_hidden_templates');
     return saved ? JSON.parse(saved) : [];
   });
+  const [hiddenFieldIds, setHiddenFieldIds] = useState(() => {
+    const saved = localStorage.getItem('vtsp_hidden_fields');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Persist hidden templates
+  // Persist hidden templates/fields
   useEffect(() => {
     localStorage.setItem('vtsp_hidden_templates', JSON.stringify(hiddenTemplateIds));
   }, [hiddenTemplateIds]);
+  useEffect(() => {
+    localStorage.setItem('vtsp_hidden_fields', JSON.stringify(hiddenFieldIds));
+  }, [hiddenFieldIds]);
 
   // Persist custom labels
   useEffect(() => {
@@ -142,7 +149,11 @@ const App = () => {
     moveFolder,
   } = useUserTemplates(user?.id, reportMode);
 
-  const dynamicFields = useDynamicFields(selectedTemplate, reportMode, manualFields, customFieldLabels);
+  const rawDynamicFields = useDynamicFields(selectedTemplate, reportMode, manualFields, customFieldLabels);
+  const dynamicFields = useMemo(() => 
+    rawDynamicFields.filter(f => !hiddenFieldIds.includes(f.id)),
+    [rawDynamicFields, hiddenFieldIds]
+  );
 
   // Build hierarchical folder tree from flat list (memoized)
   const folderTree = useMemo(() => {
@@ -179,9 +190,16 @@ const App = () => {
     const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
     if (isSystem) {
       setHiddenTemplateIds(prev => [...new Set([...prev, templateId])]);
-      return;
+    } else {
+      await deleteTemplate(templateId);
     }
-    await deleteTemplate(templateId);
+    
+    // Clear selection if deleted
+    if (selectedTemplate?.id === `template_${templateId}`) {
+      setSelectedTemplate(null);
+      setFormData({});
+      resetPreview(reportMode);
+    }
   };
 
   const handleSelectTemplate = (item, type = 'template') => {
@@ -213,9 +231,10 @@ const App = () => {
   };
 
   const handleDeleteField = (id) => {
-    if (!window.confirm(`ยืนยันการลบฟิลด์ "${customFieldLabels[id] || id}"?`)) return;
+    if (!window.confirm(`ยืนยันการลบหัวข้อ "${customFieldLabels[id] || id}"?`)) return;
     
-    // Remove from manual list if present
+    // Hide from form
+    setHiddenFieldIds(prev => [...new Set([...prev, id])]);
     setManualFields(prev => prev.filter(fid => fid !== id));
     
     // Remove from mapping in HTML
@@ -579,10 +598,11 @@ const App = () => {
         updateTemplateName={updateTemplateName}
         deleteFolder={deleteFolder}
         deleteReport={deleteReport}
-        deleteTemplate={deleteTemplate}
+        deleteTemplate={handleDeleteTemplate}
         onSelectTemplate={handleSelectTemplate}
         onContextMenu={onContextMenu}
         mappingFieldId={mappingFieldId}
+        setMappingFieldId={setMappingFieldId}
         handleRenameField={handleRenameField}
         handleDeleteField={handleDeleteField}
         handleStartMapping={handleStartMapping}
