@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+        env:
+          VITE_SUPABASE_URL: "https://pjckyxzydofbuclsiaxp.supabase.co"
+          VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqY2t5eHp5ZG9mYnVjbHNpYXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTMyNDksImV4cCI6MjA5MTEyOTI0OX0.-f8UoItBzvDY_Y9yKf__8zVZ2cFgKKveMgzJv6DvHAw"
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
