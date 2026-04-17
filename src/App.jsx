@@ -12,6 +12,7 @@ import { APP_VERSION } from './constants/templates';
 
 import Login from './Login';
 import ModeSelector from './components/ModeSelector';
+import UsageLogView from './components/UsageLogView';
 import Sidebar from './components/Sidebar/Sidebar';
 import ReportForm from './components/ReportForm';
 import PreviewArea from './components/PreviewArea';
@@ -148,6 +149,20 @@ const App = () => {
     moveTemplateToFolder,
     moveFolder,
   } = useUserTemplates(user?.id, reportMode);
+  
+  const logActivity = async (action, target, details = {}) => {
+    if (!supabase || !user) return;
+    try {
+      await supabase.from('activity_logs').insert({
+        user_id: user.id,
+        user_name: user.username || user.display_name,
+        role: user.role,
+        action_type: action,
+        target_name: target,
+        details: details
+      });
+    } catch (e) { console.error("Logging failed:", e); }
+  };
 
   const rawDynamicFields = useDynamicFields(selectedTemplate, reportMode, manualFields, customFieldLabels);
   const dynamicFields = useMemo(() => 
@@ -190,8 +205,10 @@ const App = () => {
     const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
     if (isSystem) {
       setHiddenTemplateIds(prev => [...new Set([...prev, templateId])]);
+      logActivity('hide_system_template', templateId);
     } else {
       await deleteTemplate(templateId);
+      logActivity('delete_custom_template', templateId);
     }
     
     // Clear selection if deleted
@@ -236,6 +253,7 @@ const App = () => {
     // Hide from form
     setHiddenFieldIds(prev => [...new Set([...prev, id])]);
     setManualFields(prev => prev.filter(fid => fid !== id));
+    logActivity('delete_field', customFieldLabels[id] || id);
     
     // Remove from mapping in HTML
     if (thaiPreviewRef.current) {
@@ -332,6 +350,7 @@ const App = () => {
     const { error } = await saveTemplate(targetName, formData, currentHtml, extraPreview, folderId, reportMode, targetTemplateId);
 
     if (!error) {
+      logActivity(type === 'overwrite' ? 'update_template' : 'create_template', targetName);
       alert(type === 'overwrite' ? 'บันทึกการแก้ไขเรียบร้อย' : 'บันทึกฟอร์มใหม่เรียบร้อย');
       setSaveModalData({ ...saveModalData, isOpen: false });
     } else {
@@ -372,8 +391,18 @@ const App = () => {
 
   // --- Route Guards ---
   if (!user) return <Login onLogin={setUser} />;
+  
+  if (reportMode === 'logs') {
+    return (
+      <div className="app-container">
+        <UsageLogView onBack={() => setReportMode(null)} />
+      </div>
+    );
+  }
+
   if (!reportMode) return (
     <ModeSelector 
+      user={user}
       onSelect={(m) => { 
         setReportMode(m); 
         resetPreview(m); 
@@ -601,6 +630,7 @@ const App = () => {
         deleteTemplate={handleDeleteTemplate}
         onSelectTemplate={handleSelectTemplate}
         onContextMenu={onContextMenu}
+        user={user}
         mappingFieldId={mappingFieldId}
         setMappingFieldId={setMappingFieldId}
         handleRenameField={handleRenameField}

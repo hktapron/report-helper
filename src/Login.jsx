@@ -15,7 +15,7 @@ const Login = ({ onLogin }) => {
     try {
       // 1. Hardcoded Override for admin/admin (Works even if Supabase is connected or not)
       if (username.trim() === 'admin' && password === 'admin') {
-        onLogin({ id: 'demo', username: 'admin', display_name: 'Administrator (Demo)' });
+        onLogin({ id: 'demo', username: 'admin', display_name: 'Administrator (Demo)', role: 'admin' });
         return;
       }
 
@@ -34,11 +34,13 @@ const Login = ({ onLogin }) => {
           const u = data.user;
           const userEmail = u?.email || '';
           const fallback = userEmail.includes('@') ? userEmail.split('@')[0] : 'User';
+          const role = u.user_metadata?.role || 'operation'; // Default to operation
           
           onLogin({
             id: u.id,
             username: u.user_metadata?.username || fallback,
             display_name: u.user_metadata?.display_name || fallback,
+            role: role
           });
         }
       }

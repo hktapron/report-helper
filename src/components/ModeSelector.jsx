@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, Gavel } from 'lucide-react';
+import { FileText, Gavel, History } from 'lucide-react';
 
-const ModeSelector = ({ onSelect }) => {
+const ModeSelector = ({ onSelect, user }) => {
   return (
     <div className="login-container mode-selector-container">
       <div className="mode-card">
@@ -12,7 +12,7 @@ const ModeSelector = ({ onSelect }) => {
           กรุณาเลือกประเภทรายงาน:
         </p>
         
-        <div className="mode-grid">
+        <div className="mode-grid" style={{ gridTemplateColumns: user?.role === 'admin' ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)' }}>
           <div className="mode-item" onClick={() => onSelect('incident')}>
             <span className="mode-icon">
               <FileText size={42} strokeWidth={1.5} />
@@ -32,6 +32,18 @@ const ModeSelector = ({ onSelect }) => {
                บันทึกการกระทำความผิดกฎจราจรและยึดบัตร
             </p>
           </div>
+
+          {user?.role === 'admin' && (
+            <div className="mode-item" onClick={() => onSelect('logs')}>
+              <span className="mode-icon">
+                <History size={42} strokeWidth={1.5} />
+              </span>
+              <h2 style={{ fontSize: '1rem', marginBottom: '0.4rem', fontWeight: 'bold' }}>ตรวจสอบประวัติ</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', lineHeight: '1.4', textAlign: 'center', maxWidth: '140px' }}>
+                ดูประวัติการ เพิ่ม/ลบ/แก้ไข ฟอร์มของเจ้าหน้าที่
+              </p>
+            </div>
+          )}
         </div>
 
         <div style={{ marginTop: '3.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.6', opacity: 0.7 }}>
