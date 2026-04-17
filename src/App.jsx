@@ -376,6 +376,9 @@ const App = () => {
   };
 
   const onContextMenu = (e, type, id, data) => {
+    // RBAC: Operations cannot use mapping features
+    if (user?.role === 'operation') return;
+
     e.preventDefault();
     const selection = window.getSelection();
     const selectionText = selection?.toString();

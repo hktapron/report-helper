@@ -211,17 +211,16 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
               <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
             </button>
 
-            <button 
-              className={`account-nav-item ${activeTab === 'gemini' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('gemini'); setMessage({ type: '', text: '' }); }}
-              style={navItemStyle(activeTab === 'gemini')}
-            >
-              <RefreshCw size={18} /> ตั้งค่า AI (Gemini)
-              <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-            </button>
-            
             {user?.role === 'admin' && (
               <>
+                <button 
+                  className={`account-nav-item ${activeTab === 'gemini' ? 'active' : ''}`}
+                  onClick={() => { setActiveTab('gemini'); setMessage({ type: '', text: '' }); }}
+                  style={navItemStyle(activeTab === 'gemini')}
+                >
+                  <RefreshCw size={18} /> ตั้งค่า AI (Gemini)
+                  <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                </button>
                 <button 
                   className={`account-nav-item ${activeTab === 'rbac' ? 'active' : ''}`}
                   onClick={() => { setActiveTab('rbac'); setMessage({ type: '', text: '' }); }}
@@ -317,7 +316,7 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
             </div>
           )}
 
-          {activeTab === 'gemini' && (
+          {activeTab === 'gemini' && user?.role === 'admin' && (
             <div style={{ maxWidth: '600px' }}>
               <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', marginBottom: '0.5rem' }}>
                 ตั้งค่า AI (Gemini API Key)

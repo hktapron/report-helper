@@ -47,6 +47,12 @@ const PreviewArea = ({
     alert('คัดลอกและเก็บประวัติแล้ว');
   };
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
+
   return (
     <section className={`preview-container-main ${isSplitMode ? 'split-mode-active' : ''}`} style={{ flex: '1', height: '100%', overflow: 'hidden' }}>
       <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -97,6 +103,7 @@ const PreviewArea = ({
             className="preview-textarea"
             contentEditable
             suppressContentEditableWarning
+            onPaste={handlePaste}
             style={{ whiteSpace: 'pre-wrap', minHeight: '100%' }}
           />
         </div>
