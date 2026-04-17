@@ -18,9 +18,15 @@ const PreviewArea = ({
   onContextMenu,
   setSaveModalData,
 }) => {
+  React.useEffect(() => {
+    if (thaiPreviewRef.current) {
+      thaiPreviewRef.current.innerHTML = thaiPreview;
+    }
+  }, []);
+
   const handleSaveTemplate = () => {
     // Force Save As flow per user request
-    onSave('saveNew', {
+    setSaveModalData({
       isOpen: true,
       currentName: selectedTemplate?.name || '',
       folderId: null,
@@ -62,7 +68,7 @@ const PreviewArea = ({
                 title="บันทึกต้นแบบ"
                 style={{ fontWeight: '700', padding: '10px 24px' }}
               >
-                บันทึก
+                บันทึกฟอร์ม
               </button>
               <button
                 className="btn btn-outline btn-ai-translate"

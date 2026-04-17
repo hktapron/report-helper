@@ -588,7 +588,7 @@ const App = () => {
                    });
                  }}
                >
-                 บันทึก
+                 บันทึกฟอร์ม
                </button>
                <button 
                  className="btn btn-primary" 
