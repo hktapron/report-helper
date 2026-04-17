@@ -27,6 +27,7 @@ import FieldNamingModal from './components/FieldNamingModal';
 const App = () => {
   // --- Auth & Persistence ---
   const [user, setUser] = useState(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [reportMode, setReportMode] = useState(() => {
     const saved = localStorage.getItem('vtsp_report_mode');
     return (saved === 'incident' || saved === 'violator') ? saved : null;
@@ -38,13 +39,15 @@ const App = () => {
       // demo mode: restore from localstorage
       const saved = localStorage.getItem('vtsp_user');
       if (saved) setUser(JSON.parse(saved));
+      setIsLoadingSession(false);
       return;
     }
 
     // Use service to fetch session
     getActiveSession().then(userData => {
       if (userData) setUser(userData);
-    });
+      setIsLoadingSession(false);
+    }).catch(() => setIsLoadingSession(false));
 
     // Close context menu on any click (v27 FIX)
     const handleGlobalClick = () => setContextMenu(null);
@@ -215,12 +218,12 @@ const App = () => {
     });
   };
 
-  // Initial load: Prepare a blank report
+  // Initial load: Prepare a blank report but ONLY if mode is already known
   useEffect(() => {
-    if (user && !selectedTemplate) {
+    if (user && reportMode && !selectedTemplate) {
       initBlankReport(reportMode);
     }
-  }, [user]);
+  }, [user, reportMode]);
 
   const handleDeleteTemplate = async (templateId) => {
     const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
@@ -423,6 +426,17 @@ const App = () => {
   };
 
   // --- Route Guards ---
+  if (isLoadingSession) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--accent-indigo)', borderTopColor: 'transparent', borderRadius: '50%' }} />
+          <div style={{ fontWeight: '700', letterSpacing: '2px' }}>VTSP STATION LOADING...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return <Login onLogin={setUser} />;
   
   if (isAccountViewOpen) {
