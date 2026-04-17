@@ -399,6 +399,9 @@ const App = () => {
       const result = await translateToCAAT22(text, formData);
       setTranslatedCAAT(result);
       setIsCAATModalOpen(true);
+      
+      // LOG AI USAGE FOR COST TRACKING
+      logActivity('ai_translate', selectedTemplate?.name || 'กำหนดเอง', { mode: reportMode });
     } catch (err) {
       alert(err.message || "เกิดข้อผิดพลาดในการประมวลผล AI");
     } finally {

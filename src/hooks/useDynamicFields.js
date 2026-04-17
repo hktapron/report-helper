@@ -35,13 +35,7 @@ export const useDynamicFields = (selectedTemplate, reportMode, manualFields = []
   return useMemo(() => {
     let keys = [];
 
-    const isBlank = !selectedTemplate || selectedTemplate.id?.includes('blank') || (!selectedTemplate.content && !selectedTemplate.preview);
-
-    if (isBlank) {
-      // EMPTY SLATE: No default keys. 
-      // Only manualFields will be added later in the return logic.
-      keys = [];
-    } else {
+    if (selectedTemplate) {
       const body = selectedTemplate.preview || selectedTemplate.content || "";
 
       // PRIMARY: DOM scan in document order
@@ -53,6 +47,7 @@ export const useDynamicFields = (selectedTemplate, reportMode, manualFields = []
           if (k && !keys.includes(k.trim())) keys.push(k.trim());
         });
       } catch (e) {
+        // Fallback search
         const attrRegex = /data-field=["']([^"']+)["']/g;
         let attrMatch;
         while ((attrMatch = attrRegex.exec(body)) !== null) {
