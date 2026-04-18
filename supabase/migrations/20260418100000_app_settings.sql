@@ -19,14 +19,14 @@ CREATE POLICY "Allow all for admins" ON public.app_settings
     FOR ALL TO authenticated 
     USING (
         EXISTS (
-            SELECT 1 FROM public.user_roles 
-            WHERE user_id = auth.uid() AND role = 'admin'
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND role::text = 'admin'
         )
     )
     WITH CHECK (
         EXISTS (
-            SELECT 1 FROM public.user_roles 
-            WHERE user_id = auth.uid() AND role = 'admin'
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND role::text = 'admin'
         )
     );
 
