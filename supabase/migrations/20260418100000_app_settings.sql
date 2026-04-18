@@ -14,20 +14,14 @@ ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read for authenticated" ON public.app_settings
     FOR SELECT TO authenticated USING (true);
 
--- Allow all for admins
+-- Allow all for admins (Check role from Auth Metadata)
 CREATE POLICY "Allow all for admins" ON public.app_settings
     FOR ALL TO authenticated 
     USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles 
-            WHERE id = auth.uid() AND role::text = 'admin'
-        )
+        (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
     )
     WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.profiles 
-            WHERE id = auth.uid() AND role::text = 'admin'
-        )
+        (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
     );
 
 -- Insert initial empty key if not exists
