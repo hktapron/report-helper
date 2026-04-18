@@ -81,7 +81,7 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
           value: systemGeminiKey,
           updated_by: user.id,
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'key' });
 
       if (error) throw error;
       
