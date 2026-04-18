@@ -89,7 +89,8 @@ const ContextMenu = ({
     setContextMenu(null);
   };
 
-  const canModify = user?.role === 'supervisor' || user?.role === 'admin';
+  const canManage = !!user; // Everyone authenticated can manage content/mapping
+  const canDelete = user?.role === 'supervisor' || user?.role === 'admin';
 
   if (contextMenu.type === 'field') {
     return (
@@ -98,7 +99,7 @@ const ContextMenu = ({
         style={{ top: contextMenu.y, left: contextMenu.x }}
         onClick={(e) => e.stopPropagation()}
       >
-        {canModify && (
+        {canManage && (
           <div className="context-item" onClick={handleRename}>
             <Edit2 size={14} /> เปลี่ยนชื่อ
           </div>
@@ -106,7 +107,7 @@ const ContextMenu = ({
         <div className={`context-item ${mappingFieldId === contextMenu.id ? 'active-mapping' : ''}`} onClick={() => { setMappingFieldId(mappingFieldId === contextMenu.id ? null : contextMenu.id); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
           <Plus size={14} /> {mappingFieldId === contextMenu.id ? 'ยกเลิกการเพิ่มจุดจับคู่' : 'เพิ่มการจับคู่'}
         </div>
-        {canModify && (
+        {canManage && (
           <div className="context-item danger" onClick={handleDelete}>
             <Trash2 size={14} /> ลบทิ้ง
           </div>
@@ -148,13 +149,9 @@ const ContextMenu = ({
         style={{ top: contextMenu.y, left: contextMenu.x }}
         onClick={(e) => e.stopPropagation()}
       >
-        {canModify ? (
+        {canManage && (
           <div className="context-item highlight" onClick={() => { onAddField(); setContextMenu(null); }} style={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }}>
             <Plus size={14} /> เพิ่มหัวข้อใหม่
-          </div>
-        ) : (
-          <div className="context-item disabled" style={{ opacity: 0.5, cursor: 'not-allowed', fontSize: '0.75rem', padding: '0.8rem' }}>
-            ไม่มีสิทธิ์เพิ่มหัวข้อใหม่
           </div>
         )}
       </div>
@@ -167,19 +164,19 @@ const ContextMenu = ({
       style={{ top: contextMenu.y, left: contextMenu.x }}
       onClick={(e) => e.stopPropagation()}
     >
-      {canModify && (
+      {canManage && (
         <div className="context-item" onClick={handleRename}>
           <Edit2 size={14} /> เปลี่ยนชื่อ
         </div>
       )}
-      {canModify && (
+      {canDelete && (
         <div className="context-item danger" onClick={handleDelete}>
           <Trash2 size={14} /> ลบทิ้ง
         </div>
       )}
-      {!canModify && (
+      {!canDelete && contextMenu.type !== 'preview' && (
         <div className="context-item disabled" style={{ opacity: 0.5, cursor: 'not-allowed', fontSize: '0.75rem', padding: '0.8rem' }}>
-          Mapping ได้อย่างเดียว (จำกัดสิทธิ์แก้ไขฟอร์ม)
+          สิทธิ์ Operation: แก้ไขชื่อได้แต่ลบฟอร์มไม่ได้
         </div>
       )}
     </div>
