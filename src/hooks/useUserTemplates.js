@@ -38,13 +38,17 @@ export const useUserTemplates = (userId, reportMode) => {
   }, [userId]); // Still refresh if user changes, but fetchAll no longer blocks if userId is missing initially
 
   // Accept mode explicitly to avoid stale closure bug
-  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode, templateId = null) => {
+  const saveTemplate = async (name, formData, preview, extraPreview, folderId = null, mode = reportMode, templateId = null, labels = null) => {
     if (!supabase || !userId) return;
 
+    // Pack both values and custom labels into the data field for persistence
     const payload = {
       name,
       mode,
-      data: formData,
+      data: {
+        values: formData,
+        custom_labels: labels
+      },
       preview,
       extra_preview: extraPreview,
       user_id: userId,

@@ -288,14 +288,23 @@ const App = () => {
       return;
     }
 
-    const { finalHtml, savedData } = processAndLoadItem(item, type);
-    setFormData(savedData);
+    const { finalHtml, savedData: rawData } = processAndLoadItem(item, type);
+    
+    // Support both new nested structure {values, custom_labels} and old flat structure
+    const actualFormData = rawData?.values || (rawData && !rawData.custom_labels ? rawData : {});
+    const actualLabels = rawData?.custom_labels || {};
+
+    setFormData(actualFormData);
+    if (Object.keys(actualLabels).length > 0) {
+      setCustomFieldLabels(prev => ({ ...prev, ...actualLabels }));
+    }
     
     // Clear mapping state when changing templates to prevent cross-linking
     setMappingFieldId(null);
 
     // If it's a blank template, clear manual fields to ensure clean slate
     if (item.id === 'blank') {
+      setFormData({});
       setManualFields([]);
     }
 
@@ -422,7 +431,7 @@ const App = () => {
     }
 
     const currentHtml = thaiPreviewRef.current ? thaiPreviewRef.current.innerHTML : thaiPreview;
-    const { error } = await saveTemplate(targetName, formData, currentHtml, extraPreview, folderId, reportMode, targetTemplateId);
+    const { error } = await saveTemplate(targetName, formData, currentHtml, extraPreview, folderId, reportMode, targetTemplateId, customFieldLabels);
 
     if (!error) {
       logActivity(type === 'overwrite' ? 'update_template' : 'create_template', targetName);
