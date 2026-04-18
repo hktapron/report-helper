@@ -254,6 +254,10 @@ const App = () => {
   }, [user, reportMode]);
 
   const handleDeleteTemplate = async (templateId) => {
+    if (user?.role === 'operation') {
+      alert("คุณไม่มีสิทธิ์ลบฟอร์ม (จำกัดเฉพาะ Supervisor/Admin)");
+      return;
+    }
     const isSystem = !(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(templateId));
     if (isSystem) {
       setHiddenTemplateIds(prev => [...new Set([...prev, templateId])]);
@@ -448,9 +452,9 @@ const App = () => {
   };
 
   const onContextMenu = (e, type, id, data) => {
-    // RBAC: Operations cannot use mapping features
-    if (user?.role === 'operation') return;
-
+    // Mapping feature is now open to all authenticated users (v28)
+    // Destructive actions are gated within the ContextMenu component itself
+    
     e.preventDefault();
     const selection = window.getSelection();
     const selectionText = selection?.toString();

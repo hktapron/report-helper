@@ -103,14 +103,16 @@ const Sidebar = ({
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
             <div className="history-title" style={{ margin: 0 }}>ฟอร์มรายงาน</div>
-            <FolderPlus
-              size={16}
-              style={{ cursor: 'pointer', opacity: 0.6 }}
-              onClick={() => {
-                const n = window.prompt("ชื่อฟอร์มที่จะสร้าง:");
-                if (n) createFolder(n);
-              }}
-            />
+            {user?.role !== 'operation' && (
+              <FolderPlus
+                size={16}
+                style={{ cursor: 'pointer', opacity: 0.6 }}
+                onClick={() => {
+                  const n = window.prompt("ชื่อฟอร์มที่จะสร้าง:");
+                  if (n) createFolder(n);
+                }}
+              />
+            )}
           </div>
 
           <FolderTree

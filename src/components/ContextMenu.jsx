@@ -179,7 +179,7 @@ const ContextMenu = ({
       )}
       {!canModify && (
         <div className="context-item disabled" style={{ opacity: 0.5, cursor: 'not-allowed', fontSize: '0.75rem', padding: '0.8rem' }}>
-          เฉพาะ Supervisor/Admin ที่จัดการฟอร์มได้
+          Mapping ได้อย่างเดียว (จำกัดสิทธิ์แก้ไขฟอร์ม)
         </div>
       )}
     </div>
