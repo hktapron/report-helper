@@ -44,8 +44,12 @@ const App = () => {
     }
 
     // Use service to fetch session
-    getActiveSession().then(userData => {
-      if (userData) setUser(userData);
+    getActiveSession().then(async userData => {
+      if (userData) {
+        setUser(userData);
+        // Sync system settings (Gemini Key)
+        await syncSystemSettings();
+      }
       setIsLoadingSession(false);
     }).catch(() => setIsLoadingSession(false));
 
@@ -75,12 +79,36 @@ const App = () => {
     else localStorage.removeItem('vtsp_report_mode');
   }, [reportMode]);
 
+  const syncSystemSettings = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'gemini_api_key')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      if (data?.value) {
+        // Only sync to local if local is currently empty to avoid overwriting personal overrides
+        const localKey = localStorage.getItem('vtsp_gemini_key');
+        if (!localKey) {
+          localStorage.setItem('vtsp_gemini_key', data.value);
+        }
+      }
+    } catch (err) {
+      console.error("System settings sync failed:", err);
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
     setUser(null);
     setReportMode(null);
     localStorage.removeItem('vtsp_report_mode');
     localStorage.removeItem('vtsp_user');
+    // Note: vtsp_gemini_key IS NOT removed on logout to allow persistent personal/cache keys
     window.location.reload();
   };
 

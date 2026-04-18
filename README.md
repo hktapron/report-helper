@@ -1,16 +1,23 @@
-# React + Vite
+# VTSP Incident Reporter (v25 Stable)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ระบบช่วยร่างและเตรียมรายงานเหตุการณ์ไม่ปกติ (Incident) และรายงานผู้กระทำความผิด (Violator) สำหรับงานบริหารหลุมจอด (Apron Management) ท่าอากาศยานภูเก็ต
 
-Currently, two official plugins are available:
+## 🚀 Project Status (2026-04-17)
+✅ **Stable v25+**: ระบบมีความเสถียรสูงสุด ผ่านการบวนการ UX Polish และ Terminology Alignment เรียบร้อยแล้ว
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
+- **Smart Mapping System**: แปลงข้อมูลจาก Narrative (รายงานดิบ) เข้าสู่แบบฟอร์มมาตรฐานโดยอัตโนมัติ
+- **Premium User Interface**: ดีไซน์แบบ Rich Dark Mode, Glassmorphism และ High-Density UI สำหรับการใช้งานระดับ Operation
+- **Unified Save Workflow**: 
+    - รองรับการบันทึกทับ (Overwrite) สำหรับฟอร์มเดิม
+    - ระบบ Save As อัตโนมัติสำหรับรายงานใหม่ (ใหม่)
+    - หน้าต่างบันทึกขนาด 650px พร้อมปุ่มสมมาตรสวยงาม
+- **Secure Integration**: เชื่อมต่อกับ Supabase Auth และ RLS สำหรับการจัดการข้อมูลร่วมกันในทีม
 
-## React Compiler
+## 🛠 Tech Stack
+- **Frontend**: React + Vite + Lucide React
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Styling**: Vanilla CSS (Premium Custom Design)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📖 History & Debug Logs
+ประวัติการแก้ไขและรายละเอียดเชิงลึกของแต่ละ Phase สามารถดูได้ที่ [../DEBUG_LOG.md](file:///Users/tmee/Desktop/Aircraft%20Stand%20Monitoring/DEBUG_LOG.md)

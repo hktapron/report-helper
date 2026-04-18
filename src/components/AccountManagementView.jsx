@@ -28,7 +28,9 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
   const [logsLoading, setLogsLoading] = useState(false);
 
   // Gemini State
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('vtsp_gemini_key') || '');
+  const [localGeminiKey, setLocalGeminiKey] = useState(() => localStorage.getItem('vtsp_gemini_key') || '');
+  const [systemGeminiKey, setSystemGeminiKey] = useState('');
+  const [isSystemKeyLoading, setIsSystemKeyLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'rbac' && user?.role === 'admin') {
@@ -37,12 +39,66 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
     if (activeTab === 'logs' && user?.role === 'admin') {
       fetchLogs();
     }
+    if (activeTab === 'gemini') {
+      fetchSystemGeminiKey();
+    }
   }, [activeTab]);
 
-  const handleSaveGeminiKey = (e) => {
+  const fetchSystemGeminiKey = async () => {
+    if (!supabase) return;
+    setIsSystemKeyLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'gemini_api_key')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data) setSystemGeminiKey(data.value);
+    } catch (err) {
+      console.error("Fetch system key error:", err);
+    } finally {
+      setIsSystemKeyLoading(false);
+    }
+  };
+
+  const handleSaveLocalKey = (e) => {
     e.preventDefault();
-    localStorage.setItem('vtsp_gemini_key', geminiKey);
-    setMessage({ type: 'success', text: 'บันทึก API Key เรียบร้อยแล้ว (เก็บไว้ในเครื่องนี้เท่านั้น)' });
+    localStorage.setItem('vtsp_gemini_key', localGeminiKey);
+    setMessage({ type: 'success', text: 'บันทึก API Key ในเครื่องนี้เรียบร้อยแล้ว' });
+  };
+
+  const handleSaveSystemKey = async (e) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ 
+          key: 'gemini_api_key', 
+          value: systemGeminiKey,
+          updated_by: user.id,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      
+      // Also update local for immediate use
+      localStorage.setItem('vtsp_gemini_key', systemGeminiKey);
+      setLocalGeminiKey(systemGeminiKey);
+      
+      setMessage({ type: 'success', text: 'บันทึก API Key เข้าระบบส่วนกลางเรียบร้อยแล้ว ทุกคนในแผนกจะเริ่มใช้ Key นี้ทันที' });
+      
+      if (logActivity) {
+        logActivity('update_system_config', 'Gemini API Key', { action: 'centralized_save' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'ไม่สามารถบันทึกเข้าระบบส่วนกลางได้' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchUserList = async () => {
@@ -321,24 +377,63 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
               <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--accent-indigo)', marginBottom: '0.5rem' }}>
                 ตั้งค่า AI (Gemini API Key)
               </h1>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>
-                เพื่อให้ระบบสามารถทำรายงานภาษาอังกฤษ (CAAT-22) ได้ คุณต้องระบุ API Key ของ Gemini ส่วนตัวครับ 
-                <br/><small>(ข้อมูลนี้จะถูกเก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น ไม่ได้ส่งไปเก็บที่เซิร์ฟเวอร์ใดๆ)</small>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+                เพื่อให้ระบบสามารถทำรายงานภาษาอังกฤษได้ คุณต้องระบุ API Key ของ Gemini ครับ
               </p>
 
-              <form onSubmit={handleSaveGeminiKey} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="input-group">
-                  <label>Gemini API Key</label>
-                  <input 
-                    type="password" 
-                    value={geminiKey} 
-                    onChange={(e) => setGeminiKey(e.target.value)} 
-                    placeholder="ใส่ API Key ของคุณที่นี่..."
-                    required
-                  />
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    คุณสามารถรับ API Key ได้ฟรีที่ <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)' }}>Google AI Studio</a>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* System-wide Key (Admin only) */}
+                {user?.role === 'admin' && (
+                  <div style={{ padding: '1.5rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '12px', border: '1px solid var(--accent-indigo-soft)' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Shield size={18} className="text-indigo" /> ตั้งค่าส่วนกลาง (System-wide)
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                      Admin สามารถบันทึก Key ไว้เพื่อให้ทุกคนในแผนกใช้งานร่วมกันได้ทันทีโดยไม่ต้องกรอกเอง
+                    </p>
+                    <form onSubmit={handleSaveSystemKey}>
+                      <div className="input-group">
+                        <input 
+                          type="password" 
+                          value={systemGeminiKey} 
+                          onChange={(e) => setSystemGeminiKey(e.target.value)} 
+                          placeholder={isSystemKeyLoading ? "กำลังดึงข้อมูล..." : "กรอก API Key เพื่อใช้ทั้งระบบ..."}
+                          required
+                        />
+                      </div>
+                      <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '1rem', width: '100%' }}>
+                        {loading ? 'กำลังบันทึก...' : 'บันทึกเข้าระบบส่วนกลาง (ทุกคนใช้งาน)'}
+                      </button>
+                    </form>
                   </div>
+                )}
+
+                {/* Local Device Key */}
+                <div style={{ padding: '1.5rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                  <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Key size={18} /> บันทึกเฉพาะเครื่องนี้ (Device-only)
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    ใช้สำหรับกรณีที่ต้องการใช้ Key ส่วนตัวของคุณเอง หรือต้องการจำกัดการใช้งานแค่เบราว์เซอร์นี้
+                  </p>
+                  <form onSubmit={handleSaveLocalKey}>
+                    <div className="input-group">
+                      <input 
+                        type="password" 
+                        value={localGeminiKey} 
+                        onChange={(e) => setLocalGeminiKey(e.target.value)} 
+                        placeholder="กรอก API Key ส่วนตัวที่นี่..."
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-ghost" style={{ marginTop: '1rem', width: '100%', borderColor: 'var(--border-subtle)' }}>
+                      บันทึกเฉพาะเครื่องนี้ (Local)
+                    </button>
+                  </form>
+                </div>
+
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  ขอรับ API Key ฟรีได้ที่ <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline' }}>Google AI Studio</a>
                 </div>
 
                 {message.text && (
@@ -356,11 +451,7 @@ const AccountManagementView = ({ user, logActivity, onBack, onLogout }) => {
                     {message.text}
                   </div>
                 )}
-
-                <button type="submit" className="btn btn-primary" style={{ width: 'fit-content', padding: '0.8rem 2.5rem' }}>
-                  บันทึก Key
-                </button>
-              </form>
+              </div>
             </div>
           )}
 
