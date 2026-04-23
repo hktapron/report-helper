@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwx_uvNzFyso1vQiPXCx0wIpJLPJ9tTzsvUSVD_ft2zr5rEY8eea3QYgOWwdT26XToJ6Q/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgu-uNPcRxBWnNGIqgTnLaozcBcsSiTi4pZIZaQhpOlRQyEv3Zt9_r3JooSMIur2_BEA/exec';
 
 export const logToSheets = (payload) => {
   fetch(GAS_URL, {
