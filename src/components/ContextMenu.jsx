@@ -59,8 +59,8 @@ const ContextMenu = ({
     } else {
       if (window.confirm("ยืนยันการลบ?")) {
         if (contextMenu.type === 'folder') deleteFolder(contextMenu.id);
-        else if (contextMenu.type === 'history') deleteReport(contextMenu.id);
-        else if (contextMenu.type === 'template') deleteTemplate(contextMenu.id);
+        else if (contextMenu.type === 'history') deleteReport(contextMenu.id, contextMenu.data, user);
+        else if (contextMenu.type === 'template') deleteTemplate(contextMenu.id, contextMenu.data, user);
       }
     }
     setContextMenu(null);

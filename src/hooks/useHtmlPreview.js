@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import { DEFAULT_INCIDENT_BODY, DEFAULT_VIOLATOR_BODY } from '../constants/templates';
 import { hydrateHtmlTemplate, formatTimeInput } from '../utils/parser';
+
+const sanitize = (html) => DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 
 export const useHtmlPreview = () => {
   const [thaiPreview, setThaiPreview] = useState('');
@@ -13,7 +16,7 @@ export const useHtmlPreview = () => {
   // We MUST write to the DOM directly via ref whenever the preview content changes.
   useEffect(() => {
     if (thaiPreviewRef.current) {
-      thaiPreviewRef.current.innerHTML = thaiPreview;
+      thaiPreviewRef.current.innerHTML = sanitize(thaiPreview);
     }
   }, [thaiPreview]);
 
@@ -45,7 +48,7 @@ export const useHtmlPreview = () => {
     setThaiPreview(finalHtml);
 
     // GUARANTEED DOM write: useEffect won't fire if html hasn't changed
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = finalHtml;
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = sanitize(finalHtml);
     isEditingPreview.current = type === 'history';
     return { finalHtml, savedData };
   };
@@ -80,7 +83,7 @@ export const useHtmlPreview = () => {
   const resetPreview = (mode) => {
     const html = getDefaultHtml(mode);
     setThaiPreview(html);
-    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = html;
+    if (thaiPreviewRef.current) thaiPreviewRef.current.innerHTML = sanitize(html);
   };
 
   return {

@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { logToSheets } from '../utils/sheetsLogger';
 
-export const useHistory = (userId) => {
+export const useHistory = (user) => {
+  const userId = user?.id;
+  const username = user?.username || user?.display_name || user?.email || 'Unknown';
+  const userRole = user?.role || '';
+
   const [history, setHistory] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -65,7 +70,20 @@ export const useHistory = (userId) => {
         user_id: userId,
       }]);
 
-    if (!error) fetchHistory();
+    if (!error) {
+      fetchHistory();
+      logToSheets({
+        event: 'SAVED',
+        actor: username,
+        actorRole: userRole,
+        createdBy: username,
+        mode: report.mode,
+        templateName: report.templateName,
+        customTitle: report.customTitle || '',
+        preview: report.preview || '',
+        formData: report.data || {},
+      });
+    }
   };
 
   const renameReport = async (id, newTitle) => {
@@ -78,14 +96,29 @@ export const useHistory = (userId) => {
     if (!error) fetchHistory();
   };
 
-  const deleteReport = async (id) => {
+  const deleteReport = async (id, item, deletedByUser) => {
     if (!supabase) return;
     const { error } = await supabase
       .from('incident_history')
       .delete()
       .eq('id', id);
 
-    if (!error) fetchHistory();
+    if (!error) {
+      fetchHistory();
+      const actor = deletedByUser?.username || deletedByUser?.display_name || username;
+      const actorRole = deletedByUser?.role || userRole;
+      logToSheets({
+        event: 'DELETED',
+        actor,
+        actorRole,
+        createdBy: item?.createdBy || '',
+        mode: item?.mode || '',
+        templateName: item?.templateName || item?.template_name || '',
+        customTitle: item?.customTitle || '',
+        preview: item?.preview || '',
+        formData: item?.data || {},
+      });
+    }
   };
 
   const togglePin = async (id, currentStatus) => {

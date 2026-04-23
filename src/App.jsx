@@ -8,6 +8,7 @@ import { useUserTemplates } from './hooks/useUserTemplates';
 import { useHtmlPreview } from './hooks/useHtmlPreview';
 import { useDynamicFields } from './hooks/useDynamicFields';
 import { translateToCAAT22 } from './utils/translator';
+import { logToSheets } from './utils/sheetsLogger';
 import { APP_VERSION } from './constants/templates';
 
 import Login from './Login';
@@ -167,7 +168,7 @@ const App = () => {
     getDefaultHtml,
   } = useHtmlPreview();
 
-  const historyData = useHistory(user?.id);
+  const historyData = useHistory(user);
   const { history, renameReport, deleteReport } = historyData;
 
   const {
@@ -253,7 +254,7 @@ const App = () => {
     }
   }, [user, reportMode]);
 
-  const handleDeleteTemplate = async (templateId) => {
+  const handleDeleteTemplate = async (templateId, templateData, deletedByUser) => {
     if (user?.role === 'operation') {
       alert("คุณไม่มีสิทธิ์ลบฟอร์ม (จำกัดเฉพาะ Supervisor/Admin)");
       return;
@@ -265,6 +266,18 @@ const App = () => {
     } else {
       await deleteTemplate(templateId);
       logActivity('delete_custom_template', templateId);
+      const actor = deletedByUser || user;
+      logToSheets({
+        event: 'TEMPLATE_DELETED',
+        actor: actor?.username || actor?.display_name || '',
+        actorRole: actor?.role || '',
+        createdBy: templateData?.created_by || '',
+        mode: templateData?.mode || '',
+        templateName: templateData?.name || templateData?.template_name || '',
+        customTitle: '',
+        preview: templateData?.preview || templateData?.content || '',
+        formData: {},
+      });
     }
     
     // Clear selection if deleted
