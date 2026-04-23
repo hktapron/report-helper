@@ -448,7 +448,15 @@ const App = () => {
 
     if (!error) {
       logActivity(type === 'overwrite' ? 'update_template' : 'create_template', targetName);
-      // Silent close - no alert per user request
+      logToSheets({
+        event: type === 'overwrite' ? 'TEMPLATE_UPDATED' : 'TEMPLATE_SAVED',
+        actor: user?.username || user?.display_name || '',
+        actorRole: user?.role || '',
+        createdBy: user?.username || user?.display_name || '',
+        mode: reportMode,
+        templateName: targetName,
+        formData,
+      });
       setSaveModalData({ ...saveModalData, isOpen: false });
     } else {
       alert('เกิดข้อผิดพลาด: ' + error.message);
