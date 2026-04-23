@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgu-uNPcRxBWnNGIqgTnLaozcBcsSiTi4pZIZaQhpOlRQyEv3Zt9_r3JooSMIur2_BEA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx9U_QsIf4X8W8U7LAxxROE-Rwy3yInKJ4GlwvMPYKWUMHl49bi0l7eRQ2mDXyKCJzl7A/exec';
 
 export const logToSheets = (payload) => {
   const form = new FormData();
