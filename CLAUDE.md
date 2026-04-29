@@ -1,8 +1,9 @@
 # Incident Reporter — Project Rules
 
-## ⚡ Step 0 — อ่าน hotcache.md ก่อนทำอะไร
-- ไฟล์อยู่ที่ `../hotcache.md` (symlink → Obsidian wiki)
-- ถ้าคำตอบอยู่ที่นี่ หยุด ไม่ต้องเปิดไฟล์อื่น
+## ⚡ Step 0 — อ่าน hotcache.md ก่อนทำอะไรทั้งนั้น
+- ไฟล์อยู่ที่ `hotcache.md` (ใน root ของโปรเจคนี้เลย)
+- ถ้าคำตอบอยู่ที่นี่ **หยุด** ไม่ต้องเปิดไฟล์อื่น
+- ถ้ามี cross-project alert → ดูเพิ่มที่ `../hotcache.md` (workspace-level)
 
 ## Stack
 - React + Vite
@@ -19,5 +20,6 @@
 - Supabase schema changes → แจ้ง user ก่อนเสมอ (shared DB)
 
 ## After Work
-- สำเร็จ → บันทึกลง `../hotcache.md`
+- สำเร็จ → บันทึกลง `hotcache.md` (ของโปรเจคนี้)
+- cross-project decision → บันทึกลง `../hotcache.md` ด้วย
 - ไม่สำเร็จ → ไม่ต้องจด
